@@ -130,7 +130,7 @@ public class Move {
     public void setPriority_lvl( int priority_lvl ) {this.priority_lvl = priority_lvl;}
     public int getProbability() {return probability;}
     public void setProbability( int probability ) {this.probability = probability;}
-    public int getTarget() {return target;}
+    public boolean getTarget() {return target == 1 ? true: false;}
     public void setTarget( int target ) {this.target = target;}
     public t_Type getType() {return type;}
     public void setType( t_Type type ) {this.type = type;}

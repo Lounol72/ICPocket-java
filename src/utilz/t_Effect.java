@@ -14,7 +14,7 @@ public enum t_Effect {
         this.value = value;
     }
 
-    public t_Effect fromValue(int value) {
+    public static t_Effect fromValue( int value ) {
         for (t_Effect effect : t_Effect.values()) {
             if (effect.getValue() == value) {
                 return effect;

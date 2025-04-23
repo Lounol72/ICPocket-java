@@ -23,8 +23,9 @@ public class ICMonIMG {
     }
 
     private void initBounds() {
-        InitialHpBar = new Rectangle(x,y, width, (int)(5 * SCALE));
-        HpBar = new Rectangle(x,y, width, (int)(5 * SCALE));
+        int HEIGHT = 7;
+        InitialHpBar = new Rectangle(x,y - HEIGHT, width, (int)(HEIGHT * SCALE));
+        HpBar = new Rectangle(x,y - HEIGHT, width, (int)(HEIGHT * SCALE));
     }
 
     public void draw( Graphics g){
@@ -37,5 +38,61 @@ public class ICMonIMG {
 
     public void update(){
         HpBar.width= (HpBar.width > 0)? HpBar.width -1 :InitialHpBar.width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight( int height ) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth( int width ) {
+        this.width = width;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX( int x ) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY( int y ) {
+        this.y = y;
+    }
+
+    public Rectangle getInitialHpBar() {
+        return InitialHpBar;
+    }
+
+    public void setInitialHpBar( Rectangle initialHpBar ) {
+        InitialHpBar = initialHpBar;
+    }
+
+    public Rectangle getHpBar() {
+        return HpBar;
+    }
+
+    public void setHpBar( Rectangle hpBar ) {
+        HpBar = hpBar;
+    }
+
+    public BufferedImage getSprite() {
+        return sprite;
+    }
+
+    public void setSprite( BufferedImage sprite ) {
+        this.sprite = sprite;
     }
 }

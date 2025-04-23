@@ -35,6 +35,7 @@ public class Constants {
         public static final int TYPE_NUMBER = 9;
         public static final int IS_ABSCENT  =-1;
         public static final int NUMBER_OF_MOVES = 49;
+        public static final int NEUTRAL_STAT_CHANGE = 6;
 
         public static class Combat{
             public static final int STRUGGLE_MOVE_INDEX = -10;
@@ -55,6 +56,7 @@ public class Constants {
 
         public static boolean criticalHitFlag = false;
         public static double moveEffectivenessFlag = 1.0;
+        public static boolean secondaryEffectHappenedFlag = false;
 
         public static final double LEVEL_MULTIPLIER = 0.4;
         public static final int DAMAGE_DIVISOR = 50;

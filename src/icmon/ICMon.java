@@ -4,8 +4,8 @@ import utilz.t_Effect;
 import utilz.t_Type;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.Random;
+
 
 import static utilz.Constants.ICMONS.*;
 import static utilz.Constants.ICMONS.Combat.*;
@@ -17,9 +17,12 @@ import static utilz.Constants.ICMONS.StatVariations.*;
 import static utilz.Constants.SCALE;
 import static utilz.HelpMethods.generateICMonFromId;
 import static utilz.HelpMethods.generateMoveFromId;
-import static utilz.LoadSave.GetICMonSprite;
+
+import static utilz.t_Effect.noEffect;
+
 
 public class ICMon {
+
 
     private static final Random rnd = new Random();
 
@@ -39,6 +42,8 @@ public class ICMon {
     private Move[] moveList; /**< liste des attaques du ICmon. [4]*/
     private int nb_move = 0; /**< nombre d'attaques du ICmon. */
     private t_Effect main_effect; /**< effet principal du ICmon. */
+
+    private int statChanges[];
     // Affichage
 
     // Définition des constantes pour le positionnement
@@ -70,12 +75,13 @@ public class ICMon {
         this.iv = generated.iv;
         this.moveList = generated.moveList;
         this.nb_move = rnd.nextInt(5);
-        this.main_effect = t_Effect.noEffect;
+        this.main_effect = noEffect;
         // generate random moves
         for (int i = 0; i<nb_move;i++)
             setNewMove(generateMoveFromId(rnd.nextInt(1,NUMBER_OF_MOVES)));
         // generate sprite
         this.img = new ICMonIMG(SPRITE_X,SPRITE_Y,SPRITE_WIDTH,SPRITE_HEIGHT,name);
+        setDefaultStatChanges();
 
     }
 
@@ -92,7 +98,7 @@ public class ICMon {
         this.exp = expCurve();
         this.nature = rnd.nextInt(25);
         this.current_pv = initial_pv = calcStatFrom(PV);
-        this.main_effect = t_Effect.noEffect;
+        this.main_effect = noEffect;
         // Remplissage des moves NULL
         moveList = new Move[4];
         for (int i = 0; i < moveList.length; i++) {
@@ -242,6 +248,97 @@ public class ICMon {
         
         System.out.println(separator);
     }
+
+    private void setDefaultStatChanges() {
+        statChanges = new int[6];
+        for(int i = 0; i<statChanges.length; i++)
+            statChanges[i]= NEUTRAL_STAT_CHANGE;
+    }
+
+    public boolean statVarChange(int probability, int modifier, int targetedStat){
+        if(rnd.nextInt(100)<probability) {
+            if( statChanges[targetedStat]+modifier>12)  statChanges[targetedStat]=12;
+            else if( statChanges[targetedStat]+modifier<0)  statChanges[targetedStat]=0;
+            else  statChanges[targetedStat]+=modifier;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean applyEffect(int probability, int effect){
+        if(this.main_effect==noEffect && rnd.nextInt(100)<probability){
+            this.main_effect=t_Effect.fromValue(effect);
+            return true;
+        }
+        return false;
+    }
+    public boolean recoilDamage(int probability, int percentage_of_val){
+        if (rnd.nextInt(100)<probability){
+            this.current_pv -= this.calcStatFrom(PV) * percentage_of_val/100;
+            if (this.current_pv < 0) this.current_pv = 0;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean applyStatChange(ICMon target, Move action) {
+        boolean StatChange = target.statVarChange(
+                action.getProbability(),
+                action.getValue_effect(),
+                action.getEffect_modifier()
+        );
+
+        if (StatChange)
+            secondaryEffectHappenedFlag = true;
+
+        return StatChange;
+    }
+    private boolean applyEffectChange(ICMon target, Move action){
+        boolean effectApplied = target.applyEffect(
+                action.getProbability(),
+                action.getEffect_modifier()
+        );
+        if (effectApplied)
+            secondaryEffectHappenedFlag = true;
+
+        return effectApplied;
+    }
+    private boolean applyRecoilDamage(ICMon target, Move action){
+        boolean recoilDamage = target.recoilDamage(
+                action.getProbability(),
+                action.getValue_effect()
+        );
+        if (recoilDamage)
+            secondaryEffectHappenedFlag = true;
+
+        return recoilDamage;
+    }
+
+    public void launchSecEffect(ICMon defender, Move action) {
+        if (action.getInd_secEffect() >= 0) {
+            ICMon target = action.getTarget() ? this : defender;
+            switch (action.getInd_secEffect()) {
+                case 0 -> {
+                    if (applyStatChange(target, action))
+                        return;
+                }
+                case 1 ->{
+                    if (applyEffectChange(target, action))
+                        return;
+                }
+                case 2 ->{
+                    if (applyRecoilDamage(target, action))
+                        return;
+                }
+                default ->
+                    throw new RuntimeException
+                            ("Effet secondaire invalide : " + action.getInd_secEffect());
+
+            }
+        }
+        secondaryEffectHappenedFlag = false;
+    }
+
 
     public int calcStatFrom(int stat){
         if(stat == PV) return ( (int)( baseStats[PV] + iv[PV])*lvl/100 ) + lvl+10;

@@ -8,9 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.net.URL;
+import java.util.*;
 
 import static utilz.Constants.PATHS.DATA_FILE;
 import static utilz.Constants.PATHS.LANGUAGE_FILE;
@@ -24,6 +23,8 @@ public class HelpMethods {
     // Cache des données pour éviter des lectures répétées
     private static Map<String, JsonObject> jsonCache = new HashMap<>();
     private static Gson gson = new Gson();
+
+    private static ResourceBundle bundle;
 
     /**
      * Charge un fichier JSON en cache s'il n'y est pas déjà
@@ -123,15 +124,34 @@ public class HelpMethods {
     }
 
     public static String GetPhrase(String name){
-        try{
-            JsonObject jsonData = getJsonData(LANGUAGE_FILE);
-            JsonObject languageData = jsonData.getAsJsonObject("languages").get(language).getAsJsonObject();
-            return languageData.get(name).getAsString();
-        } catch (Exception e){
-            System.err.println("Erreur lors de la récupération de la phrase :" + name + ">>" + e.getMessage());
-            return null;
+        try {
+            // Utilisation du chemin complet correspondant à la structure de vos fichiers
+            bundle = ResourceBundle.getBundle("data.langue", new Locale(language), new ResourceControl());
+            return bundle.getString(name);
+
+
+        } catch (MissingResourceException e) {
+            System.err.printf("Erreur lors de la récupération de la phrase : {%s} - {%s}%n", name, e.getMessage());
+            // Tentative de fallback vers l'anglais si la langue demandée n'existe pas
+            try {
+                bundle = ResourceBundle.getBundle("res.data.langue", new Locale("en"));
+                return bundle.getString(name);
+            } catch (MissingResourceException e2) {
+                return "Error: " + name;
+            }finally{
+                System.exit(3);
+            }
         }
     }
+    // Classe pour gérer le chargement des ressources depuis le dossier res
+    private static class ResourceControl extends ResourceBundle.Control {
+        public URL getResource( String baseName, String locale) {
+            String bundleName = toBundleName(baseName, Locale.of(locale));
+            String resourceName = toResourceName(bundleName, "properties");
+            return ClassLoader.getSystemResource("res/" + resourceName);
+        }
+    }
+
 
     /**
      * Réinitialiser le cache (utile pour les tests ou si les fichiers sont modifiés)

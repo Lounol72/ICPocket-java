@@ -1,0 +1,19 @@
+{
+  "languages" : {
+    "en": {
+      "langue": "What language would you like to play in?"
+    },
+    "fr": {
+      "langue": "En quelle langue voulez-vous jouer ?"
+    },
+    "ru" : {
+      "langue" : "На каком языке вы хотели бы играть?"
+    },
+    "chinois": {
+      "langue" : "您想用哪种语言进行游戏？"
+    },
+    "ger" : {
+      "langue" : "In welcher Sprache möchten Sie spielen?"
+    }
+  }
+}

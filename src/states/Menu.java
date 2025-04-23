@@ -2,6 +2,7 @@ package states;
 
 import game.Game;
 import ui.MenuButtons;
+import ui.ScrollingText;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -32,6 +33,8 @@ public class Menu extends State implements StateMethods{
     private String languageString ;
     private int xText, yText ;
     private boolean textPosCalc = false;
+
+    private ScrollingText scrollText;
     /**
      * Constructor
      * */
@@ -47,6 +50,12 @@ public class Menu extends State implements StateMethods{
         for (int i = 0; i < buttons.length ; i++)
             buttons[i] = new MenuButtons(X_BUTTON_POS + ((i % 2) * X_BUTTON_OFFSET), Y_BUTTON_POS + ((i / 2) * Y_BUTTON_OFFSET * 2),WIDTH, HEIGHT,0,lang[i],text[i]);
         languageString = GetPhrase("langue");
+
+        scrollText = new ScrollingText( 300, 300, 300, 50);
+        scrollText.reset("Voici un nouveau message qui va défiler!");
+        scrollText.setCharDelay(130); // Plus rapide
+        scrollText.setFont(new Font("Arial", Font.BOLD, 18));
+        scrollText.setTextColor(Color.white);
     }
 
     /**
@@ -69,6 +78,8 @@ public class Menu extends State implements StateMethods{
         g.drawString(languageString ,xText ,yText );
         for (MenuButtons mb : buttons)
             mb.draw(g);
+        scrollText.draw(g);
+
     }
 
     /**
@@ -78,7 +89,7 @@ public class Menu extends State implements StateMethods{
     public void update() {
         for (MenuButtons mb : buttons)
             mb.update();
-
+        scrollText.update();
     }
 
     /**

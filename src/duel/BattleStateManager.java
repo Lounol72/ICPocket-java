@@ -14,7 +14,17 @@ public class BattleStateManager {
     private int moveBleu;
     private boolean first;
 
-    public enum TurnState {
+    public BattleStateManager(Team rouge,Team bleu){
+        this.rouge = rouge;
+        this.bleu = bleu;
+        initClasses();
+    }
+
+    private void initClasses() {
+        text = new ScrollingText(0,0,100,10);
+    }
+
+    public static enum TurnState {
         TURN_NONE,
         TURN_INIT,
         TURN_ACTION1,

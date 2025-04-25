@@ -128,6 +128,13 @@ public class Constants {
                 return VARIATIONS[index];
             }
         }
+
+        public static class MULTIPLIERS{
+            public static final double TRAINER_BONUS = 1.5f;
+            public static final double EXP_BOOST = 1.5f;
+            public static final int BASE_EXP_MULTIPLIER = 3;
+            public static final int EXP_DIVISOR = 7;
+        }
     }
 
     public static void SetLanguage (String name){

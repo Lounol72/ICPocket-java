@@ -95,7 +95,7 @@ public class ICMon {
             iv[i] = rnd.nextInt(32)+1;
         this.gender = (rnd.nextInt(2) == 0);
         this.lvl = rnd.nextInt(100) + 1;
-        this.exp = expCurve();
+        this.exp = expCurve(lvl + 1);
         this.nature = rnd.nextInt(25);
         this.current_pv = initial_pv = calcStatFrom(PV);
         this.main_effect = noEffect;
@@ -314,21 +314,20 @@ public class ICMon {
         return recoilDamage;
     }
 
-    public void launchSecEffect(ICMon defender, Move action) {
+    public boolean launchSecEffect(ICMon defender, Move action) {
         if (action.getInd_secEffect() >= 0) {
             ICMon target = action.getTarget() ? this : defender;
             switch (action.getInd_secEffect()) {
                 case 0 -> {
-                    if (applyStatChange(target, action))
-                        return;
+                    return(applyStatChange(target, action));
                 }
                 case 1 ->{
-                    if (applyEffectChange(target, action))
-                        return;
+                    return (applyEffectChange(target, action))
+                        ;
                 }
                 case 2 ->{
-                    if (applyRecoilDamage(target, action))
-                        return;
+                    return (applyRecoilDamage(target, action))
+                        ;
                 }
                 default ->
                     throw new RuntimeException
@@ -337,6 +336,7 @@ public class ICMon {
             }
         }
         secondaryEffectHappenedFlag = false;
+        return false;
     }
 
 
@@ -421,9 +421,12 @@ public class ICMon {
             if (m.getCurrent_pp()>0) return true;
         return false;
     }
+    public boolean isAttacking(int moveIndex){
+        return (moveIndex<4 && moveIndex>=0) || isStruggling(moveIndex);
+    }
 
-    public long expCurve(){
-        return (long) Math.pow(lvl, 3);
+    public long expCurve( int i ){
+        return (long) Math.pow(i, 3);
     }
 
     public int[] getBaseStats() {
@@ -559,7 +562,34 @@ public class ICMon {
         MouseOver = mouseOver;
     }
 
+    public int[] getStatChanges() {
+        return statChanges;
+    }
+
+    public void setStatChanges( int[] statChanges ) {
+        this.statChanges = statChanges;
+    }
+
     public Rectangle getRect() {
         return rect;
+    }
+
+    public boolean isSwitching( int idxmove ) {
+        return idxmove>=11 && idxmove<16;
+    }
+
+    public void addExp( long expAmount ) {
+        this.exp += expAmount;
+    }
+
+    public boolean reachedNextLvl() {
+        if(exp>=expCurve(lvl+1)){
+            lvl++;
+            //printf("%s monte au niveau %d\n",p->name,p->lvl);
+            /*TO ADD HERE : apprendre une nouvelle attaque si disponible*/
+            //checkLearningMove();
+            return true;
+        }
+        return false;
     }
 }

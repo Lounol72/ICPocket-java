@@ -1,6 +1,7 @@
 package utilz;
 
 import com.google.gson.*;
+import duel.Team;
 import icmon.ICMon;
 import icmon.Move;
 
@@ -12,7 +13,6 @@ import java.net.URL;
 import java.util.*;
 
 import static utilz.Constants.PATHS.DATA_FILE;
-import static utilz.Constants.PATHS.LANGUAGE_FILE;
 import static utilz.Constants.language;
 
 public class HelpMethods {
@@ -37,6 +37,36 @@ public class HelpMethods {
             }
         }
         return jsonCache.get(filePath);
+    }
+
+    public static Team generateTeamFromId(int id){
+        try {
+            JsonObject jsonData = getJsonData(DATA_FILE);
+
+            JsonObject teamData = jsonData.getAsJsonArray("teams")
+                    .get(id - 1)
+                    .getAsJsonObject();
+
+            int nbPokes = teamData.get("nb_Poke").getAsInt();
+            String name = teamData.get("name").getAsString();
+
+
+            ICMon[] icmons = new ICMon[nbPokes];
+            for(int i = 0; i < nbPokes; i++) {
+                int monId = teamData.getAsJsonArray("ids").get(i).getAsInt();
+                icmons[i] = new ICMon(monId);
+                if (icmons[i] == null) {
+                    throw new IllegalStateException("Échec de la création de l'ICMon #" + monId);
+                }
+            }
+
+            return new Team(id, icmons, nbPokes, name);
+        } catch (Exception e) {
+            System.err.println("Erreur détaillée lors de la génération de la team #" + id + ": ");
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     /**
@@ -90,6 +120,45 @@ public class HelpMethods {
         baseStats[5] = stats.get("speed").getAsInt();
         return baseStats;
     }
+
+    public static Move[] getLearningBuffer(int pokeId, int pokeLevel) {
+        try {
+            JsonObject jsonData = getJsonData(DATA_FILE);
+            JsonObject poolData = jsonData.getAsJsonArray("movepool")
+                    .get(pokeId - 1)
+                    .getAsJsonObject();
+
+            Move[] buffer = new Move[20];
+            int bufferIndex = 0;
+
+            // Récupérer le tableau de moves
+            JsonArray moves = poolData.getAsJsonArray("moves");
+
+            // Parcourir tous les moves disponibles
+            for (JsonElement moveElement : moves) {
+                JsonObject moveData = moveElement.getAsJsonObject();
+                int moveLvl = moveData.get("lvl").getAsInt();
+
+                // Si le niveau correspond exactement, ajouter le move au buffer
+                if (moveLvl == pokeLevel) {
+                    int idMove = moveData.get("idMove").getAsInt();
+                    buffer[bufferIndex] = generateMoveFromId(idMove);
+                    bufferIndex++;
+
+                    // Éviter le dépassement du buffer
+                    if (bufferIndex >= buffer.length) {
+                        break;
+                    }
+                }
+            }
+
+            return buffer;
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la génération du buffer de moves pour l'ICMon #" + pokeId + ": " + e.getMessage());
+            return null;
+        }
+    }
+
 
     /**
      * Génère un Move à partir de son id

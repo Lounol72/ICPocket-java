@@ -4,12 +4,14 @@
  */
 package states;
 
+import duel.Team;
 import game.Game;
 import icmon.ICMon;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Random;
 
 import static game.Game.GAME_HEIGHT;
 import static game.Game.GAME_WIDTH;
@@ -19,11 +21,13 @@ import static game.Game.GAME_WIDTH;
  */
 public class Battle extends State implements StateMethods {
 
-    private ICMon icMon;
+    private Team team;
+    Random rnd = new Random();
 
     public Battle( Game game){
         super(game);
-        icMon = new ICMon(1);
+        team = new Team(1);
+        System.out.println("level :" + team.getTeam()[0].getLvl());
     }
 
 
@@ -36,8 +40,7 @@ public class Battle extends State implements StateMethods {
     public void draw( Graphics g ) {
         g.setColor(new Color(32,24,32));
         g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
-        icMon.draw(g);
-
+        team.draw(g);
     }
 
     /**
@@ -45,7 +48,7 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void update() {
-        icMon.update();
+        team.update();
     }
 
     /**
@@ -77,9 +80,6 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void mouseMoved( MouseEvent e ) {
-        icMon.setMouseOver(false);
-        if (isIn(e,icMon.getRect()))
-            icMon.setMouseOver(true);
     }
 
     /**
@@ -87,7 +87,7 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void mouseClicked( MouseEvent e ) {
-
+        team.gainExp(team.getTeam()[0]);
     }
 
     /**

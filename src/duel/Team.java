@@ -2,8 +2,11 @@ package duel;
 
 import icmon.ICMon;
 
+import java.awt.*;
+
 import static utilz.Constants.ICMONS.MULTIPLIERS.*;
 import static utilz.Constants.ICMONS.STATS.PV;
+import static utilz.HelpMethods.generateTeamFromId;
 
 public class Team {
     private int id;
@@ -11,9 +14,30 @@ public class Team {
     private ICMon[] team;
     private int nbPoke;
 
-    public Team(int id){
-        //
+    public Team() {
+        this(1); // Appel du constructeur avec l'ID par défaut
+    }
+
+    public Team(int id) {
+        Team generatedTeam = generateTeamFromId(id);
+        if (generatedTeam == null) {
+            throw new IllegalStateException("Impossible de générer l'équipe avec l'ID: " + id);
+        }
+        copyTeamProperties(generatedTeam);
+    }
+
+    private void copyTeamProperties(Team source) {
+        this.id = source.id;
+        this.team = source.team;
+        this.nbPoke = source.nbPoke;
+        this.name = source.name;
+    }
+
+    public Team(int id,ICMon[] team, int nbPoke, String name){
         this.id = id;
+        this.team = team;
+        this.nbPoke = nbPoke;
+        this.name = name;
     }
 
     public ICMon[] getTeam() {
@@ -49,5 +73,50 @@ public class Team {
                 team[i].setInitial_pv( team[i].getInitial_pv() + hp_increase);
             }
         }
+    }
+
+    public int getNbPoke() {
+        return nbPoke;
+    }
+
+    public void setNbPoke( int nbPoke ) {
+        this.nbPoke = nbPoke;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId( int id ) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName( String name ) {
+        this.name = name;
+    }
+
+    public void setTeam( ICMon[] team ) {
+        this.team = team;
+    }
+
+    public void swapActualAttacker( int i ) {
+        ICMon current = team[0];
+        team[0] = team[i];
+        team[i] = current;
+        for (ICMon mons : team)
+            mons.setDefaultStatChanges();
+
+    }
+
+    public void update() {
+        team[0].update();
+    }
+
+    public void draw( Graphics g ) {
+        team[0].draw(g);
     }
 }

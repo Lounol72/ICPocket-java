@@ -4,6 +4,7 @@ import utilz.t_Effect;
 import utilz.t_Type;
 
 import java.awt.*;
+import java.util.Objects;
 import java.util.Random;
 
 
@@ -15,9 +16,8 @@ import static utilz.Constants.ICMONS.STATS.*;
 import static utilz.Constants.ICMONS.TypeChart.getEffectiveness;
 import static utilz.Constants.ICMONS.StatVariations.*;
 import static utilz.Constants.SCALE;
-import static utilz.HelpMethods.generateICMonFromId;
-import static utilz.HelpMethods.generateMoveFromId;
 
+import static utilz.HelpMethods.*;
 import static utilz.t_Effect.noEffect;
 
 
@@ -45,6 +45,8 @@ public class ICMon {
 
     private int statChanges[];
     // Affichage
+    private Move[] LearningBuffer;
+    private int idxLearningBuffer = 0;
 
     // Définition des constantes pour le positionnement
     private final int TEXT_MARGIN_LEFT = (int) (20 * SCALE);
@@ -54,8 +56,8 @@ public class ICMon {
 
     private final int SPRITE_X = (int) ( 200* SCALE);
     private final int SPRITE_Y = (int) ( 200* SCALE);
-    private final int SPRITE_WIDTH = (int) ( 200* SCALE);
-    private final int SPRITE_HEIGHT = (int) ( 200* SCALE);
+    private final int SPRITE_WIDTH = (int) ( 100* SCALE);
+    private final int SPRITE_HEIGHT = (int) ( 100* SCALE);
     private final Rectangle rect = new Rectangle(SPRITE_X,SPRITE_Y,SPRITE_WIDTH,SPRITE_HEIGHT);
 
     private ICMonIMG img;
@@ -64,6 +66,7 @@ public class ICMon {
         ICMon generated = generateICMonFromId(id);
         this.id = id;
         this.name = generated.name;
+        this.img = new ICMonIMG(SPRITE_X,SPRITE_Y,SPRITE_WIDTH,SPRITE_HEIGHT,this);
         this.gender = generated.gender;
         this.type = generated.type;
         this.lvl = generated.lvl;
@@ -79,8 +82,9 @@ public class ICMon {
         // generate random moves
         for (int i = 0; i<nb_move;i++)
             setNewMove(generateMoveFromId(rnd.nextInt(1,NUMBER_OF_MOVES)));
-        // generate sprite
-        this.img = new ICMonIMG(SPRITE_X,SPRITE_Y,SPRITE_WIDTH,SPRITE_HEIGHT,name);
+        System.out.println(this.name +" has :"+nb_move);
+        this.LearningBuffer = new Move[20];
+
         setDefaultStatChanges();
 
     }
@@ -198,8 +202,8 @@ public class ICMon {
                 }
             }
         }
-        img.draw(g);
-
+        if (img != null)
+            img.draw(g);
     }
 
     public void DisplayInfo() {
@@ -249,7 +253,7 @@ public class ICMon {
         System.out.println(separator);
     }
 
-    private void setDefaultStatChanges() {
+    public void setDefaultStatChanges() {
         statChanges = new int[6];
         for(int i = 0; i<statChanges.length; i++)
             statChanges[i]= NEUTRAL_STAT_CHANGE;
@@ -429,6 +433,21 @@ public class ICMon {
         return (long) Math.pow(i, 3);
     }
 
+    public void checkLearningMove(){
+        if (nb_move < 4){
+            moveList[nb_move] = Objects.requireNonNull(getLearningBuffer(id, lvl))[0];
+            nb_move++;
+        }else{
+            Move[] temp = getLearningBuffer(id, lvl);
+            System.out.println("level :" + lvl);
+            for (int i = 0; i < temp.length;i++)
+                if (temp[i] != null)temp[i].InfoDisplay();
+            for (int i = idxLearningBuffer; i < LearningBuffer.length; i++){
+                LearningBuffer[i] = temp[i -idxLearningBuffer];
+            }
+        }
+    }
+
     public int[] getBaseStats() {
         return baseStats;
     }
@@ -587,7 +606,7 @@ public class ICMon {
             lvl++;
             //printf("%s monte au niveau %d\n",p->name,p->lvl);
             /*TO ADD HERE : apprendre une nouvelle attaque si disponible*/
-            //checkLearningMove();
+            checkLearningMove();
             return true;
         }
         return false;

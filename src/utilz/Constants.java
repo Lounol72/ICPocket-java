@@ -18,8 +18,8 @@ public class Constants {
         public static class BUTTONS{
             public static final int DEFAULT_WIDTH = 192;
             public static final int DEFAULT_HEIGHT = 31;
-            public static final int WIDTH = (int) ((int) (DEFAULT_WIDTH * SCALE) * 1.5f);
-            public static final int HEIGHT = (int) ((int) (DEFAULT_HEIGHT * SCALE) * 1.5f);
+            public static final int WIDTH = (int) ((int) (DEFAULT_WIDTH * SCALE) * 1f);
+            public static final int HEIGHT = (int) ((int) (DEFAULT_HEIGHT * SCALE) * 1f);
         }
     }
     public static class PATHS{
@@ -30,6 +30,14 @@ public class Constants {
         public static final String LANGUAGE_FILE = DATA + "language.json";
 
 
+    }
+    public static class WORLD{
+        public final static int TILES_DEFAULT_SIZE = 32;                     // Taille de base d'une tuile
+        public final static int TILES_IN_WIDTH = 26;                         // Nombre de tuiles en largeur
+        public final static int TILES_IN_HEIGHT = 14;                        // Nombre de tuiles en hauteur
+        public final static int TILES_SIZE = (int) (TILES_DEFAULT_SIZE * SCALE);  // Taille d'une tuile après mise à l'échelle
+        public final static int GAME_WIDTH = TILES_SIZE * TILES_IN_WIDTH;    // Largeur totale du jeu
+        public final static int GAME_HEIGHT = TILES_SIZE * TILES_IN_HEIGHT;  // Hauteur totale du jeu
     }
     public static class ICMONS{
         public static final int TYPE_NUMBER = 9;

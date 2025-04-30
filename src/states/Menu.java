@@ -7,12 +7,11 @@ import ui.ScrollingText;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-
-import static game.Game.GAME_HEIGHT;
-import static game.Game.GAME_WIDTH;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.UI.BUTTONS.HEIGHT;
 import static utilz.Constants.UI.BUTTONS.WIDTH;
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
 import static utilz.HelpMethods.GetPhrase;
 
 public class Menu extends State implements StateMethods{
@@ -22,12 +21,12 @@ public class Menu extends State implements StateMethods{
     private static final int Y_TEXT_POS_DEFAULT = (int) (GAME_HEIGHT  * 0.8f);
 
     // Buttons positions
-    private static final int X_BUTTON_POS_DEFAULT = 250;
-    private static final int Y_BUTTON_POS_DEFAULT = 160;
+    private static final int X_BUTTON_POS_DEFAULT = (int) (GAME_WIDTH *0.196);
+    private static final int Y_BUTTON_POS_DEFAULT = (int) (GAME_HEIGHT *0.174);
     private static final int X_BUTTON_POS = (int) (X_BUTTON_POS_DEFAULT * SCALE);
     private static final int Y_BUTTON_POS = (int) (Y_BUTTON_POS_DEFAULT * SCALE);
-    private static final int X_BUTTON_OFFSET = (int)(150 *SCALE) + WIDTH;
-    private static final int Y_BUTTON_OFFSET = (int)(15 *SCALE) + HEIGHT;
+    private static final int X_BUTTON_OFFSET = (int)(Y_BUTTON_POS_DEFAULT *SCALE) + WIDTH;
+    private static final int Y_BUTTON_OFFSET = (int)((GAME_HEIGHT * 0.016) *SCALE) + HEIGHT;
 
     MenuButtons[] buttons;
     private String languageString ;
@@ -52,7 +51,7 @@ public class Menu extends State implements StateMethods{
         languageString = GetPhrase("langue");
 
         scrollText = new ScrollingText( 300, 300, 300, 50);
-        scrollText.reset("Voici un nouveau message qui va défiler!");
+        scrollText.reset(GetPhrase("no_very_eff"));
         scrollText.setCharDelay(130); // Plus rapide
         scrollText.setFont(new Font("Arial", Font.BOLD, 18));
         scrollText.setTextColor(Color.white);

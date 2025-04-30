@@ -57,8 +57,7 @@ public class ICMonIMG {
 
     public void draw( Graphics g){
         g.drawImage(sprite,x,y,width,height,null);
-
-        g.setColor(Color.RED);
+        g.setColor(Color.GRAY);
         g.fillRect(InitialHpBar.x,InitialHpBar.y,InitialHpBar.width,InitialHpBar.height);
         g.setColor(Color.GREEN);
         g.fillRect(HpBar.x,HpBar.y,HpBar.width,HpBar.height);

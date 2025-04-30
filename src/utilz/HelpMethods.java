@@ -5,6 +5,7 @@ import duel.Team;
 import icmon.ICMon;
 import icmon.Move;
 
+import java.awt.geom.Rectangle2D;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -257,6 +258,35 @@ public class HelpMethods {
         gson = new GsonBuilder()
             .registerTypeAdapter(typeOfT, typeAdapter)
             .create();
+    }
+
+    public static int GetSpriteAmount(int action){
+        switch(action){
+            case 0:
+                return 3;
+            case 1:
+                return 0;
+            case 2:
+                return 8;
+            case 3:
+                return 7;
+            default :
+                return 0;
+        }
+    }
+    public static boolean IsEntityOnFloor( Rectangle2D.Float hitbox, int[][] levelData ) {
+        return true;
+    }
+
+    public static boolean CanMoveHere( Rectangle2D.Float aFloat, int[][] levelData ) {
+        return true;
+    }
+
+    public static float GetEntityYPosUnderRoofOrAboveFloor( Rectangle2D.Float hitbox, float airSpeed ) {
+        return 1.0f;
+    }
+    public static float GetEntityXPosNextToWall( Rectangle2D.Float hitbox, float xSpeed ) {
+        return 1.0f;
     }
 
 }

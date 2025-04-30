@@ -6,7 +6,7 @@ import ui.Button;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class State {
+public abstract class State {
     protected Game game;
 
     public State(Game game) {

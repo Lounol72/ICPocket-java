@@ -6,15 +6,13 @@ package states;
 
 import duel.Team;
 import game.Game;
-import icmon.ICMon;
-
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Random;
 
-import static game.Game.GAME_HEIGHT;
-import static game.Game.GAME_WIDTH;
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
 
 /**
  * Classe Battle qui implémente les méthodes spécifiques à l'état de combat.
@@ -22,11 +20,12 @@ import static game.Game.GAME_WIDTH;
 public class Battle extends State implements StateMethods {
 
     private Team team;
+    private boolean paused=false;
     Random rnd = new Random();
 
     public Battle( Game game){
         super(game);
-        team = new Team(1);
+        team = new Team(3);
         System.out.println("level :" + team.getTeam()[0].getLvl());
     }
 
@@ -41,6 +40,10 @@ public class Battle extends State implements StateMethods {
         g.setColor(new Color(32,24,32));
         g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
         team.draw(g);
+        if(paused){
+            g.setColor(new Color(255,255,255,128));
+            g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
+        }
     }
 
     /**
@@ -48,7 +51,8 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void update() {
-        team.update();
+        if (!paused)
+            team.update();
     }
 
     /**
@@ -72,7 +76,19 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void keyPressed( KeyEvent e ) {
-        GameState.setState(GameState.MENU);
+        switch (e.getKeyCode()){
+            case KeyEvent.VK_Z ->{
+                GameState.setState(GameState.MENU);
+            }
+            case  KeyEvent.VK_S ->{
+                GameState.setState(GameState.WORLD);
+            }
+            case KeyEvent.VK_ESCAPE->{
+                paused = !paused;
+            }
+
+        }
+
     }
 
     /**
@@ -87,7 +103,23 @@ public class Battle extends State implements StateMethods {
      */
     @Override
     public void mouseClicked( MouseEvent e ) {
-        team.gainExp(team.getTeam()[0]);
+        switch(e.getButton()) {
+            case MouseEvent.BUTTON1 -> {
+                if (!paused) {
+                    team.gainExp(team.getTeam()[0]);
+                }
+            }
+            case MouseEvent.BUTTON2 -> {
+                // TODO: Implémenter la logique pour le bouton molette ou supprimer ce case
+            }
+            case MouseEvent.BUTTON3 -> {
+                if (!paused) {
+                    team.swapActualAttacker(1);
+                    // TODO System.out.println("Switching");
+                }
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + e.getButton());
+        }
     }
 
     /**

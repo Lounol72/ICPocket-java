@@ -28,8 +28,10 @@ package game;
 
 import java.awt.*;
 
+
 import states.Battle;
 import states.Menu;
+import states.World;
 
 
 import static states.GameState.currentState;
@@ -45,14 +47,9 @@ public class Game implements Runnable{
     private final int UPS_SET = 200;        // Mises à jour par seconde cible
 
 
-
-    // Constantes liées à la taille de la fenêtre
-
-    public final static int GAME_WIDTH = 1280;    // Largeur totale du jeu
-    public final static int GAME_HEIGHT = 920;  // Hauteur totale du jeu
-
     private Menu menu;
     private Battle battle;
+    private World world;
 
 
     /**
@@ -75,6 +72,7 @@ public class Game implements Runnable{
     private void initClasses() {
         this.menu = new Menu(this);
         this.battle = new Battle(this);
+        this.world = new World(this);
     }
 
     /**
@@ -98,6 +96,7 @@ public class Game implements Runnable{
                 battle.update();
             }
             case WORLD -> {
+                world.update();
             }
             case SETTINGS -> {
             }
@@ -124,6 +123,7 @@ public class Game implements Runnable{
                 battle.draw(g);
             }
             case WORLD -> {
+                world.draw(g);
             }
             case SETTINGS -> {
             }
@@ -195,5 +195,8 @@ public class Game implements Runnable{
 
     public void UpdateEveryStrings() {
         System.out.println("Every Strings Updated");
+    }
+
+    public World getWorld() {return world;
     }
 }

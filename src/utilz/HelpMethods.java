@@ -2,6 +2,8 @@ package utilz;
 
 import com.google.gson.*;
 import duel.Team;
+
+import game.Game;
 import icmon.ICMon;
 import icmon.Move;
 
@@ -14,7 +16,10 @@ import java.net.URL;
 import java.util.*;
 
 import static utilz.Constants.PATHS.DATA_FILE;
+import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
+import static utilz.LoadSave.LEVEL_ONE_DATA;
 
 public class HelpMethods {
 
@@ -30,7 +35,7 @@ public class HelpMethods {
     /**
      * Charge un fichier JSON en cache s'il n'y est pas déjà
      */
-    private static JsonObject getJsonData(String filePath) throws IOException {
+    public static JsonObject getJsonData( String filePath ) throws IOException {
         if (!jsonCache.containsKey(filePath)) {
             try (Reader reader = new FileReader(filePath)) {
                 JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
@@ -263,30 +268,116 @@ public class HelpMethods {
     public static int GetSpriteAmount(int action){
         switch(action){
             case 0:
-                return 3;
             case 1:
-                return 0;
+                return 1;
             case 2:
                 return 8;
             case 3:
-                return 7;
+                return 4;
+            case 4:
+                return 3;
             default :
                 return 0;
         }
     }
-    public static boolean IsEntityOnFloor( Rectangle2D.Float hitbox, int[][] levelData ) {
+
+    public static boolean CanMoveHere(Rectangle2D.Float hitbox, int[][] lvlData) {
+        if(IsSolid(hitbox.x, hitbox.y, lvlData)) return false;
+        if(IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height, lvlData)) return false;
+        if(IsSolid(hitbox.x + hitbox.width, hitbox.y, lvlData)) return false;
+        if(IsSolid(hitbox.x, hitbox.y + hitbox.height, lvlData)) return false;
         return true;
     }
+    private static boolean IsSolid(float x, float y, int[][] lvlData) {
+        int maxWidth = lvlData[0].length * TILES_SIZE;
+        int maxHeight = lvlData.length * TILES_SIZE;
+        if (x < 0 || x >= maxWidth || y < 0 || y >= maxHeight)
+            return true;
 
-    public static boolean CanMoveHere( Rectangle2D.Float aFloat, int[][] levelData ) {
+        float xIndex = x / TILES_SIZE;
+        float yIndex = y / TILES_SIZE;
+
+        int value = lvlData[(int) yIndex][(int) xIndex];
+
+        return (value != -1);
+
+    }
+
+    public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
+        int currentTile = (int) (hitbox.x / TILES_SIZE);
+        if (xSpeed > 0) {
+            // Right
+            int tileXPos = currentTile * TILES_SIZE;
+            int xOffset = (int) (TILES_SIZE - hitbox.width);
+            return tileXPos + xOffset - 1;
+        } else
+            // Left
+            return currentTile * TILES_SIZE;
+    }
+
+    public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
+        int currentTile = (int) (hitbox.y / TILES_SIZE);
+        if (airSpeed > 0) {
+            // Falling - touching floor
+            int tileYPos = currentTile * TILES_SIZE;
+            int yOffset = (int) (TILES_SIZE - hitbox.height);
+            return tileYPos + yOffset - 1;
+        } else
+            // Jumping
+            return currentTile * TILES_SIZE;
+
+    }
+
+    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
+        // Check the pixel below bottomleft and bottomright
+        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
+            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
+                return false;
+
         return true;
+
     }
 
-    public static float GetEntityYPosUnderRoofOrAboveFloor( Rectangle2D.Float hitbox, float airSpeed ) {
-        return 1.0f;
-    }
-    public static float GetEntityXPosNextToWall( Rectangle2D.Float hitbox, float xSpeed ) {
-        return 1.0f;
+
+    public static float Map(float value, float originalMin, float originalMax, float newMin, float newMax, boolean clamp)
+    {
+        float newValue = (value - originalMin) / (originalMax - originalMin) * (newMax - newMin) + newMin;
+        if (clamp)
+        {
+            newValue = Math.clamp(newValue, newMin, newMax);
+        }
+        return newValue;
     }
 
+    public static int[][] GetLevelData(){
+        try {
+            JsonObject jsonData = getJsonData(LEVEL_ONE_DATA);
+            JsonArray layers = jsonData.getAsJsonArray("layers");
+
+            int[][] levelData = null;
+
+            // Recherche de la layer "level"
+            for (JsonElement layerElement : layers) {
+                JsonObject layer = layerElement.getAsJsonObject();
+                if (layer.get("name").getAsString().equals("level")) {
+                    JsonArray data = layer.getAsJsonArray("data");
+                    int width = layer.get("width").getAsInt();
+                    int height = layer.get("height").getAsInt();
+                    levelData = new int[height][width];
+
+                    // Conversion du tableau 1D en tableau 2D
+                    int index = 0;
+                    for (int y = 0; y < height; y++) {
+                        for (int x = 0; x < width; x++) {
+                            levelData[y][x] = (data.get(index++).getAsInt() - 1);
+                        }
+                    }
+                    break;
+                }
+            }
+            return levelData;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

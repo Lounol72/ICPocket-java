@@ -11,7 +11,7 @@ import static utilz.t_Type.noType;
  * into logical groupings such as battle mechanics, type charts, stats, and more.
  */
 public class Constants {
-    public final static float SCALE = 1.0f;                              // Facteur d'échelle global
+    public final static float SCALE = 2.0f;                              // Facteur d'échelle global
     public static String language  = "en";
 
     public static class UI{
@@ -32,12 +32,24 @@ public class Constants {
 
     }
     public static class WORLD{
-        public final static int TILES_DEFAULT_SIZE = 32;                     // Taille de base d'une tuile
-        public final static int TILES_IN_WIDTH = 26;                         // Nombre de tuiles en largeur
-        public final static int TILES_IN_HEIGHT = 14;                        // Nombre de tuiles en hauteur
-        public final static int TILES_SIZE = (int) (TILES_DEFAULT_SIZE * SCALE);  // Taille d'une tuile après mise à l'échelle
+        public final static int TILES_DEFAULT_SIZE = 16;                     // Taille de base d'une tuile
+        public final static int TILES_IN_WIDTH = 52;                         // Nombre de tuiles en largeur
+        public final static int TILES_IN_HEIGHT = 28;                        // Nombre de tuiles en hauteur
+        public final static int TILES_SIZE = (int) (TILES_DEFAULT_SIZE * (SCALE));  // Taille d'une tuile après mise à l'échelle
         public final static int GAME_WIDTH = TILES_SIZE * TILES_IN_WIDTH;    // Largeur totale du jeu
         public final static int GAME_HEIGHT = TILES_SIZE * TILES_IN_HEIGHT;  // Hauteur totale du jeu
+        public static class PLAYER{
+            public static final int IDLE = 0;
+            public static final int KNEEL = 1;
+            public static final int RUN = 2;
+            public static final int JUMP = 3;
+            public static final int FALL = 4;
+
+            public final static int PLAYER_DEFAULT_WIDTH = 32;
+            public final static int PLAYER_DEFAULT_HEIGHT  = 32;
+            public final static int PLAYER_WIDTH = (int) (PLAYER_DEFAULT_WIDTH  * SCALE);
+            public final static int PLAYER_HEIGHT = (int) (PLAYER_DEFAULT_HEIGHT  * SCALE);
+        }
     }
     public static class ICMONS{
         public static final int TYPE_NUMBER = 9;

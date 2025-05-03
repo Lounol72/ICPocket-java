@@ -2,11 +2,11 @@ package entities;
 
 import utilz.LoadSave;
 
-
-import static entities.PlayerState.*;
-
 import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.PLAYER.*;
+import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.HelpMethods.*;
+
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -14,14 +14,15 @@ import java.awt.image.BufferedImage;
 
 
 public class Player extends Entity {
+
 	private BufferedImage[][] animations;
 	private int aniTick, aniIndex, aniSpeed = 25;
-	private int playerAction = IDLE.ordinal();
+	private int playerAction = IDLE;
 	private boolean moving = false, attacking = false;
 	private boolean left, up, right, down, jump;
 	private float playerSpeed = SCALE;
 	private int[][] levelData;
-	private float xDrawOffset = 21 * SCALE, yDrawOffset = 4 * SCALE;
+	private float xDrawOffset = 12 * SCALE, yDrawOffset = 4 * SCALE;
 
 	// Jumping & Falling
 	private float airSpeed = 0f;
@@ -29,12 +30,13 @@ public class Player extends Entity {
 	private final float jumpSpeed = -2.5f * SCALE;
 	private float fallSpeedAfterCollision = 0.5f * SCALE;
 	private boolean inAir = false;
+	private boolean facingRight = true;
 
 
 	public Player(float x, float y, int width, int height) {
 		super(x, y, width, height);
 		loadAnimations();
-		initHitbox(x, y, (int)(20 * SCALE), (int)(27 * SCALE));
+		initHitbox(x, y, (int)(11 * SCALE), (int)(13 * SCALE));
 
 	}
 
@@ -45,8 +47,26 @@ public class Player extends Entity {
 	}
 
 	public void render(Graphics g, int xLvlOffset, int yLvlOffset) {
-		g.drawImage(animations[playerAction][aniIndex], (int) (hitbox.x - xDrawOffset) - xLvlOffset, (int) (hitbox.y - yDrawOffset) - yLvlOffset, width, height, null);
-//		drawHitbox(g);
+		BufferedImage image = animations[playerAction][aniIndex];
+
+		// Calculer la position de rendu
+		int x = (int) (hitbox.x - xDrawOffset) - xLvlOffset;
+		int y = (int) (hitbox.y - yDrawOffset) - yLvlOffset;
+
+		if (!facingRight) {
+			// Si le joueur va vers la gauche, dessiner l'image en miroir
+			g.drawImage(image,
+					x + width, // Position X + largeur pour le point de départ
+					y,         // Position Y reste la même
+					-width,    // Largeur négative pour flip horizontal
+					height,    // Hauteur reste la même
+					null);
+		} else {
+			// Rendu normal pour la direction droite
+			g.drawImage(image, x, y, width, height, null);
+		}
+
+		drawHitbox(g);
 	}
 
 	private void updateAnimationTick() {
@@ -67,15 +87,19 @@ public class Player extends Entity {
 		int startAni = playerAction;
 
 		if (moving)
-			playerAction = RUN.ordinal();
-		else
-			playerAction = IDLE.ordinal();
+			playerAction = RUN;
+		else {
+			if(!down)
+				playerAction = IDLE;
+			else
+				playerAction = KNEEL;
+		}
 
 		if (inAir) {
 			if (airSpeed < 0)
-				playerAction = JUMP.ordinal();
+				playerAction = JUMP;
 			else
-				playerAction = FALL.ordinal();
+				playerAction = FALL;
 		}
 
 		if (startAni != playerAction)
@@ -98,10 +122,15 @@ public class Player extends Entity {
 
 		float xSpeed = 0;
 
-		if (left)
+		if (left) {
 			xSpeed -= playerSpeed;
-		if (right)
+			facingRight = false;
+
+		}
+		if (right) {
 			xSpeed += playerSpeed;
+			facingRight = true;
+		}
 
 		if (!inAir)
 			if (!IsEntityOnFloor(hitbox, levelData))
@@ -153,7 +182,7 @@ public class Player extends Entity {
 
 		BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
 
-		animations = new BufferedImage[4][8];
+		animations = new BufferedImage[5][8];
 		for (int j = 0; j < animations.length; j++)
 			for (int i = 0; i < animations[j].length; i++)
 				animations[j][i] = img.getSubimage(i * 32, j * 32, 32, 32);
@@ -185,6 +214,8 @@ public class Player extends Entity {
 
 	public void setLeft(boolean left) {
 		this.left = left;
+		if (left) facingRight = false;
+
 	}
 
 	public boolean isUp() {
@@ -201,6 +232,7 @@ public class Player extends Entity {
 
 	public void setRight(boolean right) {
 		this.right = right;
+		if (right) facingRight = true;
 	}
 
 	public boolean isDown() {

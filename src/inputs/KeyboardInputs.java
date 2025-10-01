@@ -19,6 +19,9 @@ public class KeyboardInputs implements KeyListener {
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub
 		switch(currentState){
+			case START -> {
+				gamePanel.getGame().getStart().keyTyped(e);
+			}
             case MENU -> {
 				gamePanel.getGame().getMenu().keyTyped(e);
             }
@@ -29,6 +32,7 @@ public class KeyboardInputs implements KeyListener {
 				gamePanel.getGame().getWorld().keyTyped(e);
             }
             case SETTINGS -> {
+				gamePanel.getGame().getSettings().keyTyped(e);
             }
             case TEAM -> {
             }
@@ -43,6 +47,9 @@ public class KeyboardInputs implements KeyListener {
 	@Override
 	public void keyReleased(KeyEvent e) {
 		switch(currentState){
+			case START -> {
+				gamePanel.getGame().getStart().keyReleased(e);
+			}
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyReleased(e);
 			}
@@ -53,6 +60,7 @@ public class KeyboardInputs implements KeyListener {
 				gamePanel.getGame().getWorld().keyReleased(e);
 			}
 			case SETTINGS -> {
+				gamePanel.getGame().getSettings().keyReleased(e);
 			}
 			case TEAM -> {
 			}
@@ -67,6 +75,9 @@ public class KeyboardInputs implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		switch(currentState){
+			case START -> {
+				gamePanel.getGame().getStart().keyPressed(e);
+			}
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyPressed(e);
 			}
@@ -77,6 +88,7 @@ public class KeyboardInputs implements KeyListener {
 				gamePanel.getGame().getWorld().keyPressed(e);
 			}
 			case SETTINGS -> {
+				gamePanel.getGame().getSettings().keyPressed(e);
 			}
 			case TEAM -> {
 			}

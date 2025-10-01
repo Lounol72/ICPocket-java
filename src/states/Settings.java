@@ -1,31 +1,22 @@
 package states;
 
 import game.Game;
-import ui.MenuButtons;
-import ui.ScrollingText;
+
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import static utilz.Constants.SCALE;
-import static utilz.Constants.UI.BUTTONS.HEIGHT;
-import static utilz.Constants.UI.BUTTONS.WIDTH;
-import static utilz.Constants.WORLD.GAME_HEIGHT;
-import static utilz.Constants.WORLD.GAME_WIDTH;
-import static utilz.HelpMethods.GetPhrase;
 
-public class Menu extends State implements StateMethods{
+public class Settings extends State implements StateMethods {
 
-   
-    /**
-     * Constructor
-     * */
-    public Menu( Game game){
+    public Settings( Game game){
         super(game);
         initClasses();
     }
 
-    private void initClasses() {
+    private void initClasses(){
 
     }
 
@@ -34,12 +25,12 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void draw( Graphics g ) {
-        g.setColor(Color.RED);
-        g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.PLAIN, 20));
-        g.drawString("Menu", 100, 100);
-
+            g.setColor(Color.RED);
+            g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("Arial", Font.PLAIN, 20));
+            g.drawString("Settings", 100, 100);
+            
     }
 
     /**
@@ -47,7 +38,7 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void update() {
-        
+
     }
 
     /**
@@ -72,14 +63,9 @@ public class Menu extends State implements StateMethods{
     @Override
     public void keyPressed( KeyEvent e ) {
         switch (e.getKeyCode()){
-            case KeyEvent.VK_A->{
-                GameState.setState(GameState.BATTLE);
+            case KeyEvent.VK_A ->{
+                GameState.setState(GameState.MENU);
             }
-            case KeyEvent.VK_Z->{
-                GameState.setState(GameState.WORLD);
-            }
-            
-
         }
     }
 
@@ -88,7 +74,7 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void mouseMoved( MouseEvent e ) {
-        
+
     }
 
     /**
@@ -104,7 +90,6 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void mousePressed( MouseEvent e ) {
-        
 
     }
 
@@ -115,5 +100,4 @@ public class Menu extends State implements StateMethods{
     public void mouseReleased( MouseEvent e ) {
 
     }
-
 }

@@ -2,6 +2,7 @@ package states;
 
 import entities.Player;
 import game.Game;
+import levels.LevelManager;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -14,14 +15,19 @@ public class World extends State implements StateMethods{
     private boolean paused;
 
     private Player player;
+    private LevelManager level;
 
     public World( Game game){
         super(game);
+        level = new LevelManager(game);
         player = new Player( 20 ,20, (int) (64 * SCALE), (int) (64 * SCALE));
+        player.loadLvlData(level.getCurrentLevel().getLevelData());
+
     }
 
     @Override
     public void draw( Graphics g ) {
+        level.draw(g,0,0);
         player.render(g,0,0);
     }
 
@@ -29,6 +35,7 @@ public class World extends State implements StateMethods{
     public void update() {
         if (!paused)
             player.update();
+        level.update();
     }
 
     @Override
@@ -45,7 +52,10 @@ public class World extends State implements StateMethods{
             case KeyEvent.VK_D ->{
                 player.setRight(false);
             }
-            default -> System.out.println("Unexpected value: " + e.getKeyCode());
+            case KeyEvent.VK_SPACE->{
+                player.setJump(false);
+            }
+            //default -> System.out.println("Unexpected value: " + e.getKeyCode());
         }
     }
 
@@ -58,7 +68,13 @@ public class World extends State implements StateMethods{
             case KeyEvent.VK_D ->{
                 player.setRight(true);
             }
-            default -> System.out.println("Unexpected value: " + e.getKeyCode());
+            case KeyEvent.VK_SPACE->{
+                player.setJump(true);
+            }
+            case KeyEvent.VK_A ->{
+                GameState.setState(GameState.MENU);
+            }
+            //default -> System.out.println("Unexpected value: " + e.getKeyCode());
         }
     }
 

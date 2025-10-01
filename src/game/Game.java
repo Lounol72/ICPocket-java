@@ -29,9 +29,8 @@ package game;
 import java.awt.*;
 
 
-import states.Battle;
+import states.*;
 import states.Menu;
-import states.World;
 
 
 import static states.GameState.currentState;
@@ -50,6 +49,8 @@ public class Game implements Runnable{
     private Menu menu;
     private Battle battle;
     private World world;
+    private Start start;
+    private Settings settings;
 
 
     /**
@@ -73,6 +74,8 @@ public class Game implements Runnable{
         this.menu = new Menu(this);
         this.battle = new Battle(this);
         this.world = new World(this);
+        this.start = new Start(this);
+        this.settings = new Settings(this);
     }
 
     /**
@@ -98,7 +101,11 @@ public class Game implements Runnable{
             case WORLD -> {
                 world.update();
             }
+            case START -> {
+                start.update();
+            }
             case SETTINGS -> {
+                settings.update();
             }
             case TEAM -> {
             }
@@ -116,6 +123,9 @@ public class Game implements Runnable{
      */
     public void render(Graphics g) {
         switch(currentState){
+            case START ->{
+                start.draw(g);
+            }
             case MENU -> {
                 menu.draw(g);
             }
@@ -126,6 +136,7 @@ public class Game implements Runnable{
                 world.draw(g);
             }
             case SETTINGS -> {
+                settings.draw(g);
             }
             case TEAM -> {
             }
@@ -198,5 +209,13 @@ public class Game implements Runnable{
     }
 
     public World getWorld() {return world;
+    }
+
+    public Settings getSettings() {
+        return settings;
+    }
+
+    public Start getStart() {
+        return start;
     }
 }

@@ -25,7 +25,8 @@ public class LoadSave {
     public static final String BUTTONS = UI + "Buttons/ButtonsAtlas.png";
     public static final String ICMONS = ASSETS + "ICMONS/" ;
 
-    public static final String PLAYER_ATLAS = ASSETS + "Hooded Character-Sheet.png";
+    //public static final String PLAYER_ATLAS = ASSETS + "Hooded Character-Sheet.png";
+    public static final String PLAYER_ATLAS = ASSETS + "PlayerSheet.png";
     public static final String LEVEL_ONE_DATA = ASSETS + "Levels/LevelOne.png";
     public static final String LEVEL_ATLAS = ASSETS + "tileset/GrassTileSet.png";
 

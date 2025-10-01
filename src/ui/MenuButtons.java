@@ -59,6 +59,6 @@ public class MenuButtons extends Button{
 
     public void action() {
         ApplyLanguage();
-        GameState.setState(GameState.BATTLE);
+        GameState.setState(GameState.MENU);
     }
 }

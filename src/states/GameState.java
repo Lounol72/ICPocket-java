@@ -2,6 +2,7 @@ package states;
 
 public enum GameState {
 //    FIRST_LAUNCH,
+    START,
     MENU,
     BATTLE,
     WORLD,
@@ -9,8 +10,8 @@ public enum GameState {
     TEAM,
     INFOS;
 
-    public static GameState currentState = GameState.MENU;
-    private static GameState lastState = GameState.MENU;
+    public static GameState currentState = GameState.START;
+    private static GameState lastState = GameState.START;
 
     public static void setState( GameState state ){
         lastState = currentState;

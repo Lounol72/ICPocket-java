@@ -2,6 +2,7 @@ package utilz;
 
 import com.google.gson.*;
 import duel.Team;
+import game.Game;
 import icmon.ICMon;
 import icmon.Move;
 
@@ -14,6 +15,8 @@ import java.net.URL;
 import java.util.*;
 
 import static utilz.Constants.PATHS.DATA_FILE;
+import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.*;
 import static utilz.Constants.language;
 
 public class HelpMethods {
@@ -260,33 +263,103 @@ public class HelpMethods {
             .create();
     }
 
-    public static int GetSpriteAmount(int action){
-        switch(action){
-            case 0:
-                return 3;
-            case 1:
-                return 0;
-            case 2:
-                return 8;
-            case 3:
-                return 7;
-            default :
-                return 0;
+    private static final Map<Integer, Integer> ACTION_SPRITE_COUNT = new HashMap<>();
+
+    static {
+        for ( int action : new int[]{0, 8, 9, 10, 12} ) {
+            ACTION_SPRITE_COUNT.put(action, 10);
+        }
+        for ( int action : new int[]{1, 2} ) {
+            ACTION_SPRITE_COUNT.put(action, 8);
+        }
+        ACTION_SPRITE_COUNT.put(3, 9);
+        for ( int action : new int[]{4, 5, 6} ) {
+            ACTION_SPRITE_COUNT.put(action, 6);
+        }
+        for ( int action : new int[]{7, 11} ) {
+            ACTION_SPRITE_COUNT.put(action, 4);
         }
     }
-    public static boolean IsEntityOnFloor( Rectangle2D.Float hitbox, int[][] levelData ) {
+
+    public static int GetSpriteAmount( int action ) {
+        return ACTION_SPRITE_COUNT.getOrDefault(action, 0);
+    }
+
+    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData) {
+        // System.out.println((IsSolid(x, y + height, lvlData)) + " : value of bottom");
+        if (!IsSolid(x, y, lvlData))
+            if (!IsSolid(x + width, y + height, lvlData))
+                if (!IsSolid(x + width, y, lvlData))
+                    if (!IsSolid(x, y + height, lvlData))
+                        return true;
+        return false;
+    }
+
+    private static boolean IsSolid(float x, float y, int[][] lvlData) {
+        if (x < 0 || x >= GAME_WIDTH)
+            return true;
+        if (y < 0 || y >= GAME_HEIGHT)
+            return true;
+
+        float xIndex = x / TILES_SIZE;
+        float yIndex = y / TILES_SIZE;
+
+        int value = lvlData[(int) yIndex][(int) xIndex];
+
+
+        if (value == 21)
+            return false;
         return true;
     }
 
-    public static boolean CanMoveHere( Rectangle2D.Float aFloat, int[][] levelData ) {
-        return true;
+    public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
+        int currentTile = (int) (hitbox.x / TILES_SIZE);
+        if (xSpeed > 0) {
+            // Right
+            int tileXPos = currentTile * TILES_SIZE;
+            int xOffset = (int) (TILES_SIZE - hitbox.width);
+            return tileXPos + xOffset - 1;
+        } else
+            // Left
+            return currentTile * TILES_SIZE;
     }
 
-    public static float GetEntityYPosUnderRoofOrAboveFloor( Rectangle2D.Float hitbox, float airSpeed ) {
-        return 1.0f;
+    public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
+        int currentTile = (int) (hitbox.y / TILES_SIZE);
+        System.out.println(currentTile + " : currentTile");
+        if (airSpeed > 0) {
+            // Falling - touching floor
+            int tileYPos = currentTile * TILES_SIZE;
+            int yOffset = (int) (TILES_DEFAULT_SIZE - hitbox.height ); // TO-DO Search why magic number works
+            return tileYPos - yOffset + TILES_DEFAULT_SIZE - 1;
+        } else
+            // Jumping
+            //System.out.println(currentTile * TILES_SIZE + " : currentTile");
+            return currentTile * TILES_SIZE;
+
     }
-    public static float GetEntityXPosNextToWall( Rectangle2D.Float hitbox, float xSpeed ) {
-        return 1.0f;
+
+    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
+        // Check the pixel below bottomleft and bottomright
+        // System.out.println(IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData) + " : left pixel");
+        // System.out.println(IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData) + " : right pixel");
+        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
+            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
+                return false;
+
+        return true;
+
     }
+
+    public static int mapAndClamp(float value, float inMin, float inMax, int outMin, int outMax) {
+		// Normalisation : ramène value dans l'intervalle [inMin, inMax] vers [0, 1]
+		float t = (value - inMin) / (inMax - inMin);
+	
+		// Clamp entre 0 et 1
+		t = Math.max(0, Math.min(1, t));
+	
+		// Remap vers [outMin, outMax]
+		return (int)(outMin + t * (outMax - outMin));
+	}
 
 }

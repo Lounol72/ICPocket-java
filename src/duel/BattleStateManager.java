@@ -8,8 +8,6 @@ import ui.ScrollingText;
 import java.awt.*;
 
 import static duel.TurnState.*;
-import static states.GameState.BATTLE;
-import static states.GameState.currentState;
 import static utilz.Constants.ICMONS.Combat.*;
 import static utilz.Constants.ICMONS.STATS.SPE;
 import static utilz.Constants.ICMONS.StatVariations.getStatVariation;
@@ -39,7 +37,7 @@ public class BattleStateManager {
     private boolean resolveSpeedDuel(int speed1, int speed2){
         if (speed1>speed2) return true;
         if (speed1<speed2) return false;
-        return Math.random()%2 == 0; //speed tie : choose winner randomly
+        return Math.random() < 0.5; //speed tie : choose winner randomly
     }
 
     private boolean PriorityForFirstPoke( ICMon rouge, int IdxmoveRouge, ICMon bleu, int IdxmoveBleu ) {
@@ -95,7 +93,7 @@ public class BattleStateManager {
                 criticalHitFlag = false;
                 text.reset(GetPhrase("crit"));
             }
-            else if (moveEffectivenessFlag < -1){
+            else if (moveEffectivenessFlag < -1.0f){
                 String msg = moveEffectivenessFlag == 0 ? GetPhrase("no_effect") :(
                         (moveEffectivenessFlag<=0.9) ? GetPhrase("no_very_eff"):
                                 (moveEffectivenessFlag>1.1) ? GetPhrase("very_eff"): "");
@@ -119,9 +117,9 @@ public class BattleStateManager {
                     int[] liste_valide = new int[bleu.getNbPoke()];
                     for (int i = 0; i < liste_valide.length; i++) {
                         if (bleu.getTeam()[i].isAlive())
-                        liste_valide[nb_valide++] = i + 10;
+                            liste_valide[nb_valide++] = i + 10;
                     }
-                    int x = (int) (Math.random() % nb_valide);
+                    int x = (int) (Math.random() * nb_valide);
                     bleu.swapActualAttacker(liste_valide[x]);
                 }
                 else if ( bleu.getTeam()[0].isAttacking(moveBleu) ) {

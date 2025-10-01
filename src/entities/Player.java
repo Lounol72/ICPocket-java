@@ -2,13 +2,13 @@ package entities;
 
 import utilz.LoadSave;
 
-
-import static entities.PlayerState.*;
-
 import static utilz.Constants.PLAYER.HITBOX_HEIGHT;
 import static utilz.Constants.PLAYER.HITBOX_WIDTH;
 import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.PLAYER.*;
+import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.HelpMethods.*;
+
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -17,15 +17,15 @@ import java.awt.image.BufferedImage;
 
 
 public class Player extends Entity {
+
 	private BufferedImage[][] animations;
 	private int aniTick, aniIndex, aniSpeed = 25;
-	private int playerAction = IDLE.ordinal();
+	private int playerAction = IDLE;
 	private boolean moving = false, attacking = false;
 	private boolean left, up, right, down, jump;
 	private float playerSpeed = SCALE;
 	private int[][] levelData;
 	private float xDrawOffset = 22 * SCALE, yDrawOffset = 20 * SCALE;
-    float xSpeed = 0;
 
 	// Jumping & Falling
 	private float airSpeed = 0f;
@@ -53,13 +53,6 @@ public class Player extends Entity {
 		// Position de base du sprite (sans retournement)
 		int drawX = (int) (hitbox.x - xDrawOffset) - xLvlOffset;
 		int drawY = (int) (hitbox.y - yDrawOffset) - yLvlOffset;
-	
-		// Détermination de la direction
-		if (xSpeed < 0) {
-			direction = -1; // gauche
-		} else if (xSpeed > 0) {
-			direction = 1; // droite
-		}
 	
 		// Largeur dessinée (positive = normal, négative = miroir)
 		int drawWidth = direction * width;
@@ -114,15 +107,19 @@ public class Player extends Entity {
 		int startAni = playerAction;
 
 		if (moving)
-			playerAction = RUN.ordinal();
-		else
-			playerAction = IDLE.ordinal();
+			playerAction = RUN;
+		else {
+			if(!down)
+				playerAction = IDLE;
+			else
+				playerAction = KNEEL;
+		}
 
 		if (inAir) {
 			if (airSpeed < 0)
-				playerAction = JUMP.ordinal();
+				playerAction = JUMP;
 			else
-				playerAction = FALL.ordinal();
+				playerAction = FALL;
 		}
 
 		if (startAni != playerAction)
@@ -141,7 +138,7 @@ public class Player extends Entity {
         if (!left && !right && !inAir)
             return;
 
-        xSpeed = 0;
+        float xSpeed = 0;
 
         if (left)
             xSpeed -= playerSpeed;
@@ -230,6 +227,8 @@ public class Player extends Entity {
 
 	public void setLeft(boolean left) {
 		this.left = left;
+		if (left) direction = -1;
+
 	}
 
 	public boolean isUp() {
@@ -246,6 +245,7 @@ public class Player extends Entity {
 
 	public void setRight(boolean right) {
 		this.right = right;
+		if (right) direction = 1;
 	}
 
 	public boolean isDown() {

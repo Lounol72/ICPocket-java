@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 
 import static utilz.Constants.WORLD.TILES_DEFAULT_SIZE;
 import static utilz.Constants.WORLD.TILES_SIZE;
+import static utilz.HelpMethods.GetLevelData;
 import static utilz.LoadSave.*;
 
 public class LevelManager {
@@ -22,11 +23,11 @@ public class LevelManager {
     public LevelManager(Game game) {
         this.game = game;
         importOutsideSprites();
-        levelOne = new Level(LoadSave.GetLevelData());
+        levelOne = new Level(GetLevelData());
     }
 
     public void importOutsideSprites() {
-        levelSprite = new BufferedImage[48];
+        levelSprite = new BufferedImage[28];
         BufferedImage img = GetSpriteAtlas(LEVEL_ATLAS);
         for (int i = 0; i<NB_TILES_HEIGHT; i++) {
             for (int j = 0; j<NB_TILES_WIDTH; j++) {

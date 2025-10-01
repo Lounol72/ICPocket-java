@@ -12,6 +12,7 @@ import static utilz.t_Type.noType;
  */
 public class Constants {
     public final static float SCALE = 2.0f;                              // Facteur d'échelle global
+    public final static float SCALE = 2.0f;                              // Facteur d'échelle global
     public static String language  = "en";
 
     public static class PLAYER{

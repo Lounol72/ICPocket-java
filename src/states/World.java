@@ -9,33 +9,62 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.*;
+import static utilz.Constants.WORLD.PLAYER.PLAYER_HEIGHT;
+import static utilz.Constants.WORLD.PLAYER.PLAYER_WIDTH;
+import static utilz.HelpMethods.GetLevelData;
 
 public class World extends State implements StateMethods{
 
-    private boolean paused;
-
     private Player player;
-    private LevelManager level;
+    private LevelManager levelManager;
+    //private PauseOverlay pauseOverlay;
+    public boolean paused = false;
+
+    private int xLvlOffset;
+    private int leftBorder = (int) (0.2 * GAME_WIDTH);
+    private int rightBorder = (int) (0.8 * GAME_WIDTH);
+    private int lvlTilesWide = GetLevelData()[0].length;
+    private final int maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
+    private final int maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
+    private int yLvlOffset;
+    private int bottomBorder = ( int ) ( GAME_HEIGHT * 0.8f );
+    private int topBorder = ( int ) ( GAME_HEIGHT * 0.20f );
+    private int lvlTilesHigh = GetLevelData().length;
+    private int maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
+    private int maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
 
     public World( Game game){
         super(game);
-        level = new LevelManager(game);
-        player = new Player( 20 ,20, (int) (64 * SCALE), (int) (64 * SCALE));
-        player.loadLvlData(level.getCurrentLevel().getLevelData());
+        initClasses();
 
     }
 
+    private void initClasses() {
+        levelManager = new LevelManager(game);
+        player = new Player( 20 ,20, (int) (64 * SCALE), (int) (64 * SCALE));
+        player.loadLvlData(levelManager.getCurrentLevel().getLevelData());
+    }
+
     @Override
-    public void draw( Graphics g ) {
-        level.draw(g,0,0);
-        player.render(g,0,0);
+    public void draw(Graphics g) {
+        g.setColor(Color.white);
+        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        levelManager.draw(g, xLvlOffset, yLvlOffset);
+        player.render(g, xLvlOffset, yLvlOffset);
+//        if (paused)
+//            pauseOverlay.draw(g);
     }
 
     @Override
     public void update() {
-        if (!paused)
+        if (!paused) {
+            levelManager.update();
             player.update();
-        level.update();
+
+            checkCloseToBorder();
+        }
     }
 
     @Override
@@ -95,6 +124,34 @@ public class World extends State implements StateMethods{
 
     @Override
     public void mouseReleased( MouseEvent e ) {
+
+    }
+
+    private void checkCloseToBorder() {
+        int playerX = (int) player.getHitbox().x;
+        int playerY = (int) player.getHitbox().y;
+        int xDiff = playerX - xLvlOffset;
+        int yDiff = playerY - yLvlOffset;
+
+        if (xDiff > rightBorder)
+            xLvlOffset += xDiff - rightBorder;
+        else if (xDiff < leftBorder)
+            xLvlOffset += xDiff - leftBorder;
+
+        if (yDiff > bottomBorder)
+            yLvlOffset += yDiff - bottomBorder;
+        else if (yDiff < topBorder)
+            yLvlOffset += yDiff - topBorder;
+
+        if (xLvlOffset > maxLvlOffsetX)
+            xLvlOffset = maxLvlOffsetX;
+        else if (xLvlOffset < 0)
+            xLvlOffset = 0;
+
+        if (yLvlOffset > maxLvlOffsetY)
+            yLvlOffset = maxLvlOffsetY;
+        else if (yLvlOffset < 0)
+            yLvlOffset = 0;
 
     }
 }

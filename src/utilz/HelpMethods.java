@@ -18,7 +18,6 @@ import static utilz.Constants.PATHS.DATA_FILE;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.*;
 import static utilz.Constants.language;
-import static utilz.LoadSave.LEVEL_ONE_DATA;
 
 public class HelpMethods {
 
@@ -34,7 +33,7 @@ public class HelpMethods {
     /**
      * Charge un fichier JSON en cache s'il n'y est pas déjà
      */
-    public static JsonObject getJsonData( String filePath ) throws IOException {
+    static JsonObject getJsonData( String filePath ) throws IOException {
         if (!jsonCache.containsKey(filePath)) {
             try (Reader reader = new FileReader(filePath)) {
                 JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();

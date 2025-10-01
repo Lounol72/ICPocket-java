@@ -3,10 +3,11 @@ package utilz;
 import icmon.ICMon;
 
 import javax.imageio.ImageIO;
-import java.io.InputStream;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import com.google.gson.*;
 import duel.Team;
 import icmon.Move;
@@ -14,10 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
-
-import static utilz.Constants.PATHS.ROOT;
-import static utilz.HelpMethods.getJsonData;
-
 
 public class LoadSave {
 
@@ -144,6 +141,23 @@ public class LoadSave {
             System.err.println("Erreur lors du chargement : " + e.getMessage());
             return null;
         }
+    }
+    
+    public static int[][] GetLevelData(){
+        BufferedImage img = GetSpriteAtlas(LEVEL_ONE_DATA);
+        int [][] levelData = new int[img.getHeight()][img.getWidth()];
+
+        for(int j = 0; j<img.getHeight(); j++)
+            for(int i = 0; i<img.getWidth(); i++){
+                Color tileColor = new Color(img.getRGB(i,j));
+                int value = tileColor.getRed();
+                if (value >= 48)
+                    value = 0;
+                levelData[j][i] = value;
+            }
+
+
+        return levelData;
     }
 
 }

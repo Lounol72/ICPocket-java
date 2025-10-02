@@ -145,13 +145,13 @@ public class Player extends Entity {
         xSpeed += playerSpeed;
     if (!inAir) {
         // Utiliser la nouvelle méthode avec support one-way
-        if ( !IsEntityOnFloorWithOneWay(hitbox, levelData, airSpeed) ) {
+        if ( !IsEntityOnFloor (hitbox, levelData, airSpeed) ) {
             inAir = true;
         }
     }
     if (inAir){
         // Utiliser la nouvelle méthode avec support one-way
-        if (CanMoveHereWithOneWay(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)){
+        if (CanMoveHere (hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)){
             hitbox.y += airSpeed;
             if (airSpeed + gravity > MAX_AIR_SPEED)
                 airSpeed = MAX_AIR_SPEED;
@@ -188,7 +188,7 @@ public class Player extends Entity {
     }
 
     private void updateXPos(float xSpeed) {
-        if (CanMoveHereWithOneWay(hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)) {
+        if (CanMoveHere (hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)) {
             hitbox.x += xSpeed;
         } else {
             hitbox.x = GetEntityXPosNextToWall(hitbox, xSpeed);

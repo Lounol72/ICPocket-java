@@ -442,7 +442,7 @@ public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId,
  * @param airSpeed Vitesse verticale (pour les plateformes one-way)
  * @return true si la position est solide
  */
-public static boolean IsSolidWithOneWay(float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
+public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
     int tileId = GetLvlDataValue(x, y, lvlData);
     
     // Si c'est une plateforme one-way, vérifier si on peut passer à travers
@@ -465,13 +465,13 @@ public static boolean IsSolidWithOneWay(float x, float y, int[][] lvlData, Recta
  * @param airSpeed Vitesse verticale
  * @return true si le mouvement est possible
  */
-public static boolean CanMoveHereWithOneWay(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
+public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
     if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
         return false;
 
     // Vérifier les coins avec la logique one-way
-    boolean bottomLeft = !IsSolidWithOneWay(x, y + height, lvlData, hitbox, airSpeed);
-    boolean bottomRight = !IsSolidWithOneWay(x + width, y + height, lvlData, hitbox, airSpeed);
+    boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, airSpeed);
+    boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, airSpeed);
     
     return bottomLeft && bottomRight;
 }
@@ -483,10 +483,10 @@ public static boolean CanMoveHereWithOneWay(float x, float y, float width, float
  * @param airSpeed Vitesse verticale
  * @return true si l'entité est sur le sol
  */
-public static boolean IsEntityOnFloorWithOneWay(Rectangle2D.Float hitbox, int[][] lvlData, float airSpeed) {
+public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData, float airSpeed) {
     // Vérifier les pixels en dessous avec la logique one-way
-    boolean leftPixel = IsSolidWithOneWay(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
-    boolean rightPixel = IsSolidWithOneWay(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
+    boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
+    boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
     
     return leftPixel || rightPixel;
 }

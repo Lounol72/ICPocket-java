@@ -5,8 +5,7 @@ import utilz.LoadSave;
 
 import static entities.PlayerState.*;
 
-import static utilz.Constants.PLAYER.HITBOX_HEIGHT;
-import static utilz.Constants.PLAYER.HITBOX_WIDTH;
+import static utilz.Constants.PLAYER.*;
 import static utilz.Constants.SCALE;
 import static utilz.HelpMethods.*;
 
@@ -73,7 +72,7 @@ public class Player extends Entity {
                 drawWidth, height,
                 null
         );
-        //drawHitbox(g);
+        drawHitbox(g, xLvlOffset, yLvlOffset);
     }
 
     private void updateAnimationTick() {
@@ -90,7 +89,7 @@ public class Player extends Entity {
                         jumpSpeed,       // vitesse max vers le haut
                         -jumpSpeed,      // vitesse max vers le bas
                         0,               // premier sprite
-                        spriteCount - 1  // dernier sprite
+                        spriteCount      // dernier sprite
                 );
 
                 aniIndex = airIndex;
@@ -118,10 +117,7 @@ public class Player extends Entity {
             playerAction = IDLE.ordinal();
 
         if (inAir) {
-            if (airSpeed < 0)
-                playerAction = JUMP.ordinal();
-            else
-                playerAction = FALL.ordinal();
+            playerAction = JUMP.ordinal();
         }
 
         if (startAni != playerAction)
@@ -135,39 +131,46 @@ public class Player extends Entity {
 
     private void updatePos() {
         moving = false;
-        if(jump)
-            jump();
-        if (!left && !right && !inAir)
+    if(jump)
+        jump();
+    if (!inAir)
+        if((!left && !right )|| (left && right))
             return;
 
-        xSpeed = 0;
+    xSpeed = 0;
 
-        if (left)
-            xSpeed -= playerSpeed;
-        if (right)
-            xSpeed += playerSpeed;
-        if (!inAir) {
-            if ( !IsEntityOnFloor(hitbox, levelData) ) {
-                inAir = true;
-            }
+    if (left)
+        xSpeed -= playerSpeed;
+    if (right)
+        xSpeed += playerSpeed;
+    if (!inAir) {
+        // Utiliser la nouvelle méthode avec support one-way
+        if ( !IsEntityOnFloorWithOneWay(hitbox, levelData, airSpeed) ) {
+            inAir = true;
         }
-        if (inAir){
-            if (CanMoveHere(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData)){
-                hitbox.y += airSpeed;
+    }
+    if (inAir){
+        // Utiliser la nouvelle méthode avec support one-way
+        if (CanMoveHereWithOneWay(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)){
+            hitbox.y += airSpeed;
+            if (airSpeed + gravity > MAX_AIR_SPEED)
+                airSpeed = MAX_AIR_SPEED;
+            else
                 airSpeed += gravity;
-                updateXPos(xSpeed);
-            }else{
-                hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox,airSpeed);
-                if(airSpeed > 0)
-                    resetInAir();
-                else
-                    airSpeed = fallSpeedAfterCollision;
-                updateXPos(xSpeed);
-            }
+            
+            updateXPos(xSpeed);
         }else{
+            hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox,airSpeed);
+            if(airSpeed > 0)
+                resetInAir();
+            else
+                airSpeed = fallSpeedAfterCollision;
             updateXPos(xSpeed);
         }
-        moving = true;
+    }else{
+        updateXPos(xSpeed);
+    }
+    moving = true;
     }
 
     private void jump() {
@@ -185,7 +188,7 @@ public class Player extends Entity {
     }
 
     private void updateXPos(float xSpeed) {
-        if (CanMoveHere(hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData)) {
+        if (CanMoveHereWithOneWay(hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)) {
             hitbox.x += xSpeed;
         } else {
             hitbox.x = GetEntityXPosNextToWall(hitbox, xSpeed);

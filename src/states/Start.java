@@ -21,11 +21,9 @@ public class Start extends State implements StateMethods{
      private static final int Y_TEXT_POS_DEFAULT = (int) (GAME_HEIGHT  * 0.8f);
  
      // Buttons positions
-     private static final int X_BUTTON_POS_DEFAULT = (int) (GAME_WIDTH *0.196);
-     private static final int Y_BUTTON_POS_DEFAULT = (int) (GAME_HEIGHT *0.174);
-     private static final int X_BUTTON_POS = (int) (X_BUTTON_POS_DEFAULT * SCALE);
-     private static final int Y_BUTTON_POS = (int) (Y_BUTTON_POS_DEFAULT * SCALE);
-     private static final int X_BUTTON_OFFSET = (int)(Y_BUTTON_POS_DEFAULT *SCALE) + WIDTH;
+     private static final int X_BUTTON_POS = (int) (GAME_WIDTH *0.196);
+     private static final int Y_BUTTON_POS = (int) (GAME_HEIGHT *0.174);
+     private static final int X_BUTTON_OFFSET = (int)(Y_BUTTON_POS *SCALE) + WIDTH;
      private static final int Y_BUTTON_OFFSET = (int)((GAME_HEIGHT * 0.016) *SCALE) + HEIGHT;
  
      MenuButtons[] buttons;

@@ -19,6 +19,7 @@ public class Constants {
         private static final int HITBOX_HEIGHT_DEFAULT = 32;
         public static final int HITBOX_WIDTH =(int) (HITBOX_WIDTH_DEFAULT * SCALE);
         public static final int HITBOX_HEIGHT =(int) (HITBOX_HEIGHT_DEFAULT * SCALE);
+        public static final float MAX_AIR_SPEED = 3f * SCALE;
     }
 
     public static class UI{
@@ -45,6 +46,10 @@ public class Constants {
         public final static int TILES_SIZE = (int) (TILES_DEFAULT_SIZE * SCALE);  // Taille d'une tuile après mise à l'échelle
         public final static int GAME_WIDTH = TILES_SIZE * TILES_IN_WIDTH;           // Largeur totale du jeu
         public final static int GAME_HEIGHT = TILES_SIZE * TILES_IN_HEIGHT;         // Hauteur totale du jeu
+        public static class ONE_WAY_PLATFORMS{
+            public static final int[] ONE_WAY_TILE_IDS = {6, 13, 19, 20}; // Exemple avec les tiles 23, 24, 25
+            public static final float ONE_WAY_TOLERANCE = 5f * SCALE;
+        }
     }
     public static class ICMONS{
         public static final int TYPE_NUMBER = 9;

@@ -1,1 +1,1 @@
-Rules\GrassRules.tmx
+Rules\Rules.tmx

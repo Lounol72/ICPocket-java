@@ -1,14 +1,20 @@
 package states;
 
-import entities.Player;
-import game.Game;
-import levels.LevelManager;
+import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
+import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
+import static utilz.Constants.WORLD.TILES_IN_WIDTH;
+import static utilz.Constants.WORLD.TILES_SIZE;
+import static utilz.LoadSave.GetLevelData;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-import static utilz.Constants.SCALE;
+import entities.Player;
+import game.Game;
+import levels.LevelManager;
 
 public class World extends State implements StateMethods{
 
@@ -17,25 +23,69 @@ public class World extends State implements StateMethods{
     private Player player;
     private LevelManager level;
 
+    private int xLvlOffset;
+	private int yLvlOffset;
+	private int leftBorder = (int) (0.2 * GAME_WIDTH);
+	private int rightBorder = (int) (0.8 * GAME_WIDTH);
+	private int topBorder = (int) (0.3 * GAME_HEIGHT);
+	private int bottomBorder = (int) (0.90 * GAME_HEIGHT);
+	private int lvlTilesWide = GetLevelData()[0].length;
+	private int lvlTilesHigh = GetLevelData().length;
+	private int maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
+	private int maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
+	private int maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
+	private int maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
+
     public World( Game game){
         super(game);
         level = new LevelManager(game);
-        player = new Player( 20 ,20, (int) (64 * SCALE), (int) (64 * SCALE));
+        player = new Player( 5 * TILES_SIZE ,5 * TILES_SIZE, (int) (64 * SCALE), (int) (64 * SCALE));
         player.loadLvlData(level.getCurrentLevel().getLevelData());
 
     }
 
+    private void checkCloseToBorder() {
+		int playerX = (int) player.getHitbox().x;
+		int playerY = (int) player.getHitbox().y;
+		int diffX = playerX - xLvlOffset;
+		int diffY = playerY - yLvlOffset;
+
+		if (diffX > rightBorder)
+			xLvlOffset += diffX - rightBorder;
+		else if (diffX < leftBorder)
+			xLvlOffset += diffX - leftBorder;
+
+		if (xLvlOffset > maxLvlOffsetX)
+			xLvlOffset = maxLvlOffsetX;
+		else if (xLvlOffset < 0)
+			xLvlOffset = 0;
+
+		if (diffY > bottomBorder)
+			yLvlOffset += diffY - bottomBorder;
+		else if (diffY < topBorder)
+			yLvlOffset += diffY - topBorder;
+
+		if (yLvlOffset > maxLvlOffsetY)
+			yLvlOffset = maxLvlOffsetY;
+		else if (yLvlOffset < 0)
+			yLvlOffset = 0;
+	}
+
     @Override
     public void draw( Graphics g ) {
-        level.draw(g,0,0);
-        player.render(g,0,0);
+        level.draw(g,xLvlOffset,yLvlOffset);
+        player.render(g,xLvlOffset,yLvlOffset);
+
     }
 
     @Override
     public void update() {
-        if (!paused)
+        if (!paused){
+            checkCloseToBorder();
             player.update();
-        level.update();
+            level.update();
+        }
+            
     }
 
     @Override

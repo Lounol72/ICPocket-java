@@ -70,7 +70,7 @@ public class Player extends Entity {
         int correctedX = (direction == -1) ? drawX + width : drawX;
     
         g.drawImage(
-            animManager.getFrame(playerAction, !attacking && !inAir),
+            animManager.getFrame(playerAction, true),
             correctedX, drawY,
             drawWidth, height,
             null
@@ -96,7 +96,7 @@ public class Player extends Entity {
     
         } else {
             // Animations normales
-            animManager.getFrame(playerAction, true);
+            animManager.updateFrame(playerAction, true, attacking);
         }
     }
 

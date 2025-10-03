@@ -344,22 +344,23 @@ public class HelpMethods {
     }
 
 
+
+
     private static boolean IsSolid(float x, float y, int[][] lvlData) {
         return (GetLvlDataValue(x, y, lvlData) != 21);
     }
 
-    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData) {
-        if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
-            return false;
+    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
+        // Check the pixel below bottomleft and bottomright
+        // System.out.println(IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData) + " : left pixel");
+        // System.out.println(IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData) + " : right pixel");
+        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
+            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
+                return false;
 
-        if ( !IsSolid(x, y + height, lvlData))                 // En bas à gauche
-            if (!IsSolid(x + width, y + height, lvlData) )  // En bas à droite
-                return true;
-        
-        return false;
+        return true;
+
     }
-
-    
 
     public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
         int currentTile = (int) (hitbox.x / TILES_SIZE);
@@ -388,18 +389,6 @@ public class HelpMethods {
 
     }
 
-    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
-        // Check the pixel below bottomleft and bottomright
-        // System.out.println(IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData) + " : left pixel");
-        // System.out.println(IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData) + " : right pixel");
-        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
-            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
-                return false;
-
-        return true;
-
-    }
-
     /**
  * Vérifie si une tile est une plateforme one-way
  * @param tileId ID de la tile à vérifier
@@ -419,18 +408,22 @@ public static boolean isOneWayPlatform(int tileId) {
  * @param hitbox Hitbox du joueur
  * @param tileId ID de la tile
  * @param airSpeed Vitesse verticale du joueur
+ * @param isDownPressed Si la touche down est pressée
  * @return true si le joueur peut passer à travers
  */
-public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId, float airSpeed) {
+public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId, float airSpeed, boolean isDownPressed) {
     if (!isOneWayPlatform(tileId)) {
         return false;
     }
     
     // Le joueur peut passer à travers si :
     // 1. Il tombe (airSpeed > 0) OU
-    // 2. Il est suffisamment au-dessous de la plateforme
-    return airSpeed < 0 || (hitbox.y - Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE) >
-           ((int)(hitbox.y / TILES_SIZE) + 1) * TILES_SIZE;
+    // 2. Il est suffisamment au-dessous de la plateforme OU
+    // 3. Il appuie sur la touche down (nouvelle fonctionnalité)
+    return airSpeed < 0 || 
+           (hitbox.y - Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE) >
+           ((int)(hitbox.y / TILES_SIZE) + 1) * TILES_SIZE ||
+           isDownPressed;
 }
 
 /**
@@ -442,12 +435,12 @@ public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId,
  * @param airSpeed Vitesse verticale (pour les plateformes one-way)
  * @return true si la position est solide
  */
-public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
+public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
     int tileId = GetLvlDataValue(x, y, lvlData);
     
     // Si c'est une plateforme one-way, vérifier si on peut passer à travers
     if (isOneWayPlatform(tileId)) {
-        return !canPassThroughOneWay(hitbox, tileId, airSpeed);
+        return !canPassThroughOneWay(hitbox, tileId, airSpeed, isDownPressed);
     }
     
     // Comportement normal pour les autres tiles
@@ -465,15 +458,17 @@ public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Fl
  * @param airSpeed Vitesse verticale
  * @return true si le mouvement est possible
  */
-public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed) {
+public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
     if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
         return false;
 
     // Vérifier les coins avec la logique one-way
-    boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, airSpeed);
-    boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, airSpeed);
+    boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, airSpeed, isDownPressed);
+    boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, airSpeed, isDownPressed);
+    boolean topLeft = !IsSolid(x, y, lvlData, hitbox, airSpeed, isDownPressed);
+    boolean topRight = !IsSolid(x + width, y, lvlData, hitbox, airSpeed, isDownPressed);
     
-    return bottomLeft && bottomRight;
+    return bottomLeft && bottomRight && topLeft && topRight;
 }
 
 /**
@@ -485,8 +480,8 @@ public static boolean CanMoveHere(float x, float y, float width, float height, i
  */
 public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData, float airSpeed) {
     // Vérifier les pixels en dessous avec la logique one-way
-    boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
-    boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed);
+    boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
+    boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
     
     return leftPixel || rightPixel;
 }

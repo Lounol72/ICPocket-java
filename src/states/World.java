@@ -102,6 +102,9 @@ public class World extends State implements StateMethods{
             case KeyEvent.VK_D ->{
                 player.setRight(false);
             }
+            case KeyEvent.VK_S ->{
+                player.setDown(false);
+            }
             case KeyEvent.VK_SPACE->{
                 player.setJump(false);
             }
@@ -117,6 +120,9 @@ public class World extends State implements StateMethods{
             }
             case KeyEvent.VK_D ->{
                 player.setRight(true);
+            }
+            case KeyEvent.VK_S ->{
+                player.setDown(true);
             }
             case KeyEvent.VK_SPACE->{
                 player.setJump(true);

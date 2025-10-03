@@ -131,46 +131,46 @@ public class Player extends Entity {
 
     private void updatePos() {
         moving = false;
-    if(jump)
-        jump();
-    if (!inAir)
-        if((!left && !right )|| (left && right))
-            return;
+        if(jump)
+            jump();
+        if (!inAir)
+            if((!left && !right )|| (left && right))
+                return;
 
-    xSpeed = 0;
+        xSpeed = 0;
 
-    if (left)
-        xSpeed -= playerSpeed;
-    if (right)
-        xSpeed += playerSpeed;
-    if (!inAir) {
-        // Utiliser la nouvelle méthode avec support one-way
-        if ( !IsEntityOnFloor (hitbox, levelData, airSpeed) ) {
-            inAir = true;
+        if (left)
+            xSpeed -= playerSpeed;
+        if (right)
+            xSpeed += playerSpeed;
+        if (!inAir) {
+            // Utiliser la nouvelle méthode avec support one-way
+            if ( !IsEntityOnFloor (hitbox, levelData, airSpeed) ) {
+                inAir = true;
+            }
         }
-    }
-    if (inAir){
-        // Utiliser la nouvelle méthode avec support one-way
-        if (CanMoveHere (hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)){
-            hitbox.y += airSpeed;
-            if (airSpeed + gravity > MAX_AIR_SPEED)
-                airSpeed = MAX_AIR_SPEED;
-            else
-                airSpeed += gravity;
-            
-            updateXPos(xSpeed);
+        if (inAir){
+            // Utiliser la nouvelle méthode avec support one-way
+            if (CanMoveHere (hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed, down)){
+                hitbox.y += airSpeed;
+                if (airSpeed + gravity > MAX_AIR_SPEED)
+                    airSpeed = MAX_AIR_SPEED;
+                else
+                    airSpeed += gravity;
+                
+                updateXPos(xSpeed);
+            }else{
+                hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox,airSpeed);
+                if(airSpeed > 0)
+                    resetInAir();
+                else
+                    airSpeed = fallSpeedAfterCollision;
+                updateXPos(xSpeed);
+            }
         }else{
-            hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox,airSpeed);
-            if(airSpeed > 0)
-                resetInAir();
-            else
-                airSpeed = fallSpeedAfterCollision;
             updateXPos(xSpeed);
         }
-    }else{
-        updateXPos(xSpeed);
-    }
-    moving = true;
+        moving = true;
     }
 
     private void jump() {
@@ -188,7 +188,7 @@ public class Player extends Entity {
     }
 
     private void updateXPos(float xSpeed) {
-        if (CanMoveHere (hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed)) {
+        if (CanMoveHere (hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed, down)) {
             hitbox.x += xSpeed;
         } else {
             hitbox.x = GetEntityXPosNextToWall(hitbox, xSpeed);

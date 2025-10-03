@@ -18,7 +18,10 @@ import static utilz.Constants.PATHS.DATA_FILE;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.*;
 import static utilz.Constants.language;
-
+/**
+ * Cette classe contient des méthodes utilitaires pour le jeu
+ * @implNote Cette classe est utilisée pour gérer les données du jeu
+ */
 public class HelpMethods {
 
     
@@ -32,6 +35,9 @@ public class HelpMethods {
 
     /**
      * Charge un fichier JSON en cache s'il n'y est pas déjà
+     * @param filePath Chemin vers le fichier JSON
+     * @return JsonObject Données du fichier JSON
+     * @throws IOException Erreur lors de la lecture du fichier JSON
      */
     static JsonObject getJsonData( String filePath ) throws IOException {
         if (!jsonCache.containsKey(filePath)) {
@@ -42,7 +48,11 @@ public class HelpMethods {
         }
         return jsonCache.get(filePath);
     }
-
+    /**
+     * Génère une team à partir de son id
+     * @param id Id de la team
+     * @return Team
+     */
     public static Team generateTeamFromId(int id){
         try {
             JsonObject jsonData = getJsonData(DATA_FILE);
@@ -75,6 +85,8 @@ public class HelpMethods {
 
     /**
      * Génère un ICMon à partir de son id
+     * @param id Id du ICMon
+     * @return ICMon
      */
     public static ICMon generateICMonFromId(int id) {
         try {
@@ -112,7 +124,9 @@ public class HelpMethods {
     }
 
     /**
-     * Extrait les stats depuis un objet JSON
+     * Retourne les stats d'un ICMon
+     * @param stats Stats de l'ICMon
+     * @return Stats d'un ICMon
      */
     private static int[] extractStats(JsonObject stats) {
         int[] baseStats = new int[6];
@@ -124,7 +138,12 @@ public class HelpMethods {
         baseStats[5] = stats.get("speed").getAsInt();
         return baseStats;
     }
-
+    /**
+     * Retourne le buffer de moves pour un ICMon
+     * @param pokeId Id du ICMon
+     * @param pokeLevel Niveau du ICMon
+     * @return Buffer de moves
+     */
     public static Move[] getLearningBuffer(int pokeId, int pokeLevel) {
         try {
             JsonObject jsonData = getJsonData(DATA_FILE);
@@ -166,6 +185,8 @@ public class HelpMethods {
 
     /**
      * Génère un Move à partir de son id
+     * @param id Id du Move
+     * @return Move
      */
     public static Move generateMoveFromId(int id) {
         try {
@@ -195,7 +216,11 @@ public class HelpMethods {
             return null;
         }
     }
-
+    /**
+     * Retourne une phrase à partir de son nom
+     * @param name Nom de la phrase
+     * @return Phrase
+     */
     public static String GetPhrase(String name){
         try {
             // Utilisation du chemin complet correspondant à la structure de vos fichiers
@@ -313,9 +338,13 @@ public class HelpMethods {
             .registerTypeAdapter(typeOfT, typeAdapter)
             .create();
     }
-
+    /**
+     * Map des nombres de sprites pour chaque action
+     */
     private static final Map<Integer, Integer> ACTION_SPRITE_COUNT = new HashMap<>();
-
+    /**
+     * Initialise le nombre de sprites pour chaque action
+     */
     static {
         for ( int action : new int[]{0, 8, 9, 10, 12} ) {
             ACTION_SPRITE_COUNT.put(action, 10);
@@ -331,11 +360,21 @@ public class HelpMethods {
             ACTION_SPRITE_COUNT.put(action, 4);
         }
     }
-
+    /**
+     * Retourne le nombre de sprites pour une action donnée
+     * @param action Action
+     * @return Nombre de sprites
+     */
     public static int GetSpriteAmount( int action ) {
         return ACTION_SPRITE_COUNT.getOrDefault(action, 0);
     }
-
+    /**
+     * Retourne la valeur de la tile à la position donnée
+     * @param x Position X de la tile
+     * @param y Position Y de la tile
+     * @param lvlData Données du niveau
+     * @return Valeur de la tile
+     */
     private static int GetLvlDataValue(float x, float y, int[][] lvlData) {
         float xIndex = x / TILES_SIZE;
         float yIndex = y / TILES_SIZE;
@@ -345,11 +384,22 @@ public class HelpMethods {
 
 
 
-
+    /**
+     * Vérifie si l'entité est sur le sol
+     * @param x Position X de l'entité
+     * @param y Position Y de l'entité
+     * @param lvlData Données du niveau
+     * @return true si l'entité est sur le sol
+     */
     private static boolean IsSolid(float x, float y, int[][] lvlData) {
         return (GetLvlDataValue(x, y, lvlData) != 21);
     }
-
+    /**
+     * Vérifie si l'entité est sur le sol
+     * @param hitbox Hitbox de l'entité
+     * @param lvlData Données du niveau
+     * @return true si l'entité est sur le sol
+     */
     public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
         // Check the pixel below bottomleft and bottomright
         // System.out.println(IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData) + " : left pixel");
@@ -361,7 +411,12 @@ public class HelpMethods {
         return true;
 
     }
-
+    /**
+     * Retourne la position X de l'entité à côté d'un mur
+     * @param hitbox Hitbox de l'entité
+     * @param xSpeed Vitesse horizontale de l'entité
+     * @return Position X de l'entité à côté d'un mur
+     */
     public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
         int currentTile = (int) (hitbox.x / TILES_SIZE);
         if (xSpeed > 0) {
@@ -373,7 +428,12 @@ public class HelpMethods {
             // Left
             return currentTile * TILES_SIZE;
     }
-
+    /**
+     * Retourne la position Y de l'entité sous le toit ou au-dessus du sol
+     * @param hitbox Hitbox de l'entité
+     * @param airSpeed Vitesse verticale de l'entité
+     * @return Position Y de l'entité sous le toit ou au-dessus du sol
+     */
     public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
         int currentTile = (int) (hitbox.y / TILES_SIZE);
         // System.out.println((hitbox.height / TILES_SIZE) + " : currentTile");
@@ -390,113 +450,145 @@ public class HelpMethods {
     }
 
     /**
- * Vérifie si une tile est une plateforme one-way
- * @param tileId ID de la tile à vérifier
- * @return true si c'est une plateforme one-way
- */
-public static boolean isOneWayPlatform(int tileId) {
-    for (int oneWayId : Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TILE_IDS) {
-        if (tileId == oneWayId) {
+     * Vérifie si une tile est une plateforme one-way
+     * @param tileId ID de la tile à vérifier
+     * @return true si c'est une plateforme one-way
+     */
+    public static boolean isOneWayPlatform(int tileId) {
+        for (int oneWayId : Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TILE_IDS) {
+            if (tileId == oneWayId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Vérifie si le joueur peut passer à travers une plateforme one-way
+     * @param hitbox Hitbox du joueur
+     * @param tileId ID de la tile
+     * @param airSpeed Vitesse verticale du joueur
+     * @param isDownPressed Si la touche down est pressée
+     * @return true si le joueur peut passer à travers
+     */
+    public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId, float airSpeed, boolean isDownPressed) {
+        if (!isOneWayPlatform(tileId))
+            return false;
+        
+
+        if (airSpeed < 0) {
             return true;
         }
+            
+        // Le joueur peut passer à travers si :
+        // 1. Il tombe (airSpeed > 0) OU
+        // 2. Il est suffisamment au-dessous de la plateforme OU
+        // 3. Il appuie sur la touche down (nouvelle fonctionnalité)
+        return ((hitbox.y - Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE) >
+            ((int)(hitbox.y / TILES_SIZE) + 1) * TILES_SIZE) ||
+            isDownPressed;
     }
-    return false;
-}
 
-/**
- * Vérifie si le joueur peut passer à travers une plateforme one-way
- * @param hitbox Hitbox du joueur
- * @param tileId ID de la tile
- * @param airSpeed Vitesse verticale du joueur
- * @param isDownPressed Si la touche down est pressée
- * @return true si le joueur peut passer à travers
- */
-public static boolean canPassThroughOneWay(Rectangle2D.Float hitbox, int tileId, float airSpeed, boolean isDownPressed) {
-    if (!isOneWayPlatform(tileId)) {
-        return false;
+    /**
+     * Vérifie si une position est solide en tenant compte des plateformes one-way
+     * @param x Position X
+     * @param y Position Y  
+     * @param lvlData Données du niveau
+     * @param hitbox Hitbox de l'entité (pour les plateformes one-way)
+     * @param airSpeed Vitesse verticale (pour les plateformes one-way)
+     * @return true si la position est solide
+     */
+    public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
+        int tileId = GetLvlDataValue(x, y, lvlData);
+        
+        // Si c'est une plateforme one-way, vérifier si on peut passer à travers
+        if (isOneWayPlatform(tileId)) {
+            return !canPassThroughOneWay(hitbox, tileId, airSpeed, isDownPressed);
+        }
+        
+        // Comportement normal pour les autres tiles
+        return (tileId != 21);
     }
-    
-    // Le joueur peut passer à travers si :
-    // 1. Il tombe (airSpeed > 0) OU
-    // 2. Il est suffisamment au-dessous de la plateforme OU
-    // 3. Il appuie sur la touche down (nouvelle fonctionnalité)
-    return airSpeed < 0 || 
-           (hitbox.y - Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE) >
-           ((int)(hitbox.y / TILES_SIZE) + 1) * TILES_SIZE ||
-           isDownPressed;
-}
 
-/**
- * Vérifie si une position est solide en tenant compte des plateformes one-way
- * @param x Position X
- * @param y Position Y  
- * @param lvlData Données du niveau
- * @param hitbox Hitbox de l'entité (pour les plateformes one-way)
- * @param airSpeed Vitesse verticale (pour les plateformes one-way)
- * @return true si la position est solide
- */
-public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
-    int tileId = GetLvlDataValue(x, y, lvlData);
-    
-    // Si c'est une plateforme one-way, vérifier si on peut passer à travers
-    if (isOneWayPlatform(tileId)) {
-        return !canPassThroughOneWay(hitbox, tileId, airSpeed, isDownPressed);
+    /**
+     * Vérifie si le joueur peut se déplacer ici en tenant compte des plateformes one-way
+     * @param x Position X
+     * @param y Position Y
+     * @param width Largeur
+     * @param height Hauteur
+     * @param lvlData Données du niveau
+     * @param hitbox Hitbox de l'entité
+     * @param airSpeed Vitesse verticale
+     * @return true si le mouvement est possible
+     */
+    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
+        if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
+            return false;
+
+        // Vérifier les coins avec la logique one-way
+        boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, airSpeed, isDownPressed);
+        boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, airSpeed, isDownPressed);
+        boolean topLeft = !IsSolid(x, y, lvlData, hitbox, airSpeed, isDownPressed);
+        boolean topRight = !IsSolid(x + width, y, lvlData, hitbox, airSpeed, isDownPressed);
+        
+        return bottomLeft && bottomRight && topLeft && topRight;
     }
-    
-    // Comportement normal pour les autres tiles
-    return (tileId != 21);
-}
 
-/**
- * Vérifie si le joueur peut se déplacer ici en tenant compte des plateformes one-way
- * @param x Position X
- * @param y Position Y
- * @param width Largeur
- * @param height Hauteur
- * @param lvlData Données du niveau
- * @param hitbox Hitbox de l'entité
- * @param airSpeed Vitesse verticale
- * @return true si le mouvement est possible
- */
-public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, float airSpeed, boolean isDownPressed) {
-    if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
-        return false;
+    /**
+     * Vérifie si l'entité est sur le sol en tenant compte des plateformes one-way
+     * @param hitbox Hitbox de l'entité
+     * @param lvlData Données du niveau
+     * @param airSpeed Vitesse verticale
+     * @return true si l'entité est sur le sol
+     */
+    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData, float airSpeed) {
+        // Vérifier les pixels en dessous avec la logique one-way
+        boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
+        boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
+        
+        return leftPixel || rightPixel;
+    }
+    /**
+     * Vérifie si l'entité est dans une tile one-way
+     * @param hitbox Hitbox de l'entité
+     * @param lvlData Données du niveau
+     * @return true si l'entité est dans une tile one-way
+     */
+    public static boolean IsInOneWayTile(Rectangle2D.Float hitbox, int[][] lvlData) {
 
-    // Vérifier les coins avec la logique one-way
-    boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, airSpeed, isDownPressed);
-    boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, airSpeed, isDownPressed);
-    boolean topLeft = !IsSolid(x, y, lvlData, hitbox, airSpeed, isDownPressed);
-    boolean topRight = !IsSolid(x + width, y, lvlData, hitbox, airSpeed, isDownPressed);
-    
-    return bottomLeft && bottomRight && topLeft && topRight;
-}
-
-/**
- * Vérifie si l'entité est sur le sol en tenant compte des plateformes one-way
- * @param hitbox Hitbox de l'entité
- * @param lvlData Données du niveau
- * @param airSpeed Vitesse verticale
- * @return true si l'entité est sur le sol
- */
-public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData, float airSpeed) {
-    // Vérifier les pixels en dessous avec la logique one-way
-    boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
-    boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
-    
-    return leftPixel || rightPixel;
-}
-
+        // Si un des pixels de l'hitbox est dans une tile one-way return true
+        // donc regarder chaque coins de l'hitbox
+        return isOneWayPlatform(GetLvlDataValue(hitbox.x, hitbox.y, lvlData));
+    }
+    /**
+     * Map et clamps une valeur entre deux valeurs
+     * @param value Valeur à mapper
+     * @param inMin Valeur minimale
+     * @param inMax Valeur maximale
+     * @param outMin Valeur minimale de sortie
+     * @param outMax Valeur maximale de sortie
+     * @return Valeur mapée et clampée
+     */
     public static int mapAndClamp(float value, float inMin, float inMax, int outMin, int outMax) {
-		// Normalisation : ramène value dans l'intervalle [inMin, inMax] vers [0, 1]
-		float t = (value - inMin) / (inMax - inMin);
-	
-		// Clamp entre 0 et 1
-		t = clamp(t, 0, 1);
-	
-		// Remap vers [outMin, outMax]
-		return (int)(outMin + t * (outMax - outMin));
-	}
+        float t = (value - inMin) / (inMax - inMin);
 
+        // Clamp entre 0 et 1
+        t = clamp(t, 0, 1);
+
+    
+        t = 1 - (1 - t) * (1 - t); // EaseOutQuad 
+
+        return (int)(outMin + t * (outMax - outMin));
+    }
+
+
+    /**
+     * Clamp une valeur entre deux valeurs
+     * @param v Valeur à clamer
+     * @param min Valeur minimale
+     * @param max Valeur maximale
+     * @return Valeur clampée
+     */
     public static float clamp(float v, float min, float max) {
         return Math.max(min, Math.min(max, v));
     }

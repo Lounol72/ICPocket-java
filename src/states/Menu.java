@@ -1,18 +1,14 @@
 package states;
 
 import game.Game;
-import ui.MenuButtons;
-import ui.ScrollingText;
+
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import static utilz.Constants.SCALE;
-import static utilz.Constants.UI.BUTTONS.HEIGHT;
-import static utilz.Constants.UI.BUTTONS.WIDTH;
+
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
-import static utilz.HelpMethods.GetPhrase;
 
 public class Menu extends State implements StateMethods{
 
@@ -73,12 +69,11 @@ public class Menu extends State implements StateMethods{
     public void keyPressed( KeyEvent e ) {
         switch (e.getKeyCode()){
             case KeyEvent.VK_A->{
-                GameState.setState(GameState.BATTLE);
+                GameState.setState(GameState.SETTINGS);
             }
             case KeyEvent.VK_Z->{
                 GameState.setState(GameState.WORLD);
             }
-            
 
         }
     }

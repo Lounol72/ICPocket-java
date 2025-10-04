@@ -4,10 +4,8 @@ public enum GameState {
 //    FIRST_LAUNCH,
     START,
     MENU,
-    BATTLE,
     WORLD,
     SETTINGS,
-    TEAM,
     INFOS;
 
     public static GameState currentState = GameState.START;

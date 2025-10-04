@@ -47,7 +47,6 @@ public class Game implements Runnable{
 
 
     private Menu menu;
-    private Battle battle;
     private World world;
     private Start start;
     private Settings settings;
@@ -72,7 +71,6 @@ public class Game implements Runnable{
      */
     private void initClasses() {
         this.menu = new Menu(this);
-        this.battle = new Battle(this);
         this.world = new World(this);
         this.start = new Start(this);
         this.settings = new Settings(this);
@@ -95,9 +93,7 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.update();
             }
-            case BATTLE -> {
-                battle.update();
-            }
+
             case WORLD -> {
                 world.update();
             }
@@ -107,8 +103,7 @@ public class Game implements Runnable{
             case SETTINGS -> {
                 settings.update();
             }
-            case TEAM -> {
-            }
+
             case INFOS -> {
             }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
@@ -129,17 +124,14 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.draw(g);
             }
-            case BATTLE -> {
-                battle.draw(g);
-            }
+
             case WORLD -> {
                 world.draw(g);
             }
             case SETTINGS -> {
                 settings.draw(g);
             }
-            case TEAM -> {
-            }
+
             case INFOS -> {
             }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
@@ -202,9 +194,6 @@ public class Game implements Runnable{
 
     public Menu getMenu() {
         return menu;
-    }
-    public Battle getBattle(){
-        return battle;
     }
 
     public void UpdateEveryStrings() {

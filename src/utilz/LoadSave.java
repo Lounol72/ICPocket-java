@@ -1,6 +1,6 @@
 package utilz;
 
-import icmon.ICMon;
+
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import com.google.gson.*;
-import duel.Team;
-import icmon.Move;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -75,92 +74,6 @@ public class LoadSave {
         }
         return sprite;
 
-    }
-
-    private static final String SAVE_DIRECTORY = "saves/";
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-    /**
-     * Méthode pour sauvegarder une équipe
-     * @param team équipe à sauvegarder
-     * @param fileName nom du fichier de sauvegarde
-     */
-    public static void saveTeamData(Team team, String fileName) {
-        try {
-            // Créer le répertoire de sauvegarde s'il n'existe pas
-            File saveDir = new File(SAVE_DIRECTORY);
-            if (!saveDir.exists()) {
-                saveDir.mkdirs();
-            }
-
-            SaveData saveData = new SaveData();
-            List<ICMonSaveData> icmonSaves = new ArrayList<>();
-
-            for (ICMon icmon : team.getTeam()) {
-                if (icmon != null) {
-                    ICMonSaveData icmonSave = convertICMonToSaveData(icmon);
-                    icmonSaves.add(icmonSave);
-                }
-            }
-
-            saveData.setIcmons(icmonSaves);
-
-            // Écrire dans le fichier JSON
-            String json = gson.toJson(saveData);
-            Files.write(Paths.get(SAVE_DIRECTORY + fileName), json.getBytes());
-
-        } catch (IOException e) {
-            System.err.println("Erreur lors de la sauvegarde : " + e.getMessage());
-        }
-    }
-
-    /**
-     * Méthode pour convertir un ICMon en données de sauvegarde
-     * @param icmon ICMon à convertir
-     * @return ICMonSaveData les données de sauvegarde
-     */
-    private static ICMonSaveData convertICMonToSaveData( ICMon icmon) {
-        ICMonSaveData saveData = new ICMonSaveData();
-
-        saveData.setId(icmon.getId());
-        saveData.setLvl(icmon.getLvl());
-        saveData.setNature(icmon.getNature());
-        saveData.setNb_move(icmon.getNb_move());
-
-        // Sauvegarder les IDs des moves
-        List<Integer> moveIds = new ArrayList<>();
-        for (Move move : icmon.getMoveList()) {
-            if (move != null && move.getPower() != -1) {
-                moveIds.add(move.getId());
-            }
-        }
-        saveData.setMoveIds(moveIds);
-
-        // Sauvegarder les IVs
-        saveData.setIv(icmon.getIv());
-
-        // Sauvegarder les types
-        String[] types = new String[2];
-        types[0] = icmon.getType()[0].name();
-        types[1] = icmon.getType()[1].name();
-        saveData.setTypes(types);
-
-        return saveData;
-    }
-
-    /**
-     * Méthode pour charger les données sauvegardées
-     * @param fileName nom du fichier à charger
-     * @return SaveData les données sauvegardées
-     */
-    public static SaveData loadTeamData(String fileName) {
-        try {
-            String json = Files.readString(Paths.get(SAVE_DIRECTORY + fileName));
-            return gson.fromJson(json, SaveData.class);
-        } catch (IOException e) {
-            System.err.println("Erreur lors du chargement : " + e.getMessage());
-            return null;
-        }
     }
     /**
      * Méthode pour récupérer les données du niveau depuis le fichier JSON

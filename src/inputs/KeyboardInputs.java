@@ -25,17 +25,14 @@ public class KeyboardInputs implements KeyListener {
             case MENU -> {
 				gamePanel.getGame().getMenu().keyTyped(e);
             }
-            case BATTLE -> {
-				gamePanel.getGame().getBattle().keyTyped(e);
-            }
+
             case WORLD -> {
 				gamePanel.getGame().getWorld().keyTyped(e);
             }
             case SETTINGS -> {
 				gamePanel.getGame().getSettings().keyTyped(e);
             }
-            case TEAM -> {
-            }
+
             case INFOS -> {
             }
 			default ->{
@@ -53,17 +50,14 @@ public class KeyboardInputs implements KeyListener {
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyReleased(e);
 			}
-			case BATTLE -> {
-				gamePanel.getGame().getBattle().keyReleased(e);
-			}
+
 			case WORLD -> {
 				gamePanel.getGame().getWorld().keyReleased(e);
 			}
 			case SETTINGS -> {
 				gamePanel.getGame().getSettings().keyReleased(e);
 			}
-			case TEAM -> {
-			}
+
 			case INFOS -> {
 			}
 			default ->{
@@ -81,16 +75,12 @@ public class KeyboardInputs implements KeyListener {
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyPressed(e);
 			}
-			case BATTLE -> {
-				gamePanel.getGame().getBattle().keyPressed(e);
-			}
+
 			case WORLD -> {
 				gamePanel.getGame().getWorld().keyPressed(e);
 			}
 			case SETTINGS -> {
 				gamePanel.getGame().getSettings().keyPressed(e);
-			}
-			case TEAM -> {
 			}
 			case INFOS -> {
 			}

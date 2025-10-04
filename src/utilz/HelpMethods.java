@@ -1,10 +1,8 @@
 package utilz;
 
 import com.google.gson.*;
-import duel.Team;
 import game.Game;
-import icmon.ICMon;
-import icmon.Move;
+
 
 import java.awt.geom.Rectangle2D;
 import java.io.FileReader;
@@ -47,174 +45,6 @@ public class HelpMethods {
             }
         }
         return jsonCache.get(filePath);
-    }
-    /**
-     * Génère une team à partir de son id
-     * @param id Id de la team
-     * @return Team
-     */
-    public static Team generateTeamFromId(int id){
-        try {
-            JsonObject jsonData = getJsonData(DATA_FILE);
-
-            JsonObject teamData = jsonData.getAsJsonArray("teams")
-                    .get(id - 1)
-                    .getAsJsonObject();
-
-            int nbPokes = teamData.get("nb_Poke").getAsInt();
-            String name = teamData.get("name").getAsString();
-
-
-            ICMon[] icmons = new ICMon[nbPokes];
-            for(int i = 0; i < nbPokes; i++) {
-                int monId = teamData.getAsJsonArray("ids").get(i).getAsInt();
-                icmons[i] = new ICMon(monId);
-                if (icmons[i] == null) {
-                    throw new IllegalStateException("Échec de la création de l'ICMon #" + monId);
-                }
-            }
-
-            return new Team(id, icmons, nbPokes, name);
-        } catch (Exception e) {
-            System.err.println("Erreur détaillée lors de la génération de la team #" + id + ": ");
-            e.printStackTrace();
-            return null;
-        }
-
-    }
-
-    /**
-     * Génère un ICMon à partir de son id
-     * @param id Id du ICMon
-     * @return ICMon
-     */
-    public static ICMon generateICMonFromId(int id) {
-        try {
-            JsonObject jsonData = getJsonData(DATA_FILE);
-            JsonObject icmonData = jsonData.getAsJsonArray("icmons")
-                    .get(id - 1)
-                    .getAsJsonObject();
-
-            // Configuration de l'ICMon
-            String name = icmonData.get("name").getAsString();
-
-            t_Type[] types = new t_Type[2];
-            String type1 = icmonData.getAsJsonArray("types").get(0).getAsString();
-            String type2 = icmonData.getAsJsonArray("types").get(1).getAsString();
-            types[0] = t_Type.valueOf(type1);
-            types[1] = type2.equals("NONE") ? t_Type.noType : t_Type.valueOf(type2);
-
-            int[] baseStats = extractStats(icmonData.getAsJsonObject("stats"));
-
-            ICMon icmon = new ICMon(id, name, types, baseStats);
-
-            // Ajout des moves initiaux si spécifiés
-            JsonArray movesArray = icmonData.getAsJsonArray("initialMoves");
-            if (movesArray != null) {
-                for (int i = 0; i < movesArray.size(); i++) {
-                    icmon.setNewMove(generateMoveFromId(movesArray.get(i).getAsInt()));
-                }
-            }
-
-            return icmon;
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la génération de l'ICMon #" + id + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Retourne les stats d'un ICMon
-     * @param stats Stats de l'ICMon
-     * @return Stats d'un ICMon
-     */
-    private static int[] extractStats(JsonObject stats) {
-        int[] baseStats = new int[6];
-        baseStats[0] = stats.get("hp").getAsInt();
-        baseStats[1] = stats.get("attack").getAsInt();
-        baseStats[2] = stats.get("defense").getAsInt();
-        baseStats[3] = stats.get("spAttack").getAsInt();
-        baseStats[4] = stats.get("spDefense").getAsInt();
-        baseStats[5] = stats.get("speed").getAsInt();
-        return baseStats;
-    }
-    /**
-     * Retourne le buffer de moves pour un ICMon
-     * @param pokeId Id du ICMon
-     * @param pokeLevel Niveau du ICMon
-     * @return Buffer de moves
-     */
-    public static Move[] getLearningBuffer(int pokeId, int pokeLevel) {
-        try {
-            JsonObject jsonData = getJsonData(DATA_FILE);
-            JsonObject poolData = jsonData.getAsJsonArray("movepool")
-                    .get(pokeId - 1)
-                    .getAsJsonObject();
-
-            Move[] buffer = new Move[20];
-            int bufferIndex = 0;
-
-            // Récupérer le tableau de moves
-            JsonArray moves = poolData.getAsJsonArray("moves");
-
-            // Parcourir tous les moves disponibles
-            for (JsonElement moveElement : moves) {
-                JsonObject moveData = moveElement.getAsJsonObject();
-                int moveLvl = moveData.get("lvl").getAsInt();
-
-                // Si le niveau correspond exactement, ajouter le move au buffer
-                if (moveLvl == pokeLevel) {
-                    int idMove = moveData.get("idMove").getAsInt();
-                    buffer[bufferIndex] = generateMoveFromId(idMove);
-                    bufferIndex++;
-
-                    // Éviter le dépassement du buffer
-                    if (bufferIndex >= buffer.length) {
-                        break;
-                    }
-                }
-            }
-
-            return buffer;
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la génération du buffer de moves pour l'ICMon #" + pokeId + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-
-    /**
-     * Génère un Move à partir de son id
-     * @param id Id du Move
-     * @return Move
-     */
-    public static Move generateMoveFromId(int id) {
-        try {
-            JsonObject jsonData = getJsonData(DATA_FILE);
-            JsonObject moveData = jsonData.getAsJsonArray("moves")
-                    .get(id - 1)
-                    .getAsJsonObject();
-
-            return new Move(
-                id,
-                moveData.get("name").getAsString(),
-                moveData.get("power").getAsInt(),
-                t_Type.valueOf(moveData.get("type").getAsString()),
-                t_Categ.valueOf(moveData.get("categ").getAsString()),
-                moveData.get("accuracy").getAsInt(),
-                moveData.get("PP").getAsInt(),
-                moveData.get("PP").getAsInt(), // current_pp = max_pp au début
-                moveData.get("priority").getAsInt(),
-                moveData.get("target").getAsInt(),
-                moveData.get("ind_secEffect").getAsInt(),
-                moveData.get("probability").getAsInt(),
-                moveData.get("value_effect").getAsInt(),
-                moveData.get("effect_modifier").getAsInt()
-            );
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la génération du Move #" + id + ": " + e.getMessage());
-            return null;
-        }
     }
     /**
      * Retourne une phrase à partir de son nom
@@ -558,7 +388,11 @@ public class HelpMethods {
 
         // Si un des pixels de l'hitbox est dans une tile one-way return true
         // donc regarder chaque coins de l'hitbox
-        return isOneWayPlatform(GetLvlDataValue(hitbox.x, hitbox.y, lvlData));
+        for(float i = hitbox.x; i < hitbox.x + hitbox.width; i++)
+            for(float j = hitbox.y; j < hitbox.y + hitbox.height; j++)
+                if(isOneWayPlatform(GetLvlDataValue(i, j, lvlData)))
+                    return true;
+        return false;
     }
     /**
      * Map et clamps une valeur entre deux valeurs

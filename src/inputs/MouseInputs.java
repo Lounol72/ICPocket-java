@@ -27,10 +27,9 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
         switch(currentState) {
             case START -> state = gamePanel.getGame().getStart();
             case MENU -> state = gamePanel.getGame().getMenu();
-            case BATTLE -> state = gamePanel.getGame().getBattle();
             case WORLD -> state = gamePanel.getGame().getWorld();
             case SETTINGS -> state = gamePanel.getGame().getSettings();
-            case TEAM -> { /* à implémenter */ }
+
             case INFOS -> { /* à implémenter */ }
             default -> throw new IllegalStateException("État de jeu non géré");
         }

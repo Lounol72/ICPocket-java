@@ -1,18 +1,39 @@
 package entities;
 
-import utilz.LoadSave;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 
-
-import static entities.PlayerStateEnum.*;
-import entities.AnimationManager;
-import static utilz.Constants.PLAYER.*;
+import static entities.PlayerStateEnum.IDLE;
+import static entities.PlayerStateEnum.JUMP;
+import static entities.PlayerStateEnum.RUN;
+import physics.ForceType;
+import physics.Vector2D;
+import static utilz.Constants.PLAYER.ACCELERATION;
+import static utilz.Constants.PLAYER.AIR_RESISTANCE;
+import static utilz.Constants.PLAYER.APEX_ACCEL_MULT;
+import static utilz.Constants.PLAYER.APEX_GRAVITY_MULT;
+import static utilz.Constants.PLAYER.APEX_THRESHOLD;
+import static utilz.Constants.PLAYER.COYOTE_TIME_FRAMES;
+import static utilz.Constants.PLAYER.FALL_SPEED_AFTER_COLLISION;
+import static utilz.Constants.PLAYER.FAST_FALL_MULT;
+import static utilz.Constants.PLAYER.GRAVITY;
+import static utilz.Constants.PLAYER.GROUND_FRICTION;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_HEIGHT;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_WIDTH;
+import static utilz.Constants.PLAYER.JUMP_CUT_MULTIPLIER;
+import static utilz.Constants.PLAYER.JUMP_FORCE;
+import static utilz.Constants.PLAYER.JUMP_SPEED_MAX;
+import static utilz.Constants.PLAYER.MAX_FALL_SPEED;
+import static utilz.Constants.PLAYER.MAX_SPEED_X;
 import static utilz.Constants.SCALE;
-import static utilz.HelpMethods.*;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
+import static utilz.HelpMethods.CanMoveHere;
+import static utilz.HelpMethods.GetEntityXPosNextToWall;
+import static utilz.HelpMethods.GetEntityYPosUnderRoofOrAboveFloor;
+import static utilz.HelpMethods.GetSpriteAmount;
+import static utilz.HelpMethods.IsEntityOnFloor;
+import static utilz.HelpMethods.IsInOneWayTile;
+import static utilz.HelpMethods.mapAndClamp;
+import utilz.LoadSave;
 
 
 
@@ -24,25 +45,23 @@ public class Player extends Entity {
     // Map des états disponibles
     //private EnumMap<PlayerStateEnum, PlayerState> states;
 
-    // Etat courant
-    private PlayerState currentState;
-    private PlayerStateEnum currentStateEnum;
+    // Etat courant (commenté pour compatibilité future)
+    // private PlayerState currentState;
+    // private PlayerStateEnum currentStateEnum;
 
     // Bouleens de controle
     private boolean moving = false, attacking = false;
     private boolean left, up, right, down, jump;
     private boolean inAir = false;
-    // Speed of the player
-    public static final float PLAYER_SPEED_RUN = SCALE;
     private int[][] levelData;
+    
+    // Jump state
+    private int coyoteTimeCounter = COYOTE_TIME_FRAMES;      // Timer coyote time
+    private boolean jumpReleased = true;    // Si le bouton jump a été relâché
+    private boolean isJumping = false;      // Si on est en train de sauter
 
-    private float xDrawOffset = 22 * SCALE, yDrawOffset = 20 * SCALE;
+    private final float xDrawOffset = 22 * SCALE, yDrawOffset = 20 * SCALE;
 
-    // Speed of the player
-    float xSpeed = 0;
-
-    // Jumping & Falling
-    private float airSpeed = 0f;
     // Direction of the player
     private int direction = 1;
 
@@ -54,7 +73,7 @@ public class Player extends Entity {
     }
 
     public void update() {
-        updatePos();
+        updatePhysics();
         updateAnimationTick();
         setAnimation();
     }
@@ -63,8 +82,9 @@ public class Player extends Entity {
         int drawX = (int) (hitbox.x - xDrawOffset) - xLvlOffset;
         int drawY = (int) (hitbox.y - yDrawOffset) - yLvlOffset;
     
-        if (xSpeed < 0) direction = -1;
-        else if (xSpeed > 0) direction = 1;
+        // Utiliser la vélocité du PhysicsBody pour déterminer la direction
+        if (physicsBody.getVelocity().x < 0) direction = -1;
+        else if (physicsBody.getVelocity().x > 0) direction = 1;
     
         int drawWidth = direction * width;
         int correctedX = (direction == -1) ? drawX + width : drawX;
@@ -81,11 +101,11 @@ public class Player extends Entity {
 
     private void updateAnimationTick() {
         if (inAir) {
-            // Jump : cas spécial (ne passe pas par l’AnimationManager)
+            // Jump : cas spécial (ne passe pas par l'AnimationManager)
             int spriteCount = GetSpriteAmount(playerAction);
     
             int airIndex = mapAndClamp(
-                    airSpeed,
+                    physicsBody.getVelocity().y,
                     JUMP_SPEED_MAX,       // vitesse max vers le haut
                     -JUMP_SPEED_MAX,      // vitesse max vers le bas
                     0,
@@ -120,77 +140,233 @@ public class Player extends Entity {
     }
     
 
-    private void updatePos() {
-        // Regarder si le joueur est dans une tile one way si oui inAir = true 
+    /**
+     * Met à jour la physique du joueur avec le système de vecteurs
+     */
+    private void updatePhysics() {
+        // Vérifier si le joueur est dans une tile one-way
         if (IsInOneWayTile(hitbox, levelData) && down) {
             inAir = true;
         }
-        moving = false;
-        if(jump)
-            jump();
-        if (!inAir)
-            if((!left && !right )|| (left && right) )
-                return;
-
-        xSpeed = 0;
-
-        if (left)
-            xSpeed -= PLAYER_SPEED_RUN;
-        if (right)
-            xSpeed += PLAYER_SPEED_RUN;
         
-
+        moving = false;
+        
+        // Gérer le saut avec coyote time
+        handleJumpInput();
+        
+        // 1. Nettoyer les forces INPUT de la frame précédente
+        physicsBody.removeForcesOfType(ForceType.INPUT);
+        
+        // 2. Ajouter nouvelles forces
+        applyGravity();
+        applyMovementInput();
+        
+        // 3. Calculer accélération à partir des forces
+        physicsBody.applyForces();
+        
+        // 4. Appliquer accélération à vélocité
+        physicsBody.getVelocity().add(physicsBody.getAcceleration());
+        
+        // 5. Appliquer résistance (friction/air)
         if (!inAir) {
-            // Utiliser la nouvelle méthode avec support one-way
-            if ( !IsEntityOnFloor (hitbox, levelData, airSpeed) ) {
+            physicsBody.applyResistance(GROUND_FRICTION, 1.0f);
+        } else {
+            // Résistance uniquement sur l'axe X pour ne pas affecter le saut
+            physicsBody.getVelocity().x *= AIR_RESISTANCE;
+        }
+        
+        // 6. Limiter vélocité
+        physicsBody.limitVelocity(MAX_SPEED_X, MAX_FALL_SPEED);
+        
+        // Sauvegarder vélocité avant collision
+        float velocityXBeforeCollision = physicsBody.getVelocity().x;
+        float velocityYBeforeCollision = physicsBody.getVelocity().y;
+        
+        // 7. Gérer les collisions (modifie la vélocité)
+        handleCollisions();
+        
+        // 8. Appliquer le mouvement à la hitbox
+        hitbox.x += physicsBody.getVelocity().x;
+        hitbox.y += physicsBody.getVelocity().y;
+        
+        // Si collision X détectée, ajuster position
+        if (velocityXBeforeCollision != 0 && physicsBody.getVelocity().x == 0) {
+            hitbox.x = GetEntityXPosNextToWall(hitbox, velocityXBeforeCollision);
+        }
+        
+        // Si collision Y détectée, ajuster position
+        if (velocityYBeforeCollision != 0 && physicsBody.getVelocity().y == 0) {
+            hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox, velocityYBeforeCollision);
+        }
+        
+        // 9. Synchroniser PhysicsBody avec hitbox
+        updatePhysicsFromHitbox();
+        
+        // 10. Nettoyer les forces
+        physicsBody.getForces().removeIf(force -> !force.update());
+
+        // Reset isJumping après la première frame de saut
+        if (isJumping && physicsBody.getVelocity().y >= 0) {
+            isJumping = false;
+        }
+
+        // Mettre à jour l'état inAir
+        updateAirState();
+        
+        // Déterminer si le joueur bouge
+        moving = Math.abs(physicsBody.getVelocity().x) > 0.1f || Math.abs(physicsBody.getVelocity().y) > 0.1f;
+    }
+    
+    /**
+     * Applique la force de gravité avec modificateurs (apex bonus, fast fall)
+     */
+    private void applyGravity() {
+        if (inAir) {
+            float gravityMultiplier = 0.2f * SCALE;
+
+            // Fast fall - gravité augmentée si on appuie sur bas
+            if (down) {
+                gravityMultiplier *= FAST_FALL_MULT;
+            }
+
+            // Apex bonus - gravité réduite au sommet du saut
+            if (Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
+                gravityMultiplier *= APEX_GRAVITY_MULT;
+            }
+
+            // Ne pas appliquer la gravité si on vient de sauter (première frame)
+            if (!isJumping || physicsBody.getVelocity().y >= 0) {
+                physicsBody.addForce(new Vector2D(0, GRAVITY * gravityMultiplier), ForceType.GRAVITY);
+            }
+        }
+    }
+    
+    /**
+     * Applique les forces d'input du joueur avec apex control
+     */
+    private void applyMovementInput() {
+        // Ne pas utiliser de force pour la décélération - la friction s'en charge
+        if (left && !right) {
+            float acceleration = ACCELERATION;
+            // Apex control - meilleur contrôle au sommet du saut
+            if (inAir && Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
+                acceleration *= APEX_ACCEL_MULT;
+            }
+            physicsBody.addForce(new Vector2D(-acceleration, physicsBody.getVelocity().y), ForceType.INPUT);
+        } else if (right && !left) {
+            float acceleration = ACCELERATION;
+            // Apex control - meilleur contrôle au sommet du saut
+            if (inAir && Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
+                acceleration *= APEX_ACCEL_MULT;
+            }
+            physicsBody.addForce(new Vector2D(acceleration, physicsBody.getVelocity().y), ForceType.INPUT);
+        }
+        // La décélération sera gérée par la friction
+    }
+    
+    /**
+     * Gère les collisions avec le système de vecteurs
+     */
+    private void handleCollisions() {
+        Vector2D velocity = physicsBody.getVelocity();
+        
+        // Collision horizontale
+        if (velocity.x != 0) {
+            if (!CanMoveHere(hitbox.x + velocity.x, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, velocity, down)) {
+                // Collision détectée - mettre vélocité à 0
+                physicsBody.getVelocity().x = 0;
+            }
+        }
+        
+        // Collision verticale
+        if (velocity.y != 0) {
+            // Ne pas gérer les collisions verticales pendant le saut initial
+            if (!isJumping || velocity.y > 0) {
+                if (!CanMoveHere(hitbox.x, hitbox.y + velocity.y, hitbox.width, hitbox.height, levelData, hitbox, velocity, down)) {
+                    // Collision détectée
+                    float oldVelocityY = velocity.y;
+                    physicsBody.getVelocity().y = 0;
+                    
+                    // Si on touche le sol en tombant
+                    if (oldVelocityY > 0) {
+                        resetInAir();
+                    } else {
+                        // Si on touche le plafond en sautant
+                        physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION;
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Met à jour l'état inAir
+     */
+    private void updateAirState() {
+        if (!inAir) {
+            if (!IsEntityOnFloor(hitbox, levelData, physicsBody.getVelocity())) {
                 inAir = true;
             }
         }
-        if (inAir){
-            // Utiliser la nouvelle méthode avec support one-way
-            if (CanMoveHere (hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, levelData, hitbox, airSpeed, down)){
-                hitbox.y += airSpeed;
-                if (airSpeed + GRAVITY > MAX_AIR_SPEED)
-                    airSpeed = MAX_AIR_SPEED;
-                else
-                    airSpeed += GRAVITY;
-                
-                updateXPos(xSpeed);
-            }else{
-                hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox,airSpeed);
-                if(airSpeed > 0)
-                    resetInAir();
-                else
-                    airSpeed = FALL_SPEED_AFTER_COLLISION;
-                updateXPos(xSpeed);
-            }
-        }else{
-            updateXPos(xSpeed);
-        }
-        moving = true;
     }
 
     private void jump() {
-        if (inAir)
+        // Permettre le saut si on a du coyote time OU si on est au sol
+        if ((coyoteTimeCounter <= 0 && inAir) || isJumping)
             return;
+        isJumping = true;
         inAir = true;
-        airSpeed = JUMP_SPEED_MAX;
-
+        // Appliquer directement la vélocité de saut (JUMP_FORCE est négatif pour aller vers le haut)
+        physicsBody.getVelocity().y = JUMP_FORCE;
     }
 
     private void resetInAir() {
         inAir = false;
-        airSpeed = 0;
-
+        isJumping = false;
+        coyoteTimeCounter = COYOTE_TIME_FRAMES; // Reset coyote time
+        // Arrêter le mouvement vertical
+        physicsBody.stop(false, true);
     }
-
-    private void updateXPos(float xSpeed) {
-        if (CanMoveHere (hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, levelData, hitbox, airSpeed, down)) {
-            hitbox.x += xSpeed;
-        } else {
-            hitbox.x = GetEntityXPosNextToWall(hitbox, xSpeed);
+    
+    /**
+     * Gère l'input de saut avec coyote time et variable jump height
+     */
+    private void handleJumpInput() {
+        // Mettre à jour l'état du bouton jump
+        if (jump && jumpReleased) {
+            // Bouton pressé pour la première fois
+            jumpReleased = false;
+            // Permettre le saut si on a du coyote time OU si on est au sol
+            if ((coyoteTimeCounter > 0 || !inAir) && !isJumping) {
+                jump();
+            }
+        } else if (!jump) {
+            // Bouton relâché
+            jumpReleased = true;
+            // Variable jump height - réduire vélocité si on relâche
+            if (isJumping && physicsBody.getVelocity().y < 0) {
+                physicsBody.getVelocity().y *= JUMP_CUT_MULTIPLIER;
+                isJumping = false;
+            }
         }
-
+        
+        // Mettre à jour le coyote time
+        updateCoyoteTime();
+    }
+    
+    /**
+     * Met à jour le coyote time
+     */
+    private void updateCoyoteTime() {
+        if (!inAir) {
+            // Sur le sol - reset coyote time
+            coyoteTimeCounter = COYOTE_TIME_FRAMES;
+        } else {
+            // En l'air - décrémenter le timer
+            if (coyoteTimeCounter > 0) {
+                coyoteTimeCounter--;
+            }
+        }
     }
 
     private void loadAnimations() {
@@ -207,9 +383,8 @@ public class Player extends Entity {
 
     public void loadLvlData(int[][] lvlData) {
         this.levelData = lvlData;
-        if (!IsEntityOnFloor(hitbox, lvlData))
+        if (!IsEntityOnFloor(hitbox, lvlData, physicsBody.getVelocity()))
             inAir = true;
-
     }
 
     public void resetDirBooleans() {

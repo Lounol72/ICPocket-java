@@ -7,7 +7,7 @@ package utilz;
  * into logical groupings such as battle mechanics, type charts, stats, and more.
  */
 public class Constants {
-    public final static float SCALE = 2.0f;                              // Facteur d'échelle global
+    public final static float SCALE = 1.0f;                              // Facteur d'échelle global
     public static String language  = "en";
 
     public static class PLAYER{
@@ -17,7 +17,7 @@ public class Constants {
         public static final float PLAYER_SPEED_RUN = SCALE;
         public static final float JUMP_SPEED_MAX = -5f * SCALE;
         public static final float FALL_SPEED_AFTER_COLLISION = 0.5f * SCALE;
-        public static final float GRAVITY = 0.05f * SCALE;
+        public static final float GRAVITY = 0.02f * SCALE;
 
         public static class HITBOX{
             private static final int HITBOX_WIDTH_DEFAULT = 19;
@@ -27,6 +27,24 @@ public class Constants {
         }
 
         public static final float MAX_AIR_SPEED = 3f * SCALE;
+        
+        // Nouvelles constantes pour le système de vecteurs
+        public static final float ACCELERATION = 0.4f * SCALE;      // Force d'accélération
+        public static final float MAX_SPEED_X = 3f * SCALE;
+        public static final float MAX_SPEED_Y = 10f * SCALE;
+        public static final float AIR_RESISTANCE = 0.98f;           // 2% de ralentissement/frame en l'air
+        public static final float GROUND_FRICTION = 0.88f;         // 12% de ralentissement/frame au sol
+        public static final float MASS = 0.8f; // Masse du joueur pour les calculs de force
+        
+        // Jump mechanics
+        public static final float JUMP_FORCE = -8f * SCALE;
+        public static final float JUMP_CUT_MULTIPLIER = 0.5f;      // Réduction vélocité si relâché
+        public static final float APEX_THRESHOLD = 1.5f * SCALE;   // Seuil pour apex bonus
+        public static final float APEX_GRAVITY_MULT = 0.5f;        // Gravité réduite à l'apex
+        public static final float APEX_ACCEL_MULT = 1.5f;          // Accélération horizontale à l'apex
+        public static final float FAST_FALL_MULT = 2.0f;           // Multiplicateur chute rapide
+        public static final int COYOTE_TIME_FRAMES = 6;            // Frames de coyote time
+        public static final float MAX_FALL_SPEED = 8f * SCALE;     // Vitesse chute max
     }
 
     public static class UI{

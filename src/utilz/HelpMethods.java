@@ -1,20 +1,27 @@
 package utilz;
 
-import com.google.gson.*;
-import game.Game;
-
-
 import java.awt.geom.Rectangle2D;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Random;
+import java.util.ResourceBundle;
 
-import static utilz.Constants.PATHS.DATA_FILE;
-import static utilz.Constants.SCALE;
-import static utilz.Constants.WORLD.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import static utilz.Constants.WORLD.TILES_DEFAULT_SIZE;
+import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
 /**
  * Cette classe contient des méthodes utilitaires pour le jeu
@@ -339,6 +346,28 @@ public class HelpMethods {
         // Comportement normal pour les autres tiles
         return (tileId != 21);
     }
+    
+    /**
+     * Vérifie si une position est solide en tenant compte des plateformes one-way (version avec Vector2D)
+     * @param x Position X
+     * @param y Position Y  
+     * @param lvlData Données du niveau
+     * @param hitbox Hitbox de l'entité (pour les plateformes one-way)
+     * @param velocity Vélocité de l'entité (pour les plateformes one-way)
+     * @param isDownPressed Si la touche down est pressée
+     * @return true si la position est solide
+     */
+    public static boolean IsSolid (float x, float y, int[][] lvlData, Rectangle2D.Float hitbox, physics.Vector2D velocity, boolean isDownPressed) {
+        int tileId = GetLvlDataValue(x, y, lvlData);
+        
+        // Si c'est une plateforme one-way, vérifier si on peut passer à travers
+        if (isOneWayPlatform(tileId)) {
+            return !canPassThroughOneWay(hitbox, tileId, velocity.y, isDownPressed);
+        }
+        
+        // Comportement normal pour les autres tiles
+        return (tileId != 21);
+    }
 
     /**
      * Vérifie si le joueur peut se déplacer ici en tenant compte des plateformes one-way
@@ -363,6 +392,31 @@ public class HelpMethods {
         
         return bottomLeft && bottomRight && topLeft && topRight;
     }
+    
+    /**
+     * Vérifie si le joueur peut se déplacer ici en tenant compte des plateformes one-way (version avec Vector2D)
+     * @param x Position X
+     * @param y Position Y
+     * @param width Largeur
+     * @param height Hauteur
+     * @param lvlData Données du niveau
+     * @param hitbox Hitbox de l'entité
+     * @param velocity Vélocité de l'entité
+     * @param isDownPressed Si la touche down est pressée
+     * @return true si le mouvement est possible
+     */
+    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData, Rectangle2D.Float hitbox, physics.Vector2D velocity, boolean isDownPressed) {
+        if (x < 0 || x >= lvlData[0].length * TILES_SIZE || y < 0 || y >= lvlData.length * TILES_SIZE)
+            return false;
+
+        // Vérifier les coins avec la logique one-way
+        boolean bottomLeft = !IsSolid(x, y + height, lvlData, hitbox, velocity, isDownPressed);
+        boolean bottomRight = !IsSolid(x + width, y + height, lvlData, hitbox, velocity, isDownPressed);
+        boolean topLeft = !IsSolid(x, y, lvlData, hitbox, velocity, isDownPressed);
+        boolean topRight = !IsSolid(x + width, y, lvlData, hitbox, velocity, isDownPressed);
+        
+        return bottomLeft && bottomRight && topLeft && topRight;
+    }
 
     /**
      * Vérifie si l'entité est sur le sol en tenant compte des plateformes one-way
@@ -375,6 +429,21 @@ public class HelpMethods {
         // Vérifier les pixels en dessous avec la logique one-way
         boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
         boolean rightPixel = IsSolid (hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, airSpeed, false);
+        
+        return leftPixel || rightPixel;
+    }
+    
+    /**
+     * Vérifie si l'entité est sur le sol en tenant compte des plateformes one-way (version avec Vector2D)
+     * @param hitbox Hitbox de l'entité
+     * @param lvlData Données du niveau
+     * @param velocity Vélocité de l'entité
+     * @return true si l'entité est sur le sol
+     */
+    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData, physics.Vector2D velocity) {
+        // Vérifier les pixels en dessous avec la logique one-way
+        boolean leftPixel = IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData, hitbox, velocity, false);
+        boolean rightPixel = IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData, hitbox, velocity, false);
         
         return leftPixel || rightPixel;
     }
@@ -409,7 +478,6 @@ public class HelpMethods {
         // Clamp entre 0 et 1
         t = clamp(t, 0, 1);
 
-    
         t = 1 - (1 - t) * (1 - t); // EaseOutQuad 
 
         return (int)(outMin + t * (outMax - outMin));

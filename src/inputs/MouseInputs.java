@@ -6,9 +6,8 @@ import java.awt.event.MouseMotionListener;
 import java.util.function.BiConsumer;
 
 import game.GamePanel;
-import states.StateMethods;
-
 import static states.GameState.currentState;
+import states.StateMethods;
 
 public class MouseInputs implements MouseListener, MouseMotionListener {
 
@@ -25,6 +24,7 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
         StateMethods state = null;
 
         switch(currentState) {
+            case SPLASH -> state = gamePanel.getGame().getSplash();
             case START -> state = gamePanel.getGame().getStart();
             case MENU -> state = gamePanel.getGame().getMenu();
             case WORLD -> state = gamePanel.getGame().getWorld();

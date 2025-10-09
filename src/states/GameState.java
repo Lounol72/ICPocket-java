@@ -2,14 +2,15 @@ package states;
 
 public enum GameState {
 //    FIRST_LAUNCH,
+    SPLASH,
     START,
     MENU,
     WORLD,
     SETTINGS,
     INFOS;
 
-    public static GameState currentState = GameState.START;
-    private static GameState lastState = GameState.START;
+    public static GameState currentState = GameState.SPLASH;
+    private static GameState lastState = GameState.SPLASH;
 
     public static void setState( GameState state ){
         lastState = currentState;

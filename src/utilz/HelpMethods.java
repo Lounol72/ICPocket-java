@@ -221,39 +221,30 @@ public class HelpMethods {
 
 
 
+    // ========== MÉTHODES PIXEL-BASED DÉPRÉCIÉES (à supprimer après migration complète) ==========
+    
     /**
-     * Vérifie si l'entité est sur le sol
-     * @param x Position X de l'entité
-     * @param y Position Y de l'entité
-     * @param lvlData Données du niveau
-     * @return true si l'entité est sur le sol
+     * @deprecated Utiliser IsEntityOnFloorAABB à la place
      */
+    @Deprecated
     private static boolean IsSolid(float x, float y, int[][] lvlData) {
         return (GetLvlDataValue(x, y, lvlData) != 21);
     }
+    
     /**
-     * Vérifie si l'entité est sur le sol
-     * @param hitbox Hitbox de l'entité
-     * @param lvlData Données du niveau
-     * @return true si l'entité est sur le sol
+     * @deprecated Utiliser IsEntityOnFloorAABB à la place
      */
+    @Deprecated
     public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
-        // Check the pixel below bottomleft and bottomright
-        // System.out.println(IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData) + " : left pixel");
-        // System.out.println(IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData) + " : right pixel");
         if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
             if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
                 return false;
-
         return true;
-
     }
     /**
-     * Retourne la position X de l'entité à côté d'un mur
-     * @param hitbox Hitbox de l'entité
-     * @param xSpeed Vitesse horizontale de l'entité
-     * @return Position X de l'entité à côté d'un mur
+     * @deprecated Utiliser GetEntityXPosNextToWallAABB à la place
      */
+    @Deprecated
     public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
         int currentTile = (int) (hitbox.x / TILES_SIZE);
         if (xSpeed > 0) {
@@ -265,15 +256,13 @@ public class HelpMethods {
             // Left
             return currentTile * TILES_SIZE;
     }
+    
     /**
-     * Retourne la position Y de l'entité sous le toit ou au-dessus du sol
-     * @param hitbox Hitbox de l'entité
-     * @param airSpeed Vitesse verticale de l'entité
-     * @return Position Y de l'entité sous le toit ou au-dessus du sol
+     * @deprecated Utiliser GetEntityYPosUnderRoofOrAboveFloorAABB à la place
      */
+    @Deprecated
     public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
         int currentTile = (int) (hitbox.y / TILES_SIZE);
-        // System.out.println((hitbox.height / TILES_SIZE) + " : currentTile");
         if (airSpeed > 0) {
             // Falling - touching floor
             int tileYPos = currentTile * TILES_SIZE;
@@ -281,9 +270,7 @@ public class HelpMethods {
             return tileYPos - yOffset + TILES_DEFAULT_SIZE - 1;
         } else
             // Jumping
-            //System.out.println(currentTile * TILES_SIZE + " : currentTile");
             return currentTile * TILES_SIZE;
-
     }
 
     /**
@@ -367,6 +354,260 @@ public class HelpMethods {
         
         // Comportement normal pour les autres tiles
         return (tileId != 21);
+    }
+
+    // ========== NOUVELLES MÉTHODES AABB ==========
+    
+    /**
+     * Vérifie les collisions AABB avec les rectangles de collision du niveau
+     * @param hitbox Hitbox de l'entité
+     * @param level Niveau contenant les rectangles de collision
+     * @return true s'il y a collision avec un rectangle solide
+     */
+    public static boolean checkAABBCollision(Rectangle2D.Float hitbox, levels.Level level) {
+        for (Rectangle2D.Float collisionRect : level.getSolidCollisions()) {
+            if (hitbox.intersects(collisionRect)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Vérifie les collisions AABB avec les plateformes one-way
+     * @param hitbox Hitbox de l'entité
+     * @param level Niveau contenant les rectangles de collision
+     * @param velocity Vélocité de l'entité
+     * @param isDownPressed Si la touche down est pressée
+     * @return true s'il y a collision avec une plateforme one-way
+     */
+    public static boolean checkOneWayPlatformCollision(Rectangle2D.Float hitbox, levels.Level level, physics.Vector2D velocity, boolean isDownPressed) {
+        for (Rectangle2D.Float platformRect : level.getOneWayPlatformCollisions()) {
+            if (hitbox.intersects(platformRect)) {
+                // Vérifier les conditions pour les plateformes one-way
+                if (velocity.y > 0 && // Entité tombe
+                    hitbox.y + hitbox.height <= platformRect.y + Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE && // Entité au-dessus de la plateforme
+                    !isDownPressed) { // Touche down non pressée
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Vérifie si une plateforme one-way doit bloquer le joueur
+     * 
+     * Règles:
+     * - Montée (velocity.y < 0): Jamais bloquer, toujours passer
+     * - Descente (velocity.y >= 0): Bloquer SI le bas de la hitbox est au-dessus de la plateforme
+     * - Down pressé: Jamais bloquer, forcer le passage
+     * 
+     * @param hitbox Hitbox du joueur
+     * @param platformRect Rectangle de la plateforme
+     * @param velocity Vélocité du joueur
+     * @param isDownPressed Si la touche down est pressée
+     * @return true si la plateforme doit bloquer le joueur
+     */
+    public static boolean shouldOneWayPlatformBlock(
+        Rectangle2D.Float hitbox, 
+        Rectangle2D.Float platformRect, 
+        physics.Vector2D velocity, 
+        boolean isDownPressed
+    ) {
+        // Si touche down pressée, toujours laisser passer
+        if (isDownPressed) {
+            return false;
+        }
+        
+        // Si le joueur monte, toujours laisser passer
+        if (velocity.y < 0) {
+            return false;
+        }
+        
+        // Le joueur descend (velocity.y >= 0)
+        // Bloquer SEULEMENT si le bas du joueur est au-dessus de la plateforme
+        float playerBottom = hitbox.y + hitbox.height;
+        float platformTop = platformRect.y;
+        
+        // Utiliser la tolérance pour éviter les accrochages
+        return playerBottom <= platformTop + Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE;
+    }
+    
+    /**
+     * Obtient la première plateforme one-way qui bloque le joueur
+     * 
+     * @param hitbox Hitbox du joueur après mouvement
+     * @param level Niveau contenant les plateformes
+     * @param velocity Vélocité du joueur
+     * @param isDownPressed Si la touche down est pressée
+     * @return Rectangle de la plateforme qui bloque, ou null si aucune
+     */
+    public static Rectangle2D.Float getBlockingOneWayPlatform(
+        Rectangle2D.Float hitbox,
+        levels.Level level,
+        physics.Vector2D velocity,
+        boolean isDownPressed
+    ) {
+        for (Rectangle2D.Float platformRect : level.getOneWayPlatformCollisions()) {
+            if (hitbox.intersects(platformRect)) {
+                if (shouldOneWayPlatformBlock(hitbox, platformRect, velocity, isDownPressed)) {
+                    return platformRect;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Vérifie si l'entité peut se déplacer à une position donnée avec AABB
+     * @param x Position X
+     * @param y Position Y
+     * @param width Largeur
+     * @param height Hauteur
+     * @param level Niveau contenant les rectangles de collision
+     * @param velocity Vélocité de l'entité
+     * @param isDownPressed Si la touche down est pressée
+     * @return true si le mouvement est possible
+     */
+    public static boolean CanMoveHereAABB(float x, float y, float width, float height, levels.Level level, physics.Vector2D velocity, boolean isDownPressed) {
+        // Vérifier les limites du niveau
+        int levelWidth = level.getLevelData()[0].length * TILES_SIZE;
+        int levelHeight = level.getLevelData().length * TILES_SIZE;
+        
+        if (x < 0 || x >= levelWidth || y < 0 || y >= levelHeight) {
+            return false;
+        }
+        
+        // Créer une hitbox temporaire pour la position testée
+        Rectangle2D.Float testHitbox = new Rectangle2D.Float(x, y, width, height);
+        
+        // Vérifier les collisions solides
+        if (checkAABBCollision(testHitbox, level)) {
+            return false;
+        }
+        
+        // Vérifier les plateformes one-way
+        if (checkOneWayPlatformCollision(testHitbox, level, velocity, isDownPressed)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Vérifie si l'entité est sur le sol avec AABB
+     * @param hitbox Hitbox de l'entité
+     * @param level Niveau contenant les rectangles de collision
+     * @param velocity Vélocité de l'entité
+     * @return true si l'entité est sur le sol
+     */
+    public static boolean IsEntityOnFloorAABB(Rectangle2D.Float hitbox, levels.Level level, physics.Vector2D velocity) {
+        // Créer une hitbox légèrement en dessous pour détecter le sol
+        Rectangle2D.Float groundCheckHitbox = new Rectangle2D.Float(
+            hitbox.x, 
+            hitbox.y + hitbox.height + 1, 
+            hitbox.width, 
+            1
+        );
+        
+        // Vérifier les collisions solides
+        if (checkAABBCollision(groundCheckHitbox, level)) {
+            return true;
+        }
+        
+        // Vérifier les plateformes one-way (seulement si on tombe)
+        if (velocity.y > 0) {
+            return checkOneWayPlatformCollision(groundCheckHitbox, level, velocity, false);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Trouve la position X de l'entité à côté d'un mur avec AABB
+     * @param hitbox Hitbox de l'entité
+     * @param xSpeed Vitesse horizontale de l'entité
+     * @param level Niveau contenant les rectangles de collision
+     * @return Position X de l'entité à côté d'un mur
+     */
+    public static float GetEntityXPosNextToWallAABB(Rectangle2D.Float hitbox, float xSpeed, levels.Level level) {
+        if (xSpeed > 0) {
+            // Déplacement vers la droite - trouver le mur le plus proche à droite
+            float closestWallX = Float.MAX_VALUE;
+            
+            for (Rectangle2D.Float collisionRect : level.getSolidCollisions()) {
+                if (collisionRect.y < hitbox.y + hitbox.height && 
+                    collisionRect.y + collisionRect.height > hitbox.y &&
+                    collisionRect.x > hitbox.x + hitbox.width) {
+                    closestWallX = Math.min(closestWallX, collisionRect.x);
+                }
+            }
+            
+            if (closestWallX != Float.MAX_VALUE) {
+                return closestWallX - hitbox.width - 1;
+            }
+        } else {
+            // Déplacement vers la gauche - trouver le mur le plus proche à gauche
+            float closestWallX = Float.MIN_VALUE;
+            
+            for (Rectangle2D.Float collisionRect : level.getSolidCollisions()) {
+                if (collisionRect.y < hitbox.y + hitbox.height && 
+                    collisionRect.y + collisionRect.height > hitbox.y &&
+                    collisionRect.x + collisionRect.width < hitbox.x) {
+                    closestWallX = Math.max(closestWallX, collisionRect.x + collisionRect.width);
+                }
+            }
+            
+            if (closestWallX != Float.MIN_VALUE) {
+                return closestWallX + 1;
+            }
+        }
+        
+        return hitbox.x; // Pas de collision trouvée
+    }
+    
+    /**
+     * Trouve la position Y de l'entité sous le toit ou au-dessus du sol avec AABB
+     * @param hitbox Hitbox de l'entité
+     * @param airSpeed Vitesse verticale de l'entité
+     * @param level Niveau contenant les rectangles de collision
+     * @return Position Y de l'entité sous le toit ou au-dessus du sol
+     */
+    public static float GetEntityYPosUnderRoofOrAboveFloorAABB(Rectangle2D.Float hitbox, float airSpeed, levels.Level level) {
+        if (airSpeed > 0) {
+            // Chute - trouver le sol le plus proche en dessous
+            float closestFloorY = Float.MAX_VALUE;
+            
+            for (Rectangle2D.Float collisionRect : level.getSolidCollisions()) {
+                if (collisionRect.x < hitbox.x + hitbox.width && 
+                    collisionRect.x + collisionRect.width > hitbox.x &&
+                    collisionRect.y > hitbox.y + hitbox.height) {
+                    closestFloorY = Math.min(closestFloorY, collisionRect.y);
+                }
+            }
+            
+            if (closestFloorY != Float.MAX_VALUE) {
+                return closestFloorY - hitbox.height - 1;
+            }
+        } else {
+            // Saut - trouver le plafond le plus proche au-dessus
+            float closestCeilingY = Float.MIN_VALUE;
+            
+            for (Rectangle2D.Float collisionRect : level.getSolidCollisions()) {
+                if (collisionRect.x < hitbox.x + hitbox.width && 
+                    collisionRect.x + collisionRect.width > hitbox.x &&
+                    collisionRect.y + collisionRect.height < hitbox.y) {
+                    closestCeilingY = Math.max(closestCeilingY, collisionRect.y + collisionRect.height);
+                }
+            }
+            
+            if (closestCeilingY != Float.MIN_VALUE) {
+                return closestCeilingY + 1;
+            }
+        }
+        
+        return hitbox.y; // Pas de collision trouvée
     }
 
     /**

@@ -26,14 +26,17 @@
  */
 package game;
 
-import java.awt.*;
-
-
-import states.*;
-import states.Menu;
-
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import static states.GameState.currentState;
+import states.Menu;
+import states.Settings;
+import states.Splash;
+import states.Start;
+import states.World;
 
 public class Game implements Runnable{
     // Composants principaux du jeu
@@ -50,6 +53,12 @@ public class Game implements Runnable{
     private World world;
     private Start start;
     private Settings settings;
+    private final ScreenFader fader = new ScreenFader();
+    private Splash splash;
+    
+    // FPS/UPS tracking
+    private int currentFPS = 0;
+    private int currentUPS = 0;
 
 
     /**
@@ -74,6 +83,7 @@ public class Game implements Runnable{
         this.world = new World(this);
         this.start = new Start(this);
         this.settings = new Settings(this);
+        this.splash = new Splash(this);
     }
 
     /**
@@ -90,6 +100,9 @@ public class Game implements Runnable{
      */
     private void update() {
         switch(currentState){
+            case SPLASH -> {
+                splash.update();
+            }
             case MENU -> {
                 menu.update();
             }
@@ -108,6 +121,8 @@ public class Game implements Runnable{
             }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
         }
+        // update fader last
+        fader.update(this);
     }
 
     /**
@@ -118,6 +133,9 @@ public class Game implements Runnable{
      */
     public void render(Graphics g) {
         switch(currentState){
+            case SPLASH ->{
+                splash.draw(g);
+            }
             case START ->{
                 start.draw(g);
             }
@@ -135,6 +153,16 @@ public class Game implements Runnable{
             case INFOS -> {
             }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
+        }
+        // draw fader overlay on top
+        fader.draw((Graphics2D) g, this);
+        
+        // Draw FPS/UPS overlay if enabled
+        if (utilz.Constants.DEBUG.RENDER_FPS_UPS) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+            g2d.drawString("FPS: " + currentFPS + " | UPS: " + currentUPS, 10, 20);
         }
     }
 
@@ -183,11 +211,10 @@ public class Game implements Runnable{
             // Affichage des FPS et UPS chaque seconde
             if (System.currentTimeMillis() - lastCheck >= 1000) {
                 lastCheck = System.currentTimeMillis();
-                System.out.println("FPS: " + frames + " | UPS: " + updates);
+                currentFPS = frames;
+                currentUPS = updates;
                 frames = 0;
                 updates = 0;
-                
-                
             }
         }
     }
@@ -198,6 +225,10 @@ public class Game implements Runnable{
 
     public void UpdateEveryStrings() {
         System.out.println("Every Strings Updated");
+        menu.UpdateStrings();
+        settings.UpdateStrings();
+        splash.UpdateStrings();
+        
     }
 
     public World getWorld() {return world;
@@ -209,5 +240,13 @@ public class Game implements Runnable{
 
     public Start getStart() {
         return start;
+    }
+
+    public Splash getSplash() {
+        return splash;
+    }
+
+    public void startTransition(states.GameState target, Color color) {
+        fader.start(target, 400, 400, color);
     }
 }

@@ -1,12 +1,10 @@
 package states;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 public interface StateMethods {
-
-
 
     public void draw( Graphics g);
     public void update();
@@ -22,4 +20,7 @@ public interface StateMethods {
     public void mouseClicked(MouseEvent e) ;
     public void mousePressed(MouseEvent e) ;
     public void mouseReleased(MouseEvent e) ;
+    
+    // update strings
+    public void UpdateStrings();
 }

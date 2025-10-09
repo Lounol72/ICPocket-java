@@ -202,6 +202,19 @@ public class Vector2D {
         return (float) Math.sqrt(dx * dx + dy * dy);
     }
     
+    /**
+     * Limite les composantes X et Y indépendamment (platformer style)
+     * Utilisé pour la physique Hollow Knight où les axes sont séparés
+     * @param maxX Limite absolue X
+     * @param maxY Limite absolue Y
+     * @return Ce vecteur modifié
+     */
+    public Vector2D clampComponents(float maxX, float maxY) {
+        this.x = Math.max(-maxX, Math.min(maxX, this.x));
+        this.y = Math.max(-maxY, Math.min(maxY, this.y));
+        return this;
+    }
+    
     @Override
     public String toString() {
         return "Vector2D(" + x + ", " + y + ")";

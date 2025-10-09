@@ -1,13 +1,5 @@
 package states;
 
-import static utilz.Constants.SCALE;
-import static utilz.Constants.WORLD.GAME_HEIGHT;
-import static utilz.Constants.WORLD.GAME_WIDTH;
-import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
-import static utilz.Constants.WORLD.TILES_IN_WIDTH;
-import static utilz.Constants.WORLD.TILES_SIZE;
-import static utilz.LoadSave.GetLevelData;
-
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -15,6 +7,13 @@ import java.awt.event.MouseEvent;
 import entities.Player;
 import game.Game;
 import levels.LevelManager;
+import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
+import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
+import static utilz.Constants.WORLD.TILES_IN_WIDTH;
+import static utilz.Constants.WORLD.TILES_SIZE;
+import static utilz.LoadSave.GetLevelData;
 
 public class World extends State implements StateMethods{
 
@@ -39,7 +38,7 @@ public class World extends State implements StateMethods{
     public World( Game game){
         super(game);
         level = new LevelManager(game);
-        player = new Player( 5 * TILES_SIZE ,5 * TILES_SIZE, (int) (64 * SCALE), (int) (64 * SCALE));
+        player = new Player( 5 * TILES_SIZE ,5 * TILES_SIZE, (int) (64 * SCALE), (int) (64 * SCALE), level.getCurrentLevel());
         player.loadLvlData(level.getCurrentLevel().getLevelData());
 
     }
@@ -152,5 +151,10 @@ public class World extends State implements StateMethods{
     @Override
     public void mouseReleased( MouseEvent e ) {
 
+    }
+
+    @Override
+    public void UpdateStrings() {
+        
     }
 }

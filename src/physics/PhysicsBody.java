@@ -85,10 +85,14 @@ public class PhysicsBody {
     
     /**
      * Applique toutes les forces actives et calcule l'accélération
+     * AMÉLIORATION : Nettoyage automatique des forces inactives
      */
     public void applyForces() {
         // Réinitialiser l'accélération
         acceleration.zero();
+        
+        // Nettoyer les forces inactives AVANT de les appliquer (optimisation)
+        forces.removeIf(force -> !force.isActive());
         
         // Appliquer toutes les forces actives
         for (Force force : forces) {
@@ -220,6 +224,65 @@ public class PhysicsBody {
             }
         }
         return totalForce;
+    }
+    
+    /**
+     * Remplace toutes les forces d'un type par une nouvelle force
+     * @param forceVector Nouvelle force
+     * @param type Type de force à remplacer
+     */
+    public void replaceForceOfType(Vector2D forceVector, ForceType type) {
+        removeForcesOfType(type);
+        addForce(forceVector, type);
+    }
+    
+    /**
+     * Remplace toutes les forces d'un type par une nouvelle force temporaire
+     * @param forceVector Nouvelle force
+     * @param type Type de force à remplacer
+     * @param duration Durée de la force
+     */
+    public void replaceForceOfType(Vector2D forceVector, ForceType type, float duration) {
+        removeForcesOfType(type);
+        addForce(forceVector, type, duration);
+    }
+    
+    /**
+     * Vérifie si le corps a des forces actives
+     * @return true s'il y a des forces actives
+     */
+    public boolean hasActiveForces() {
+        return forces.stream().anyMatch(Force::isActive);
+    }
+    
+    /**
+     * Obtient le nombre de forces actives
+     * @return Nombre de forces actives
+     */
+    public int getActiveForceCount() {
+        return (int) forces.stream().filter(Force::isActive).count();
+    }
+    
+    /**
+     * Obtient des informations de debug détaillées
+     * @return String avec informations complètes
+     */
+    public String getDebugInfo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("PhysicsBody Debug:\n");
+        sb.append("  Position: ").append(position).append("\n");
+        sb.append("  Velocity: ").append(velocity).append("\n");
+        sb.append("  Acceleration: ").append(acceleration).append("\n");
+        sb.append("  Mass: ").append(mass).append("\n");
+        sb.append("  Active Forces: ").append(getActiveForceCount()).append("\n");
+        
+        for (Force force : forces) {
+            if (force.isActive()) {
+                sb.append("    - ").append(force.getType()).append(": ").append(force.getForce()).append("\n");
+            }
+        }
+        
+        return sb.toString();
     }
     
     @Override

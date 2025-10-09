@@ -1,15 +1,19 @@
 package states;
 
-import game.Game;
-
-import static utilz.Constants.WORLD.GAME_HEIGHT;
-import static utilz.Constants.WORLD.GAME_WIDTH;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+import game.Game;
+import static utilz.Constants.WORLD.GAME_HEIGHT;
+import static utilz.Constants.WORLD.GAME_WIDTH;
+import static utilz.HelpMethods.GetPhrase;
+
 public class Settings extends State implements StateMethods {
+
+    private String languageString;
 
     public Settings( Game game){
         super(game);
@@ -17,7 +21,7 @@ public class Settings extends State implements StateMethods {
     }
 
     private void initClasses(){
-
+        languageString = GetPhrase("settings");
     }
 
     /**
@@ -29,7 +33,7 @@ public class Settings extends State implements StateMethods {
             g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
             g.setColor(Color.BLACK);
             g.setFont(new Font("Arial", Font.PLAIN, 20));
-            g.drawString("Settings", 100, 100);
+            g.drawString(languageString, 100, 100);
             
     }
 
@@ -99,5 +103,9 @@ public class Settings extends State implements StateMethods {
     @Override
     public void mouseReleased( MouseEvent e ) {
 
+    }
+
+    public void UpdateStrings() {
+        languageString = GetPhrase("settings");
     }
 }

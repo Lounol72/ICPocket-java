@@ -1,18 +1,24 @@
 package states;
 
-import game.Game;
-
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
+import game.Game;
+import ui.MenuButtons;
+import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
-
+import static utilz.HelpMethods.GetPhrase;
+import utilz.LoadSave;
 public class Menu extends State implements StateMethods{
 
-   
+    private String languageString;
+    private MenuButtons[] buttons;
+    private BufferedImage backgroundImage;
     /**
      * Constructor
      * */
@@ -22,7 +28,15 @@ public class Menu extends State implements StateMethods{
     }
 
     private void initClasses() {
-
+        languageString = GetPhrase("menu");
+        buttons = new MenuButtons[]{
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 0, "start"),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 , 200, 50, 1, "settings"),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 2, "quit"),
+        };
+        
+        // Load background image
+        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.UI + "menu_background.jpg");
     }
 
     /**
@@ -30,12 +44,26 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void draw( Graphics g ) {
-        g.setColor(Color.RED);
-        g.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.PLAIN, 20));
-        g.drawString("Menu", 100, 100);
 
+        
+        // Draw background image if available, otherwise fallback to solid color
+        if (backgroundImage != null) {
+            // Scale background to fit screen
+            g.drawImage(backgroundImage, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
+        } else {
+            // Fallback background
+            g.setColor(new Color(30, 52, 62));
+            g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        }
+        
+        // Draw menu title
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, (int) (24 * SCALE)));
+        g.drawString(languageString, GAME_WIDTH / 2 - g.getFontMetrics().stringWidth(languageString) / 2, 100);
+        
+        // Draw buttons
+        for (MenuButtons mb : buttons)
+            mb.draw(g);
     }
 
     /**
@@ -43,7 +71,8 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void update() {
-        
+        for (MenuButtons mb : buttons)
+            mb.update();
     }
 
     /**
@@ -83,7 +112,11 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void mouseMoved( MouseEvent e ) {
-        
+        for (MenuButtons mb : buttons)
+            mb.setMouseOver(false);
+        for (MenuButtons mb : buttons)
+            if (isIn(e,mb))
+                mb.setMouseOver(true);
     }
 
     /**
@@ -99,7 +132,9 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void mousePressed( MouseEvent e ) {
-        
+        for (MenuButtons mb : buttons)
+            if (isIn(e,mb))
+                mb.setMousePressed(true);
 
     }
 
@@ -108,7 +143,15 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void mouseReleased( MouseEvent e ) {
-
+        for (MenuButtons mb : buttons)
+            if (isIn(e,mb))
+                mb.setMousePressed(false);
     }
 
+    @Override
+    public void UpdateStrings() {
+        languageString = GetPhrase("menu");
+        for (MenuButtons mb : buttons)
+            mb.setText(GetPhrase(mb.getText()));
+    }
 }

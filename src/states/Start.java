@@ -1,12 +1,14 @@
 package states;
 
-import game.Game;
-import ui.MenuButtons;
-import ui.ScrollingText;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+
+import game.Game;
+import ui.StartButtons;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.UI.BUTTONS.HEIGHT;
 import static utilz.Constants.UI.BUTTONS.WIDTH;
@@ -26,12 +28,12 @@ public class Start extends State implements StateMethods{
      private static final int X_BUTTON_OFFSET = (int)(Y_BUTTON_POS *SCALE) + WIDTH;
      private static final int Y_BUTTON_OFFSET = (int)((GAME_HEIGHT * 0.016) *SCALE) + HEIGHT;
  
-     MenuButtons[] buttons;
+     StartButtons[] buttons;
      private String languageString ;
      private int xText, yText ;
      private boolean textPosCalc = false;
  
-     private ScrollingText scrollText;
+    // private ScrollingText scrollText;
 
     public Start(Game game){
         super(game);
@@ -39,11 +41,11 @@ public class Start extends State implements StateMethods{
     }
 
     private void initClasses(){
-        buttons = new MenuButtons[3];
+        buttons = new StartButtons[3];
         String[] lang = {"fr", "en", "ger"};
         String[] text = {"Français","English", "Deutsch"};
         for (int i = 0; i < buttons.length ; i++)
-            buttons[i] = new MenuButtons(X_BUTTON_POS + ((i % 2) * X_BUTTON_OFFSET), Y_BUTTON_POS + ((i / 2) * Y_BUTTON_OFFSET * 2),WIDTH, HEIGHT,0,lang[i],text[i]);
+            buttons[i] = new StartButtons(X_BUTTON_POS + ((i % 2) * X_BUTTON_OFFSET), Y_BUTTON_POS + ((i / 2) * Y_BUTTON_OFFSET * 2),WIDTH, HEIGHT,0,lang[i],text[i]);
         languageString = GetPhrase("langue");
 
         // scrollText = new ScrollingText( 300, 300, 300, 50);
@@ -68,14 +70,14 @@ public class Start extends State implements StateMethods{
         }
 
         g.drawString(languageString ,xText ,yText );
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
             mb.draw(g);
         // scrollText.draw(g);
     }
 
     @Override
     public void update() {
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
             mb.update();
         // scrollText.update();
     }
@@ -101,9 +103,9 @@ public class Start extends State implements StateMethods{
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
             mb.setMouseOver(false);
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
             if (isIn(e,mb))
                 mb.setMouseOver(true);
     }
@@ -115,7 +117,7 @@ public class Start extends State implements StateMethods{
 
     @Override
     public void mousePressed(MouseEvent e) {
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
         if (isIn(e,mb))
             mb.setMousePressed(true);
     }
@@ -123,20 +125,21 @@ public class Start extends State implements StateMethods{
     @Override
     public void mouseReleased(MouseEvent e) {
         boolean actionPerformed = false;
-        for (MenuButtons mb : buttons) {
+        for (StartButtons mb : buttons) {
             if (isIn(e,mb)) {
                 mb.action();
                 actionPerformed = true;
             }
         }
-        for (MenuButtons mb : buttons)
+        for (StartButtons mb : buttons)
             mb.resetBools();
         
         if (actionPerformed) {
             UpdateStrings();
         }  }
 
-    private void UpdateStrings (){
+    @Override
+    public void UpdateStrings() {
         languageString = GetPhrase("langue");
         // scrollText.reset(GetPhrase("no_very_eff"));
         textPosCalc = false;

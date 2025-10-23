@@ -1,8 +1,11 @@
 package game;
 
+// Java standard library imports
 import java.awt.Dimension;
 import java.awt.Graphics;
+
 import javax.swing.JPanel;
+
 import inputs.KeyboardInputs;
 import inputs.MouseInputs;
 import static utilz.Constants.WORLD.GAME_HEIGHT;

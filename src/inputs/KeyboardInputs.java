@@ -1,5 +1,6 @@
 package inputs;
 
+// Java standard library imports
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -12,14 +13,44 @@ import static states.GameState.START;
 import static states.GameState.WORLD;
 import static states.GameState.currentState;
 
+/**
+ * Gestionnaire des entrées clavier pour le jeu ICPocket.
+ * Cette classe implémente KeyListener et délègue les événements clavier
+ * aux différents états du jeu selon l'état actuel.
+ * 
+ * <p><b>Fonctionnalités :</b></p>
+ * <ul>
+ *   <li>Gestion des événements keyTyped, keyPressed, keyReleased</li>
+ *   <li>Délégation des événements selon l'état du jeu</li>
+ *   <li>Support de tous les états : SPLASH, START, MENU, WORLD, SETTINGS, INFOS</li>
+ * </ul>
+ * 
+ * @author Lounol72
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 public class KeyboardInputs implements KeyListener {
 
+	/**
+	 * Panneau de jeu associé à ce gestionnaire d'entrées.
+	 */
 	private GamePanel gamePanel;
 
+	/**
+	 * Constructeur du gestionnaire d'entrées clavier.
+	 * 
+	 * @param gamePanel Le panneau de jeu à associer
+	 */
 	public KeyboardInputs(GamePanel gamePanel) {
 		this.gamePanel = gamePanel;
 	}
 
+	/**
+	 * Gère l'événement de frappe de touche (keyTyped).
+	 * Délègue l'événement à l'état de jeu approprié.
+	 * 
+	 * @param e L'événement de frappe de touche
+	 */
 	@Override
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub
@@ -49,6 +80,12 @@ public class KeyboardInputs implements KeyListener {
         }
 	}
 
+	/**
+	 * Gère l'événement de relâchement de touche (keyReleased).
+	 * Délègue l'événement à l'état de jeu approprié.
+	 * 
+	 * @param e L'événement de relâchement de touche
+	 */
 	@Override
 	public void keyReleased(KeyEvent e) {
 		switch(currentState){
@@ -77,6 +114,12 @@ public class KeyboardInputs implements KeyListener {
 		}
 	}
 
+	/**
+	 * Gère l'événement d'appui sur une touche (keyPressed).
+	 * Délègue l'événement à l'état de jeu approprié.
+	 * 
+	 * @param e L'événement d'appui sur une touche
+	 */
 	@Override
 	public void keyPressed(KeyEvent e) {
 		switch(currentState){

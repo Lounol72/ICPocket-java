@@ -1,5 +1,6 @@
 package entities;
 
+// Java standard library imports
 import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -24,6 +25,7 @@ import static utilz.Constants.PLAYER.HITBOX.HITBOX_HEIGHT;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_WIDTH;
 import static utilz.Constants.PLAYER.JUMP_CUT_MULTIPLIER;
 import static utilz.Constants.PLAYER.JUMP_FORCE;
+import static utilz.Constants.PLAYER.JUMP_MAX_TIME;
 import static utilz.Constants.PLAYER.JUMP_SPEED_MAX;
 import static utilz.Constants.PLAYER.MAX_FALL_SPEED;
 import static utilz.Constants.PLAYER.MAX_RISE_SPEED;
@@ -145,7 +147,7 @@ public class Player extends Entity {
         );
         if (inAir) {
             // Afficher l'index de l'animation en l'air
-            System.out.println("Index: " + animManager.getAniIndex());
+            //? DEBUG: System.out.println("Index: " + animManager.getAniIndex());
         }
         //drawHitbox(g, xLvlOffset, yLvlOffset);
     }
@@ -202,12 +204,14 @@ public class Player extends Entity {
             // Le joueur appuie sur down sur une plateforme one-way
             // Créer une "grâce period" pour éviter re-collision immédiate
             inAir = true;
+            System.out.println("feur");
             PhysicsDebugger.logPhysicsState("DROP THROUGH ONE-WAY", inAir, isJumping, physicsBody.getVelocity());
         }
     }
 
     /**
      * Applique la gravité avec modificateurs Hollow Knight
+     * AMÉLIORATION : Gravité appliquée en continu pendant que le joueur est en l'air
      */
     private void applyGravity() {
         if (inAir) {
@@ -223,14 +227,12 @@ public class Player extends Entity {
                 gravityMultiplier *= APEX_GRAVITY_MULT;
             }
             
-            // Ne pas appliquer gravité première frame de saut
-            if (!isJumping || physicsBody.getVelocity().y >= 0) {
-                Vector2D gravityForce = new Vector2D(0, GRAVITY * gravityMultiplier);
-                physicsBody.replaceForceOfType(gravityForce, ForceType.GRAVITY);
-                
-                // Debug
-                PhysicsDebugger.logForceApplied("GRAVITY", 0, GRAVITY * gravityMultiplier);
-            }
+            // Appliquer la gravité en continu pendant que le joueur est en l'air
+            Vector2D gravityForce = new Vector2D(0, GRAVITY * gravityMultiplier);
+            physicsBody.replaceForceOfType(gravityForce, ForceType.GRAVITY);
+            
+            // Debug
+            PhysicsDebugger.logForceApplied("GRAVITY", 0, GRAVITY * gravityMultiplier);
         } else {
             physicsBody.removeForcesOfType(ForceType.GRAVITY);
         }
@@ -340,7 +342,7 @@ public class Player extends Entity {
             // 2. Vérifier plateformes one-way (seulement si pas déjà en collision solide)
             else if (velocity.y >= 0) {
                 // Seulement pour la descente
-                handleOneWayPlatformCollisions();
+                 handleOneWayPlatformCollisions();
             }
         }
     }
@@ -358,7 +360,8 @@ public class Player extends Entity {
             resetInAir();
         } else {
             // Toucher le plafond en sautant
-            physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION;
+            physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION; // TODO fix: add fall speed after collision
+            
             isJumping = false;
         }
     }
@@ -493,10 +496,19 @@ public class Player extends Entity {
     }
 
     /**
-     * Effectue un saut (style Hollow Knight: court et réactif)
+     * Effectue un saut 
+     * AMÉLIORATION : Logique de saut corrigée pour éviter les sauts infinis
      */
     private void jump() {
-        if (isJumping || (inAir && coyoteTimeCounter <= 0) || checkCeilingCollision()) {
+        // Vérifier si le joueur peut sauter :
+        // 1. Pas déjà en train de sauter
+        // 2. Soit au sol, soit avec coyote time disponible
+        // 3. Pas de collision avec le plafond
+        boolean canJump = !isJumping && 
+                         (!inAir || coyoteTimeCounter > 0) && 
+                         !checkCeilingCollision();
+        
+        if (!canJump) {
             return;
         }
         
@@ -510,7 +522,7 @@ public class Player extends Entity {
         physicsBody.addForce(
             new Vector2D(0, JUMP_FORCE), 
             ForceType.JUMP, 
-            1.0f
+            JUMP_MAX_TIME
         );
     }
 

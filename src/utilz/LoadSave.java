@@ -1,19 +1,12 @@
 package utilz;
 
-
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+// Java standard library imports
+import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import com.google.gson.*;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.List;
+import javax.imageio.ImageIO;
 
 public class LoadSave {
 

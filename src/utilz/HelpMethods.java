@@ -1,5 +1,6 @@
 package utilz;
 
+// Java standard library imports
 import java.awt.geom.Rectangle2D;
 import java.io.FileReader;
 import java.io.IOException;

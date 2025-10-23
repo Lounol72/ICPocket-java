@@ -38,14 +38,30 @@ import static utilz.HelpMethods.GetEntityYPosUnderRoofOrAboveFloorAABB;
 import static utilz.HelpMethods.GetSpriteAmount;
 import static utilz.HelpMethods.IsEntityOnFloor;
 import static utilz.HelpMethods.IsEntityOnFloorAABB;
-import static utilz.HelpMethods.IsInOneWayTile;
 import static utilz.HelpMethods.mapAndClamp;
 import utilz.LoadSave;
 import utilz.PhysicsDebugger;
 
 /**
  * Classe représentant le joueur avec système de physique avancé
- * Gère les mouvements, sauts, collisions et animations
+ * 
+ * ARCHITECTURE:
+ * - Système de physique basé sur des forces (Vector2D, ForceType)
+ * - Gestion des plateformes one-way avec drop-through
+ * - Animations synchronisées avec l'état physique
+ * - Détection de collision AABB optimisée
+ * 
+ * ORDRE D'EXÉCUTION CRITIQUE (updatePhysics):
+ * 1. Inputs (one-way drop-through, jump)
+ * 2. Forces (gravité, mouvement)
+ * 3. Application des forces
+ * 4. Résistances et limitations
+ * 5. Collisions (peut modifier inAir)
+ * 6. Mouvement final
+ * 7. Synchronisation des états
+ * 
+ * @author Lounol72
+ * @version 2.0 - Système one-way platform corrigé
  */
 public class Player extends Entity {
 
@@ -56,7 +72,7 @@ public class Player extends Entity {
     private final float yDrawOffset = 20 * SCALE;
 
     // ================================
-    // VARIABLES D'ÉTAT DU JOUEUR
+    // ÉTAT DU JOUEUR
     // ================================
     private int playerAction = IDLE.ordinal();
     private int direction = 1;
@@ -65,25 +81,31 @@ public class Player extends Entity {
     private boolean inAir = false;
 
     // ================================
-    // VARIABLES D'INPUT
+    // INPUTS
     // ================================
     private boolean left, up, right, down, jump;
 
     // ================================
-    // VARIABLES DE SAUT
+    // SYSTÈME DE SAUT
     // ================================
     private int coyoteTimeCounter = COYOTE_TIME_FRAMES;
     private boolean jumpReleased = true;
     private boolean isJumping = false;
 
     // ================================
-    // VARIABLES DE NIVEAU
+    // SYSTÈME DROP-THROUGH ONE-WAY
+    // ================================
+    private int dropThroughGraceFrames = 0;
+    private static final int DROP_THROUGH_GRACE_FRAMES = 10; // Frames d'immunité après drop-through
+
+    // ================================
+    // NIVEAU ET COLLISIONS
     // ================================
     private int[][] levelData;
     private levels.Level currentLevel;
 
     // ================================
-    // VARIABLES D'ANIMATION
+    // ANIMATIONS
     // ================================
     private AnimationManager animManager;
 
@@ -93,11 +115,17 @@ public class Player extends Entity {
     
     /**
      * Constructeur du joueur
-     * @param x Position X initiale
-     * @param y Position Y initiale
-     * @param width Largeur du joueur
-     * @param height Hauteur du joueur
-     * @param level Niveau actuel
+     * 
+     * INITIALISATION:
+     * - Charge les animations du joueur
+     * - Initialise la hitbox avec les dimensions définies dans Constants
+     * - Détermine l'état initial (air/sol) basé sur la position
+     * 
+     * @param x Position X initiale du joueur
+     * @param y Position Y initiale du joueur
+     * @param width Largeur du sprite du joueur
+     * @param height Hauteur du sprite du joueur
+     * @param level Niveau contenant les données de collision
      */
     public Player(float x, float y, int width, int height, levels.Level level) {
         super(x, y, width, height);
@@ -106,7 +134,8 @@ public class Player extends Entity {
         this.currentLevel = level;
         this.levelData = level.getLevelData();
         
-        // Vérifier si le joueur commence en l'air
+        // DÉTERMINATION DE L'ÉTAT INITIAL
+        // Vérifier si le joueur commence en l'air ou au sol
         inAir = !IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity());
     }
 
@@ -124,32 +153,42 @@ public class Player extends Entity {
     }
 
     /**
-     * Rend le joueur à l'écran
-     * @param g Graphics context
-     * @param xLvlOffset Offset X du niveau
-     * @param yLvlOffset Offset Y du niveau
+     * Rend le joueur à l'écran avec gestion de la direction et des animations
+     * 
+     * RENDU OPTIMISÉ:
+     * - Calcul automatique de la direction basée sur la vélocité
+     * - Gestion du flip horizontal pour les sprites
+     * - Synchronisation avec l'état physique du joueur
+     * 
+     * @param g Graphics context pour le rendu
+     * @param xLvlOffset Offset horizontal du niveau (caméra)
+     * @param yLvlOffset Offset vertical du niveau (caméra)
      */
     public void render(Graphics g, int xLvlOffset, int yLvlOffset) {
+        // Calcul de la position de rendu avec offset de caméra
         int drawX = (int) (hitbox.x - xDrawOffset) - xLvlOffset;
         int drawY = (int) (hitbox.y - yDrawOffset) - yLvlOffset;
     
-        // Déterminer la direction basée sur la vélocité
+        // Mise à jour de la direction basée sur la vélocité horizontale
         updateDirection();
     
+        // Gestion du flip horizontal pour les sprites
         int drawWidth = direction * width;
         int correctedX = (direction == -1) ? drawX + width : drawX;
     
+        // Rendu du sprite avec animation
         g.drawImage(
             animManager.getFrame(playerAction, true),
             correctedX, drawY,
             drawWidth, height,
             null
         );
-        if (inAir) {
-            // Afficher l'index de l'animation en l'air
-            //? DEBUG: System.out.println("Index: " + animManager.getAniIndex());
-        }
-        //drawHitbox(g, xLvlOffset, yLvlOffset);
+        
+        // DEBUG: Décommenter pour afficher l'état du joueur
+        // if(inAir) System.out.println("inAir");
+        
+        // DEBUG: Décommenter pour afficher la hitbox
+        // drawHitbox(g, xLvlOffset, yLvlOffset);
     }
 
     // ================================
@@ -158,82 +197,127 @@ public class Player extends Entity {
 
     /**
      * Met à jour la physique du joueur avec le système de vecteurs
+     * 
+     * ORDRE D'EXÉCUTION CRITIQUE (ne pas modifier sans comprendre les dépendances) :
+     * 
+     * 1. handleOneWayTiles() - Gère le drop-through AVANT les autres calculs
+     * 2. handleJumpInput() - Gère les inputs de saut
+     * 3. applyGravity() + applyMovementInput() - Applique les forces
+     * 4. applyForces() + add(acceleration) - Calcule la nouvelle vélocité
+     * 5. applyResistances() - Applique friction/air resistance
+     * 6. limitAndNormalizeVelocity() - Limite la vélocité
+     * 7. handleCollisions() - Gère les collisions (peut modifier inAir via resetInAir())
+     * 8. applyMovement() - Applique le mouvement final à la hitbox
+     * 9. cleanupAndSync() - Nettoie les forces expirées
+     * 10. updateStates() - Met à jour inAir (DÉPEND de handleCollisions())
+     * 
+     * IMPORTANT: updateStates() doit être appelé APRÈS handleCollisions() car
+     * handleCollisions() peut appeler resetInAir() qui change l'état du joueur.
      */
     private void updatePhysics() {
-        // Vérifier les tiles one-way
-        handleOneWayTiles();
-        
+        // === PHASE 1: GESTION DES INPUTS ===
+        handleOneWayTiles();  // Drop-through one-way platforms
         moving = false;
+        handleJumpInput();    // Jump inputs avec coyote time
         
-        // Gérer les inputs de saut
-        handleJumpInput();
+        // === PHASE 2: CALCUL DES FORCES ===
+        applyGravity();       // Gravité avec modificateurs Hollow Knight
+        applyMovementInput(); // Forces d'input horizontal
         
-        // Appliquer les forces
-        applyGravity();
-        applyMovementInput();
-        
-        // Calculer et appliquer l'accélération
+        // === PHASE 3: APPLICATION DES FORCES ===
         physicsBody.applyForces();
         physicsBody.getVelocity().add(physicsBody.getAcceleration());
         
-        // Appliquer les résistances
-        applyResistances();
+        // === PHASE 4: RÉSISTANCES ET LIMITATIONS ===
+        applyResistances();           // Friction sol / résistance air
+        limitAndNormalizeVelocity();  // Limites de vitesse Hollow Knight
         
-        // Limiter et normaliser la vélocité
-        limitAndNormalizeVelocity();
+        // === PHASE 5: COLLISIONS (PEUT MODIFIER inAir) ===
+        handleCollisions();   // Collisions solides + one-way (appelle resetInAir())
         
-        // Gérer les collisions
-        handleCollisions();
+        // === PHASE 6: MOUVEMENT FINAL ===
+        applyMovement();      // Applique le mouvement à la hitbox
         
-        // Appliquer le mouvement
-        applyMovement();
-        
-        // Nettoyer et synchroniser
-        cleanupAndSync();
-        
-        // Mettre à jour les états
-        updateStates();
+        // === PHASE 7: NETTOYAGE ET SYNCHRONISATION ===
+        cleanupAndSync();    // Nettoie les forces expirées
+        updateStates();       // Met à jour inAir (DÉPEND de handleCollisions)
     }
 
     /**
-     * Gère les tiles one-way (passage vers le bas)
-     * Permet de traverser une plateforme en appuyant sur down
+     * Gère le drop-through des plateformes one-way
+     * 
+     * SYSTÈME DROP-THROUGH AMÉLIORÉ:
+     * - Détection AABB pour vérifier si le joueur est SUR une plateforme (pas dedans)
+     * - Impulsion vers le bas pour garantir le passage à travers
+     * - Grace frames pour éviter la re-collision immédiate
+     * 
+     * TIMING: Appelé en PHASE 1 de updatePhysics() AVANT les autres calculs
      */
     private void handleOneWayTiles() {
-        if (IsInOneWayTile(hitbox, levelData) && down && !inAir) {
-            // Le joueur appuie sur down sur une plateforme one-way
-            // Créer une "grâce period" pour éviter re-collision immédiate
-            inAir = true;
-            System.out.println("feur");
-            PhysicsDebugger.logPhysicsState("DROP THROUGH ONE-WAY", inAir, isJumping, physicsBody.getVelocity());
+        // Décrémenter les grace frames si actives
+        if (dropThroughGraceFrames > 0) {
+            dropThroughGraceFrames--;
+        }
+        
+        // Vérifier si le joueur est debout sur une plateforme one-way
+        if (down && !inAir && dropThroughGraceFrames == 0) {
+            // Créer une hitbox de test légèrement en dessous pour détecter la plateforme
+            Rectangle2D.Float groundCheckHitbox = new Rectangle2D.Float(
+                hitbox.x, 
+                hitbox.y + hitbox.height + 1, 
+                hitbox.width, 
+                1
+            );
+            
+            // Vérifier s'il y a une plateforme one-way sous les pieds
+            if (HelpMethods.checkOneWayPlatformCollision(groundCheckHitbox, currentLevel, physicsBody.getVelocity(), false)) {
+                // DROP-THROUGH DÉTECTÉ → Forcer le passage à travers
+                PhysicsDebugger.logPhysicsState("DROP THROUGH ONE-WAY", inAir, isJumping, physicsBody.getVelocity());
+                
+                // 1. Marquer comme en l'air
+                inAir = true;
+                
+                // 2. Ajouter une petite impulsion vers le bas pour garantir le passage
+                float dropThroughForce = 2.0f; // Force suffisante pour traverser
+                physicsBody.getVelocity().y = dropThroughForce;
+                
+                // 3. Activer les grace frames pour éviter la re-collision
+                dropThroughGraceFrames = DROP_THROUGH_GRACE_FRAMES;
+            }
         }
     }
 
     /**
      * Applique la gravité avec modificateurs Hollow Knight
-     * AMÉLIORATION : Gravité appliquée en continu pendant que le joueur est en l'air
+     * 
+     * SYSTÈME DE GRAVITÉ AVANCÉ:
+     * - Gravité de base constante
+     * - Fast fall: gravité augmentée si touche down pressée
+     * - Apex bonus: gravité réduite au sommet du saut (floatiness)
+     * - Application continue pendant que le joueur est en l'air
      */
     private void applyGravity() {
         if (inAir) {
             float gravityMultiplier = GRAVITY_MULTIPLIER_BASE;
             
-            // Fast fall - gravité augmentée si appui bas
+            // FAST FALL: Gravité augmentée si appui sur down
             if (down) {
                 gravityMultiplier *= FAST_FALL_MULT;
             }
             
-            // Apex bonus - gravité réduite au sommet (floatiness)
+            // APEX BONUS: Gravité réduite au sommet du saut (effet floatiness)
             if (Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
                 gravityMultiplier *= APEX_GRAVITY_MULT;
             }
             
-            // Appliquer la gravité en continu pendant que le joueur est en l'air
+            // Application de la force de gravité
             Vector2D gravityForce = new Vector2D(0, GRAVITY * gravityMultiplier);
             physicsBody.replaceForceOfType(gravityForce, ForceType.GRAVITY);
             
-            // Debug
+            // Debug: Logger la force appliquée
             PhysicsDebugger.logForceApplied("GRAVITY", 0, GRAVITY * gravityMultiplier);
         } else {
+            // Le joueur est au sol → supprimer la gravité
             physicsBody.removeForcesOfType(ForceType.GRAVITY);
         }
     }
@@ -294,7 +378,7 @@ public class Player extends Entity {
         float originalVelX = velocity.x;
         float originalVelY = velocity.y;
         
-        // === LIMITATION HORIZONTALE (style Hollow Knight) ===
+        // === LIMITATION HORIZONTALE  ===
         velocity.x = Math.max(-MAX_SPEED_X, Math.min(MAX_SPEED_X, velocity.x));
         
         // === LIMITATION VERTICALE (stricte, différenciée) ===
@@ -368,20 +452,33 @@ public class Player extends Entity {
     
     /**
      * Gère les collisions avec les plateformes one-way
-     * Séparé des collisions solides pour clarté
+     * 
+     * TIMING CRITIQUE: Cette méthode est appelée dans handleCollisions() APRÈS
+     * les collisions solides. Elle peut modifier inAir via resetInAir().
+     * 
+     * LOGIQUE ONE-WAY:
+     * - Montée (velocity.y < 0) + pas de down → ignorer (passer à travers)
+     * - Descente (velocity.y >= 0) → vérifier collision et atterrir si nécessaire
+     * - Down pressé → toujours ignorer (drop-through)
+     * - Grace frames actives → ignorer (évite re-collision après drop-through)
      * 
      * @return true si une collision one-way a été gérée
      */
     private boolean handleOneWayPlatformCollisions() {
         Vector2D velocity = physicsBody.getVelocity();
         
-        // Seulement vérifier si on descend ou si on est sur une plateforme
+        // GRACE FRAMES: Ignorer les collisions one-way pendant le drop-through
+        if (dropThroughGraceFrames > 0) {
+            return false; // En drop-through → ignorer toutes les collisions one-way
+        }
+        
+        // RÈGLE ONE-WAY: Ignorer si on monte sans appuyer sur down
         if (velocity.y < 0 && !down) {
-            // Montée sans down → ignorer les one-way
-            return false;
+            return false; // Montée normale → passer à travers
         }
         
         // Créer hitbox de test avec la nouvelle position
+        // Cette hitbox représente où le joueur sera après le mouvement
         Rectangle2D.Float testHitbox = new Rectangle2D.Float(
             hitbox.x + velocity.x,
             hitbox.y + velocity.y,
@@ -389,6 +486,7 @@ public class Player extends Entity {
             hitbox.height
         );
         
+        // Vérifier s'il y a une plateforme one-way qui bloque
         Rectangle2D.Float blockingPlatform = HelpMethods.getBlockingOneWayPlatform(
             testHitbox, 
             currentLevel, 
@@ -397,16 +495,16 @@ public class Player extends Entity {
         );
         
         if (blockingPlatform != null) {
-            // Collision détectée avec plateforme one-way
+            // COLLISION DÉTECTÉE → Atterrir sur la plateforme
             PhysicsDebugger.logCollision("ONE-WAY PLATFORM", velocity.y);
             
-            // Ajuster position pour être juste au-dessus de la plateforme
+            // Positionner le joueur juste au-dessus de la plateforme
             float targetY = blockingPlatform.y - hitbox.height;
             hitbox.y = targetY;
             
-            // Arrêter mouvement vertical et réinitialiser état air
+            // Arrêter le mouvement vertical et marquer comme au sol
             physicsBody.getVelocity().y = 0;
-            resetInAir();
+            resetInAir(); // ← CRITIQUE: Change inAir = false
             
             return true;
         }
@@ -496,29 +594,36 @@ public class Player extends Entity {
     }
 
     /**
-     * Effectue un saut 
-     * AMÉLIORATION : Logique de saut corrigée pour éviter les sauts infinis
+     * Effectue un saut avec système de validation avancé
+     * 
+     * CONDITIONS DE SAUT:
+     * 1. Pas déjà en train de sauter (évite les sauts infinis)
+     * 2. Soit au sol, soit avec coyote time disponible
+     * 3. Pas de collision avec le plafond
+     * 
+     * SYSTÈME DE FORCES:
+     * - Force de saut temporaire avec durée limitée
+     * - Gestion du coyote time pour les sauts de précision
+     * - Validation des collisions avant le saut
      */
     private void jump() {
-        // Vérifier si le joueur peut sauter :
-        // 1. Pas déjà en train de sauter
-        // 2. Soit au sol, soit avec coyote time disponible
-        // 3. Pas de collision avec le plafond
+        // VALIDATION DES CONDITIONS DE SAUT
         boolean canJump = !isJumping && 
                          (!inAir || coyoteTimeCounter > 0) && 
                          !checkCeilingCollision();
         
         if (!canJump) {
-            return;
+            return; // Conditions non remplies → pas de saut
         }
         
+        // INITIALISATION DU SAUT
         isJumping = true;
         inAir = true;
         
-        // Debug
+        // Debug: Logger les paramètres du saut
         PhysicsDebugger.logJump(JUMP_FORCE, physicsBody.getVelocity().y);
         
-        // Force de saut temporaire
+        // APPLICATION DE LA FORCE DE SAUT
         physicsBody.addForce(
             new Vector2D(0, JUMP_FORCE), 
             ForceType.JUMP, 
@@ -632,12 +737,34 @@ public class Player extends Entity {
     }
 
     /**
-     * Met à jour l'état inAir
+     * Met à jour l'état inAir - SOURCE UNIQUE DE VÉRITÉ pour la détection du sol
+     * 
+     * TIMING CRITIQUE: Cette méthode est appelée APRÈS handleCollisions() dans updatePhysics().
+     * Elle ne doit PAS surcharger inAir si handleCollisions() vient de le changer via resetInAir().
+     * 
+     * LOGIQUE DE DÉTECTION:
+     * - Utilise IsEntityOnFloorAABB() qui gère correctement les plateformes one-way
+     * - Vérifie les transitions: air→sol et sol→air
+     * - Ne change inAir que si l'état a vraiment changé
+     * 
+     * CORRECTION MAJEURE: Cette méthode gère maintenant correctement le cas où
+     * le joueur est immobile (velocity.y == 0) sur une plateforme one-way.
      */
     private void updateAirState() {
-        if (!inAir && !IsEntityOnFloorAABB(hitbox, currentLevel, physicsBody.getVelocity())) {
+        // Vérifier si le joueur est réellement sur le sol
+        // CORRECTION: IsEntityOnFloorAABB() gère maintenant velocity.y == 0
+        boolean isOnFloor = IsEntityOnFloorAABB(hitbox, currentLevel, physicsBody.getVelocity());
+        
+        // TRANSITION: Sol → Air (le joueur quitte le sol)
+        if (!inAir && !isOnFloor) {
             inAir = true;
         }
+        // TRANSITION: Air → Sol (le joueur atterrit)
+        else if (inAir && isOnFloor) {
+            inAir = false;
+        }
+        // CAS STABLE: Pas de changement d'état
+        // (inAir == isOnFloor) → pas de modification nécessaire
     }
 
     // ================================
@@ -662,7 +789,10 @@ public class Player extends Entity {
 
     /**
      * Charge les données de niveau (ancien système)
+     * 
      * @deprecated Utiliser loadLevel(Level) pour le nouveau système AABB
+     * Cette méthode est conservée pour la compatibilité mais ne doit plus être utilisée.
+     * Le nouveau système AABB offre de meilleures performances et une détection plus précise.
      */
     @Deprecated
     public void loadLvlData(int[][] lvlData) {
@@ -674,10 +804,19 @@ public class Player extends Entity {
     
     /**
      * Charge le niveau avec les rectangles de collision AABB
+     * 
+     * SYSTÈME AABB OPTIMISÉ:
+     * - Utilise des rectangles de collision pré-calculés
+     * - Détection plus précise des plateformes one-way
+     * - Meilleures performances que le système tile-based
+     * 
+     * @param level Niveau contenant les rectangles de collision AABB
      */
     public void loadLevel(levels.Level level) {
         this.currentLevel = level;
         this.levelData = level.getLevelData();
+        
+        // DÉTERMINATION DE L'ÉTAT INITIAL avec le système AABB
         if (!IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity())) {
             inAir = true;
         }
@@ -688,7 +827,11 @@ public class Player extends Entity {
     // ================================
 
     /**
-     * Remet tous les booléens de direction à false
+     * Remet tous les booléens d'input à false
+     * 
+     * UTILISATION:
+     * - Appelé lors du changement de niveau
+     * - Évite les inputs "collés" entre les transitions
      */
     public void resetDirBooleans() {
         left = false;
@@ -698,10 +841,11 @@ public class Player extends Entity {
         jump = false;
     }
 
-    // Getters et setters pour les inputs
-    public void setAttacking(boolean attacking) {
-        this.attacking = attacking;
-    }
+    // ================================
+    // GETTERS/SETTERS POUR LES INPUTS
+    // ================================
+    
+    public void setAttacking(boolean attacking) { this.attacking = attacking; }
 
     public boolean isLeft() { return left; }
     public void setLeft(boolean left) { this.left = left; }

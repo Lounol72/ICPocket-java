@@ -376,6 +376,10 @@ public class HelpMethods {
     
     /**
      * Vérifie les collisions AABB avec les plateformes one-way
+     * 
+     * CORRECTION CRITIQUE: Cette méthode doit vérifier les plateformes one-way
+     * même quand velocity.y == 0 (joueur immobile) pour éviter le flottement.
+     * 
      * @param hitbox Hitbox de l'entité
      * @param level Niveau contenant les rectangles de collision
      * @param velocity Vélocité de l'entité
@@ -385,8 +389,11 @@ public class HelpMethods {
     public static boolean checkOneWayPlatformCollision(Rectangle2D.Float hitbox, levels.Level level, physics.Vector2D velocity, boolean isDownPressed) {
         for (Rectangle2D.Float platformRect : level.getOneWayPlatformCollisions()) {
             if (hitbox.intersects(platformRect)) {
-                // Vérifier les conditions pour les plateformes one-way
-                if (velocity.y > 0 && // Entité tombe
+                // CORRECTION: Vérifier les plateformes one-way dans TOUS les cas sauf montée
+                // - velocity.y > 0 : le joueur tombe → vérifier
+                // - velocity.y == 0 : le joueur est immobile → vérifier AUSSI (clé du fix!)
+                // - velocity.y < 0 : le joueur monte → ne pas vérifier
+                if (velocity.y >= 0 && // Entité tombe OU immobile
                     hitbox.y + hitbox.height <= platformRect.y + Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TOLERANCE && // Entité au-dessus de la plateforme
                     !isDownPressed) { // Touche down non pressée
                     return true;
@@ -498,6 +505,10 @@ public class HelpMethods {
     
     /**
      * Vérifie si l'entité est sur le sol avec AABB
+     * 
+     * CORRECTION MAJEURE: Cette méthode gère maintenant correctement les cas où
+     * le joueur est immobile (velocity.y == 0) sur une plateforme one-way.
+     * 
      * @param hitbox Hitbox de l'entité
      * @param level Niveau contenant les rectangles de collision
      * @param velocity Vélocité de l'entité
@@ -505,6 +516,7 @@ public class HelpMethods {
      */
     public static boolean IsEntityOnFloorAABB(Rectangle2D.Float hitbox, levels.Level level, physics.Vector2D velocity) {
         // Créer une hitbox légèrement en dessous pour détecter le sol
+        // Cette hitbox de 1 pixel de hauteur est placée juste sous les pieds du joueur
         Rectangle2D.Float groundCheckHitbox = new Rectangle2D.Float(
             hitbox.x, 
             hitbox.y + hitbox.height + 1, 
@@ -512,16 +524,21 @@ public class HelpMethods {
             1
         );
         
-        // Vérifier les collisions solides
+        // Vérifier d'abord les collisions avec les blocs solides (murs, sol normal)
         if (checkAABBCollision(groundCheckHitbox, level)) {
             return true;
         }
         
-        // Vérifier les plateformes one-way (seulement si on tombe)
-        if (velocity.y > 0) {
+        // Vérifier les plateformes one-way
+        // CORRECTION CRITIQUE: Vérifier les plateformes one-way dans TOUS les cas sauf montée
+        // - velocity.y > 0 : le joueur tombe → vérifier
+        // - velocity.y == 0 : le joueur est immobile → vérifier AUSSI (c'est la clé du fix!)
+        // - velocity.y < 0 : le joueur monte → ne pas vérifier
+        if (velocity.y >= 0) {
             return checkOneWayPlatformCollision(groundCheckHitbox, level, velocity, false);
         }
         
+        // Si velocity.y < 0, le joueur monte (saut) → pas sur le sol
         return false;
     }
     

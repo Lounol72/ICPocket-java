@@ -32,6 +32,7 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
             case SETTINGS -> state = gamePanel.getGame().getSettings();
 
             case INFOS -> { /* à implémenter */ }
+            case QUIT -> System.exit(0);
             default -> throw new IllegalStateException("État de jeu non géré");
         }
 

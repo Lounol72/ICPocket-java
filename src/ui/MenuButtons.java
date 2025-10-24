@@ -3,19 +3,23 @@ package ui;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
+import states.GameState;
 import static utilz.Constants.UI.BUTTONS.DEFAULT_HEIGHT;
 import static utilz.Constants.UI.BUTTONS.DEFAULT_WIDTH;
 import utilz.LoadSave;
 
 public class MenuButtons extends Button{
     private int rowIndex = 0;
-    private String text;
+    private String text, baseText;
+    private GameState action;
 
-    public MenuButtons(int x, int y, int width, int height, int rowIndex, String text) {
+    public MenuButtons(int x, int y, int width, int height, int rowIndex, String text, GameState action ) {
         super(x, y, width, height);
         loadImages();
         this.rowIndex = rowIndex;
         this.text = text;
+        this.baseText = text;
+        this.action = action;
     }
     
     private void loadImages() {
@@ -44,4 +48,13 @@ public class MenuButtons extends Button{
     public String getText() {
         return text;
     }
+    public void action() {
+        // prendre le label du bouton et faire une action en fonction de ce label
+        GameState.setState(action);
+    }
+
+    public String getBaseText() {
+        return baseText;
+    }
+
 }

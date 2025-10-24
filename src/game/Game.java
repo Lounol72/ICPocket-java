@@ -120,6 +120,9 @@ public class Game implements Runnable{
 
             case INFOS -> {
             }
+            case QUIT -> {
+                System.exit(0);
+            }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
         }
         // update fader last
@@ -152,6 +155,9 @@ public class Game implements Runnable{
             }
 
             case INFOS -> {
+            }
+            case QUIT -> {
+                // Nothing to render for quit state
             }
             default -> {throw new IllegalStateException("État de jeu non géré"); }
         }

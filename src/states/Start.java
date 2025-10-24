@@ -95,11 +95,6 @@ public class Start extends State implements StateMethods{
 
     @Override
     public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()){
-            case KeyEvent.VK_A->{
-                GameState.setState(GameState.MENU);
-            }
-        }
     }
 
     @Override
@@ -137,7 +132,8 @@ public class Start extends State implements StateMethods{
         
         if (actionPerformed) {
             UpdateStrings();
-        }  }
+        }  
+    }
 
     @Override
     public void UpdateStrings() {

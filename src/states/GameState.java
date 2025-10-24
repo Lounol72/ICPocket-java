@@ -7,7 +7,8 @@ public enum GameState {
     MENU,
     WORLD,
     SETTINGS,
-    INFOS;
+    INFOS,
+    QUIT;
 
     public static GameState currentState = GameState.SPLASH;
     private static GameState lastState = GameState.SPLASH;

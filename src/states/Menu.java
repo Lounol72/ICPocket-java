@@ -30,9 +30,9 @@ public class Menu extends State implements StateMethods{
     private void initClasses() {
         languageString = GetPhrase("menu");
         buttons = new MenuButtons[]{
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 0, "start"),
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 , 200, 50, 1, "settings"),
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 2, "quit"),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 0, "start", GameState.WORLD),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 , 200, 50, 1, "settings", GameState.SETTINGS),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 2, "quit", GameState.QUIT),
         };
         
         // Load background image
@@ -96,15 +96,7 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void keyPressed( KeyEvent e ) {
-        switch (e.getKeyCode()){
-            case KeyEvent.VK_A->{
-                GameState.setState(GameState.SETTINGS);
-            }
-            case KeyEvent.VK_Z->{
-                GameState.setState(GameState.WORLD);
-            }
-
-        }
+        
     }
 
     /**
@@ -142,16 +134,21 @@ public class Menu extends State implements StateMethods{
      * @param e
      */
     @Override
-    public void mouseReleased( MouseEvent e ) {
+    public void mouseReleased(MouseEvent e) {
+        
+        for (MenuButtons mb : buttons) {
+            if (isIn(e,mb)) 
+                mb.action(); 
+        }
         for (MenuButtons mb : buttons)
-            if (isIn(e,mb))
-                mb.setMousePressed(false);
+            mb.resetBools();
     }
 
     @Override
     public void UpdateStrings() {
         languageString = GetPhrase("menu");
+        // mettre à jour le texte des boutons
         for (MenuButtons mb : buttons)
-            mb.setText(GetPhrase(mb.getText()));
+            mb.setText(GetPhrase(mb.getBaseText()));
     }
 }

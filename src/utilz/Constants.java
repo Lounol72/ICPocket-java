@@ -52,6 +52,7 @@ public class Constants {
 
         // === ANIMATIONS ===
         public static final int ANI_SPEED = 25;
+        public static final int ATTACK_ANI_SPEED = 10;
         public static final float PLAYER_SPEED_RUN = SCALE;
         public static final float JUMP_SPEED_MAX = -5f * SCALE;
         public static final float FALL_SPEED_AFTER_COLLISION = 0.5f * SCALE;
@@ -63,6 +64,31 @@ public class Constants {
             private static final int HITBOX_HEIGHT_DEFAULT = 32;
             public static final int HITBOX_WIDTH =(int) (HITBOX_WIDTH_DEFAULT * SCALE);
             public static final int HITBOX_HEIGHT =(int) (HITBOX_HEIGHT_DEFAULT * SCALE);
+        }
+
+        public static class SPRITE{
+            // ================================
+            // DIMENSIONS DES SPRITES
+            // ================================
+            public static final int SPRITE_WIDTH_DEFAULT = 48 ;
+            public static final int SPRITE_HEIGHT_DEFAULT = 48 ;
+            public static final int ATTACK_SPRITE_WIDTH_DEFAULT = 80 ;
+            public static final int NORMAL_SPRITE_WIDTH = (int) (SPRITE_WIDTH_DEFAULT * SCALE);
+            public static final int NORMAL_SPRITE_HEIGHT = (int) (SPRITE_HEIGHT_DEFAULT * SCALE);
+            public static final int ATTACK_SPRITE_WIDTH = (int) (ATTACK_SPRITE_WIDTH_DEFAULT * SCALE);
+            public static final int ATTACK_SPRITE_HEIGHT = (int) (SPRITE_HEIGHT_DEFAULT * SCALE);
+            
+            // ================================
+            // CONSTANTES DE RENDU
+            // ================================
+            public static final float X_DRAW_OFFSET = 22 * SCALE;
+            public static final float Y_DRAW_OFFSET = 20 * SCALE;
+            
+            // === OFFSETS POUR ANIMATIONS D'ATTAQUE (80x48) ===
+            // Offset horizontal ajusté pour les sprites plus larges (80px vs 48px)
+            // Différence de largeur: 80 - 48 = 32px, donc offset supplémentaire de 16px
+            public static final float ATTACK_X_DRAW_OFFSET = (22 + 16) * SCALE;  // 38 * SCALE
+            public static final float ATTACK_Y_DRAW_OFFSET = 20 * SCALE;  // Même offset vertical
         }
     }
 

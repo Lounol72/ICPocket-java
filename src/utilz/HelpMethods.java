@@ -197,6 +197,9 @@ public class HelpMethods {
         for ( int action : new int[]{7, 11} ) {
             ACTION_SPRITE_COUNT.put(action, 4);
         }
+        for( int action : new int[]{13} ) {
+            ACTION_SPRITE_COUNT.put(action, 10);
+        }
     }
     /**
      * Retourne le nombre de sprites pour une action donnée

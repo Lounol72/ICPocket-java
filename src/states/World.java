@@ -107,6 +107,9 @@ public class World extends State implements StateMethods{
             case KeyEvent.VK_SPACE->{
                 player.setJump(false);
             }
+            case KeyEvent.VK_E ->{
+                player.setAttack(false);
+            }
             //default -> System.out.println("Unexpected value: " + e.getKeyCode());
         }
     }
@@ -128,6 +131,9 @@ public class World extends State implements StateMethods{
             }
             case KeyEvent.VK_A ->{
                 GameState.setState(GameState.MENU);
+            }
+            case KeyEvent.VK_E ->{
+                player.setAttack(true);
             }
             //default -> System.out.println("Unexpected value: " + e.getKeyCode());
         }

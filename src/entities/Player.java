@@ -444,9 +444,10 @@ public class Player extends Entity {
             resetInAir();
         } else {
             // Toucher le plafond en sautant
-            physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION; // TODO fix: add fall speed after collision
+            physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION;
             
             isJumping = false;
+            physicsBody.removeForcesOfType(ForceType.JUMP);
         }
     }
     
@@ -462,6 +463,10 @@ public class Player extends Entity {
      * - Down pressé → toujours ignorer (drop-through)
      * - Grace frames actives → ignorer (évite re-collision après drop-through)
      * 
+     * CORRECTION VÉLOCITÉ ÉLEVÉE:
+     * - Vérifie le chemin du mouvement, pas seulement la position finale
+     * - Utilise un système de raycast pour détecter les collisions pendant le mouvement
+     * 
      * @return true si une collision one-way a été gérée
      */
     private boolean handleOneWayPlatformCollisions() {
@@ -472,31 +477,17 @@ public class Player extends Entity {
             return false; // En drop-through → ignorer toutes les collisions one-way
         }
         
-        // RÈGLE ONE-WAY: Ignorer si on monte sans appuyer sur down
-        if (velocity.y < 0 && !down) {
-            return false; // Montée normale → passer à travers
+        // RÈGLE ONE-WAY: Ignorer si on monte ACTIVEMENT sans appuyer sur down
+        if (velocity.y < 0 && !down && isJumping) {
+            return false; // Montée ACTIVE → passer à travers
         }
         
-        // Créer hitbox de test avec la nouvelle position
-        // Cette hitbox représente où le joueur sera après le mouvement
-        Rectangle2D.Float testHitbox = new Rectangle2D.Float(
-            hitbox.x + velocity.x,
-            hitbox.y + velocity.y,
-            hitbox.width,
-            hitbox.height
-        );
-        
-        // Vérifier s'il y a une plateforme one-way qui bloque
-        Rectangle2D.Float blockingPlatform = HelpMethods.getBlockingOneWayPlatform(
-            testHitbox, 
-            currentLevel, 
-            velocity, 
-            down
-        );
+        // CORRECTION: Vérifier le chemin du mouvement pour les vélocités élevées
+        Rectangle2D.Float blockingPlatform = findOneWayPlatformInPath(velocity);
         
         if (blockingPlatform != null) {
             // COLLISION DÉTECTÉE → Atterrir sur la plateforme
-            PhysicsDebugger.logCollision("ONE-WAY PLATFORM", velocity.y);
+            PhysicsDebugger.logCollision("ONE-WAY PLATFORM (HIGH VELOCITY)", velocity.y);
             
             // Positionner le joueur juste au-dessus de la plateforme
             float targetY = blockingPlatform.y - hitbox.height;
@@ -504,12 +495,62 @@ public class Player extends Entity {
             
             // Arrêter le mouvement vertical et marquer comme au sol
             physicsBody.getVelocity().y = 0;
-            resetInAir(); // ← CRITIQUE: Change inAir = false
+            resetInAir();
             
             return true;
         }
         
         return false;
+    }
+    
+    /**
+     * Trouve une plateforme one-way dans le chemin du mouvement
+     * 
+     * CORRECTION CRITIQUE: Cette méthode résout le problème de passage à travers
+     * les plateformes one-way avec des vélocités élevées en vérifiant le chemin
+     * complet du mouvement, pas seulement la position finale.
+     * 
+     * @param velocity Vélocité du joueur
+     * @return Plateforme one-way qui bloque le chemin, ou null si aucune
+     */
+    private Rectangle2D.Float findOneWayPlatformInPath(Vector2D velocity) {
+        // Si pas de mouvement vertical, pas de collision possible
+        if (velocity.y == 0) {
+            return null;
+        }
+        
+        // Pour les vélocités élevées, vérifier le chemin par étapes
+        float stepSize = Math.max(1.0f, Math.abs(velocity.y) / 10.0f); // Diviser en 10 étapes max
+        float totalDistance = Math.abs(velocity.y);
+        int steps = Math.max(1, (int)(totalDistance / stepSize));
+        
+        for (int i = 1; i <= steps; i++) {
+            float progress = (float)i / steps;
+            float currentX = hitbox.x + velocity.x * progress;
+            float currentY = hitbox.y + velocity.y * progress;
+            
+            // Créer une hitbox de test pour cette position intermédiaire
+            Rectangle2D.Float testHitbox = new Rectangle2D.Float(
+                currentX,
+                currentY,
+                hitbox.width,
+                hitbox.height
+            );
+            
+            // Vérifier s'il y a une plateforme one-way qui bloque à cette position
+            Rectangle2D.Float blockingPlatform = HelpMethods.getBlockingOneWayPlatform(
+                testHitbox, 
+                currentLevel, 
+                velocity, 
+                down
+            );
+            
+            if (blockingPlatform != null) {
+                return blockingPlatform;
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -544,9 +585,10 @@ public class Player extends Entity {
      * Met à jour les états du joueur
      */
     private void updateStates() {
-        // Reset isJumping après la première frame de saut ou si on touche le sol
-        if (isJumping && (physicsBody.getVelocity().y >= 0 || !inAir)) {
+        // Reset isJumping dès qu'on commence à tomber (velocity positive)
+        if (isJumping && physicsBody.getVelocity().y >= 0) {
             isJumping = false;
+            physicsBody.removeForcesOfType(ForceType.JUMP);
         }
 
         // Mettre à jour l'état inAir
@@ -590,6 +632,7 @@ public class Player extends Entity {
         if (isJumping && physicsBody.getVelocity().y < 0) {
             physicsBody.getVelocity().y *= JUMP_CUT_MULTIPLIER;
             isJumping = false;
+            physicsBody.removeForcesOfType(ForceType.JUMP);
         }
     }
 
@@ -669,6 +712,7 @@ public class Player extends Entity {
         inAir = false;
         isJumping = false;
         coyoteTimeCounter = COYOTE_TIME_FRAMES;
+        physicsBody.removeForcesOfType(ForceType.JUMP);
         physicsBody.stop(false, true);
     }
 

@@ -47,8 +47,8 @@ public class LevelManager {
                 g.drawImage(levelSprite[index], (i * TILES_SIZE) - xLvlOffset, (j * TILES_SIZE) - yLvlOffset, TILES_SIZE, TILES_SIZE, null);
             }
         
-        // Debug : Afficher les rectangles de collision AABB fusionnés
-        drawCollisionRectangles(g, xLvlOffset, yLvlOffset);
+        //? Debug : Afficher les rectangles de collision AABB fusionnés
+        //? drawCollisionRectangles(g, xLvlOffset, yLvlOffset);
     }
     
     /**

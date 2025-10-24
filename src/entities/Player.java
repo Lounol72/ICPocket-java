@@ -30,7 +30,14 @@ import static utilz.Constants.PLAYER.JUMP_SPEED_MAX;
 import static utilz.Constants.PLAYER.MAX_FALL_SPEED;
 import static utilz.Constants.PLAYER.MAX_RISE_SPEED;
 import static utilz.Constants.PLAYER.MAX_SPEED_X;
-import static utilz.Constants.SCALE;
+import static utilz.Constants.PLAYER.SPRITE.ATTACK_SPRITE_WIDTH;
+import static utilz.Constants.PLAYER.SPRITE.ATTACK_SPRITE_WIDTH_DEFAULT;
+import static utilz.Constants.PLAYER.SPRITE.ATTACK_X_DRAW_OFFSET;
+import static utilz.Constants.PLAYER.SPRITE.ATTACK_Y_DRAW_OFFSET;
+import static utilz.Constants.PLAYER.SPRITE.SPRITE_HEIGHT_DEFAULT;
+import static utilz.Constants.PLAYER.SPRITE.SPRITE_WIDTH_DEFAULT;
+import static utilz.Constants.PLAYER.SPRITE.X_DRAW_OFFSET;
+import static utilz.Constants.PLAYER.SPRITE.Y_DRAW_OFFSET;
 import utilz.HelpMethods;
 import static utilz.HelpMethods.CanMoveHereAABB;
 import static utilz.HelpMethods.GetEntityXPosNextToWallAABB;
@@ -65,11 +72,7 @@ import utilz.PhysicsDebugger;
  */
 public class Player extends Entity {
 
-    // ================================
-    // CONSTANTES DE RENDU
-    // ================================
-    private final float xDrawOffset = 22 * SCALE;
-    private final float yDrawOffset = 20 * SCALE;
+    
 
     // ================================
     // ÉTAT DU JOUEUR
@@ -77,13 +80,12 @@ public class Player extends Entity {
     private int playerAction = IDLE.ordinal();
     private int direction = 1;
     private boolean moving = false;
-    private boolean attacking = false;
     private boolean inAir = false;
 
     // ================================
     // INPUTS
     // ================================
-    private boolean left, up, right, down, jump;
+    private boolean left, up, right, down, jump, attack;
 
     // ================================
     // SYSTÈME DE SAUT
@@ -107,7 +109,11 @@ public class Player extends Entity {
     // ================================
     // ANIMATIONS
     // ================================
-    private AnimationManager animManager;
+    private AnimationManager animManager;           // Gestionnaire unique pour toutes les animations
+    
+    // === GESTION DES SPRITES D'ATTAQUE ===
+    private boolean isUsingAttackSprites = false;     // Flag pour savoir si on utilise les sprites d'attaque
+    private boolean isAttacking = false;              // Flag pour savoir si on est en train d'attaquer
 
     // ================================
     // CONSTRUCTEUR
@@ -165,20 +171,38 @@ public class Player extends Entity {
      * @param yLvlOffset Offset vertical du niveau (caméra)
      */
     public void render(Graphics g, int xLvlOffset, int yLvlOffset) {
+        // === DÉTERMINATION DES OFFSETS SELON L'ÉTAT ===
+        float currentXOffset, currentYOffset;
+        
+        if (isUsingAttackSprites) {
+            // Utiliser les offsets pour les sprites d'attaque (80x48)
+            currentXOffset = ATTACK_X_DRAW_OFFSET;
+            currentYOffset = ATTACK_Y_DRAW_OFFSET;
+        } else {
+            // Utiliser les offsets pour les sprites normaux (48x48)
+            currentXOffset = X_DRAW_OFFSET;
+            currentYOffset = Y_DRAW_OFFSET;
+        }
+        
         // Calcul de la position de rendu avec offset de caméra
-        int drawX = (int) (hitbox.x - xDrawOffset) - xLvlOffset;
-        int drawY = (int) (hitbox.y - yDrawOffset) - yLvlOffset;
+        int drawX = (int) (hitbox.x - currentXOffset) - xLvlOffset;
+        int drawY = (int) (hitbox.y - currentYOffset) - yLvlOffset;
     
         // Mise à jour de la direction basée sur la vélocité horizontale
         updateDirection();
     
         // Gestion du flip horizontal pour les sprites
-        int drawWidth = direction * width;
-        int correctedX = (direction == -1) ? drawX + width : drawX;
+        // IMPORTANT: Toujours utiliser les dimensions originales pour l'affichage
+        int drawWidth = (int) (isUsingAttackSprites ? ATTACK_SPRITE_WIDTH * 1.6 * direction : width * direction);
+        
+        int correctedX = (direction == -1) ? drawX + (isUsingAttackSprites ? ATTACK_SPRITE_WIDTH : width) : drawX;
     
         // Rendu du sprite avec animation
+        // Utiliser l'index approprié selon l'état
+        int animationIndex = isUsingAttackSprites ? 13 : playerAction; // Ligne 13 pour l'attaque
+        
         g.drawImage(
-            animManager.getFrame(playerAction, true),
+            animManager.getFrame(animationIndex, true),
             correctedX, drawY,
             drawWidth, height,
             null
@@ -251,9 +275,22 @@ public class Player extends Entity {
      * - Impulsion vers le bas pour garantir le passage à travers
      * - Grace frames pour éviter la re-collision immédiate
      * 
+     * IMPORTANT: Pendant l'attaque, le joueur ne peut pas faire de drop-through
+     * 
      * TIMING: Appelé en PHASE 1 de updatePhysics() AVANT les autres calculs
      */
     private void handleOneWayTiles() {
+        // === BLOCAGE DU DROP-THROUGH PENDANT L'ATTAQUE ===
+        if (isAttacking) {
+            // Pendant l'attaque, on ne peut pas faire de drop-through
+            // Mais on continue à décrémenter les grace frames pour éviter les bugs
+            if (dropThroughGraceFrames > 0) {
+                dropThroughGraceFrames--;
+            }
+            return; // Sortir immédiatement pour empêcher tout drop-through
+        }
+        
+        // === DROP-THROUGH NORMAL (seulement si pas en train d'attaquer) ===
         // Décrémenter les grace frames si actives
         if (dropThroughGraceFrames > 0) {
             dropThroughGraceFrames--;
@@ -325,8 +362,18 @@ public class Player extends Entity {
     /**
      * Applique les forces d'input du joueur
      * AMÉLIORATION : Gestion plus efficace des forces d'input
+     * 
+     * IMPORTANT: Pendant l'attaque, le joueur ne peut pas bouger horizontalement
      */
     private void applyMovementInput() {
+        // === BLOCAGE DU MOUVEMENT PENDANT L'ATTAQUE ===
+        if (isAttacking) {
+            // Supprimer toutes les forces d'input pendant l'attaque
+            physicsBody.removeForcesOfType(ForceType.INPUT);
+            return; // Sortir immédiatement pour empêcher tout mouvement
+        }
+        
+        // === MOUVEMENT NORMAL (seulement si pas en train d'attaquer) ===
         if (left && !right) {
             applyHorizontalForce(-ACCELERATION);
         } else if (right && !left) {
@@ -604,8 +651,21 @@ public class Player extends Entity {
 
     /**
      * Gère l'input de saut avec coyote time et variable jump height
+     * 
+     * IMPORTANT: Pendant l'attaque, le joueur ne peut pas sauter
      */
     private void handleJumpInput() {
+        // === BLOCAGE DU SAUT PENDANT L'ATTAQUE ===
+        if (isAttacking) {
+            // Pendant l'attaque, on ne peut pas sauter
+            // Mais on continue à gérer le relâchement pour éviter les bugs
+            if (!jump) {
+                jumpReleased = true;
+            }
+            return; // Sortir immédiatement pour empêcher tout saut
+        }
+        
+        // === SAUT NORMAL (seulement si pas en train d'attaquer) ===
         if (jump && jumpReleased) {
             jumpReleased = false;
             if (!isJumping) {
@@ -721,13 +781,16 @@ public class Player extends Entity {
     // ================================
 
     /**
-     * Met à jour le tick d'animation
+     * Met à jour le tick d'animation avec support des animations d'attaque
      */
     private void updateAnimationTick() {
         if (inAir) {
             handleAirAnimation();
         } else {
-            animManager.updateFrame(playerAction, true, attacking);
+            // Utiliser l'index approprié selon l'état
+            int animationIndex = isUsingAttackSprites ? 13 : playerAction; // Ligne 13 pour l'attaque
+            
+            animManager.updateFrame(animationIndex, true, isAttack());
         }
     }
 
@@ -749,22 +812,45 @@ public class Player extends Entity {
     }
 
     /**
-     * Définit l'animation actuelle
+     * Définit l'animation actuelle avec support des animations d'attaque
+     * 
+     * PRIORITÉ DES ANIMATIONS:
+     * 1. ATTACK (priorité absolue, non-interruptible)
+     * 2. JUMP (en l'air)
+     * 3. RUN (mouvement horizontal)
+     * 4. IDLE (par défaut)
      */
     private void setAnimation() {
         int startAni = playerAction;
 
-        if (moving) {
-            playerAction = RUN.ordinal();
-        } else {
-            playerAction = IDLE.ordinal();
+        // === PRIORITÉ 1: ANIMATION D'ATTAQUE (NON-INTERRUPTIBLE) ===
+        if (attack && !isAttacking) {
+            // Commencer une nouvelle attaque
+            startAttack();
+        }
+        // === GESTION DE LA FIN D'ANIMATION D'ATTAQUE ===
+        else if (isAttacking && isAttackAnimationFinished()) {
+            // L'animation d'attaque est terminée
+            finishAttack();
+        }
+        // === PRIORITÉ 2: AUTRES ANIMATIONS (seulement si pas en train d'attaquer) ===
+        else if (!isAttacking) {
+            if (inAir) {
+                playerAction = JUMP.ordinal();
+            } else if (moving) {
+                playerAction = RUN.ordinal();
+            } else {
+                playerAction = IDLE.ordinal();
+            }
+        }
+        // === PENDANT L'ATTAQUE: GARDER L'ANIMATION D'ATTAQUE ===
+        else if (isAttacking) {
+            // Ne pas changer d'animation pendant l'attaque
+            playerAction = PlayerStateEnum.ATTACK.ordinal();
         }
 
-        if (inAir) {
-            playerAction = JUMP.ordinal();
-        }
-
-        if (startAni != playerAction) {
+        // Reset de l'animation si changement d'état (mais pas pendant l'attaque)
+        if (startAni != playerAction && !isAttacking) {
             animManager.reset();
         }
     }
@@ -778,6 +864,65 @@ public class Player extends Entity {
         } else if (physicsBody.getVelocity().x > 0) {
             direction = 1;
         }
+    }
+    
+    /**
+     * Commence une nouvelle attaque
+     * 
+     * Cette méthode initialise tous les flags nécessaires pour une attaque
+     * et active les sprites d'attaque.
+     */
+    private void startAttack() {
+        isAttacking = true;
+        isUsingAttackSprites = true;
+        playerAction = PlayerStateEnum.ATTACK.ordinal();
+        
+        // Reset de l'animation pour recommencer l'attaque
+        animManager.reset();
+        
+        // Debug: Logger le début de l'attaque
+        System.out.println("Starting attack animation - non-interruptible");
+    }
+    
+    /**
+     * Termine l'attaque en cours
+     * 
+     * Cette méthode remet tous les flags à leur état normal
+     * et permet de reprendre les autres animations.
+     */
+    private void finishAttack() {
+        isAttacking = false;
+        isUsingAttackSprites = false;
+        
+        // Debug: Logger la fin de l'attaque
+        System.out.println("Attack animation finished - returning to normal animations");
+    }
+    
+    /**
+     * Vérifie si l'animation d'attaque est terminée
+     * 
+     * Cette méthode permet de gérer automatiquement la fin des animations d'attaque
+     * et de revenir aux sprites normaux.
+     * 
+     * @return true si l'animation d'attaque est terminée
+     */
+    private boolean isAttackAnimationFinished() {
+        if (!isAttacking) {
+            return false;
+        }
+        
+        // Vérifier si l'animation d'attaque a atteint sa dernière frame
+        int currentFrame = animManager.getAniIndex();
+        int totalFrames = 10; // Nombre total de frames d'attaque
+        
+        // L'animation est terminée si on a atteint la dernière frame
+        boolean animationFinished = currentFrame >= totalFrames - 1;
+        
+        if (animationFinished) {
+            System.out.println("Attack animation completed at frame " + currentFrame + "/" + totalFrames);
+        }
+        
+        return animationFinished;
     }
 
     /**
@@ -816,19 +961,50 @@ public class Player extends Entity {
     // ================================
 
     /**
-     * Charge les animations du joueur
+     * Charge les animations du joueur avec un seul gestionnaire
+     * 
+     * SYSTÈME UNIFIÉ:
+     * - Lignes 0-12: Animations normales (48x48)
+     * - Ligne 13: Animation d'attaque (80x48)
+     * 
+     * ORGANISATION:
+     * - Un seul AnimationManager pour toutes les animations
+     * - Basculement géré par les indices et les offsets
      */
     private void loadAnimations() {
-        BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
-        BufferedImage[][] animations = new BufferedImage[13][10];
+        BufferedImage imgNormal = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
+        BufferedImage imgAttack = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATTACK_ATLAS);
         
-        for (int j = 0; j < animations.length; j++) {
-            for (int i = 0; i < animations[j].length; i++) {
-                animations[j][i] = img.getSubimage(i * 48, j * 48, 48, 48);
+        // === CRÉATION D'UN SEUL TABLEAU D'ANIMATIONS ===
+        BufferedImage[][] allAnimations = new BufferedImage[14][10]; // 13 animations normales + 1 attaque
+        
+        // === CHARGEMENT DES ANIMATIONS NORMALES (lignes 0-12) ===
+        for (int j = 0; j < 13; j++) {
+            for (int i = 0; i < allAnimations[j].length; i++) {
+                allAnimations[j][i] = imgNormal.getSubimage(
+                    i * SPRITE_WIDTH_DEFAULT, 
+                    j * SPRITE_HEIGHT_DEFAULT, 
+                    SPRITE_WIDTH_DEFAULT, 
+                    SPRITE_HEIGHT_DEFAULT
+                );
             }
         }
         
-        animManager = new AnimationManager(animations);
+        // === CHARGEMENT DE L'ANIMATION D'ATTAQUE (ligne 13) ===
+        for (int i = 0; i < allAnimations[13].length; i++) {
+            allAnimations[13][i] = imgAttack.getSubimage(
+                i * ATTACK_SPRITE_WIDTH_DEFAULT, 
+                0, 
+                ATTACK_SPRITE_WIDTH_DEFAULT, 
+                SPRITE_HEIGHT_DEFAULT
+            );
+        }
+        
+        // === CRÉATION DU GESTIONNAIRE UNIQUE ===
+        animManager = new AnimationManager(allAnimations);
+        
+        // Debug: Logger le chargement
+        System.out.println("Animations loaded: Unified system with 14 animation sets");
     }
 
     /**
@@ -889,8 +1065,6 @@ public class Player extends Entity {
     // GETTERS/SETTERS POUR LES INPUTS
     // ================================
     
-    public void setAttacking(boolean attacking) { this.attacking = attacking; }
-
     public boolean isLeft() { return left; }
     public void setLeft(boolean left) { this.left = left; }
 
@@ -904,4 +1078,30 @@ public class Player extends Entity {
     public void setDown(boolean down) { this.down = down; }
 
     public void setJump(boolean jump) { this.jump = jump; }
+
+    public boolean isAttack() {
+        return attack;
+    }
+
+    public void setAttack(boolean attack) {
+        this.attack = attack;
+    }
+    
+    /**
+     * Vérifie si le joueur peut commencer une nouvelle attaque
+     * 
+     * @return true si le joueur peut attaquer (pas déjà en train d'attaquer)
+     */
+    public boolean canAttack() {
+        return !isAttacking;
+    }
+    
+    /**
+     * Vérifie si le joueur est en train d'attaquer
+     * 
+     * @return true si le joueur est en train d'attaquer
+     */
+    public boolean isCurrentlyAttacking() {
+        return isAttacking;
+    }
 }

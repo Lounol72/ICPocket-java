@@ -1,10 +1,11 @@
 package entities;
 
 
-import static utilz.Constants.PLAYER.ANI_SPEED;
-import static utilz.HelpMethods.GetSpriteAmount;
-
 import java.awt.image.BufferedImage;
+
+import static utilz.Constants.PLAYER.ANI_SPEED;
+import static utilz.Constants.PLAYER.ATTACK_ANI_SPEED;
+import static utilz.HelpMethods.GetSpriteAmount;
 
 public class AnimationManager{
     private BufferedImage[][] animations;
@@ -17,7 +18,7 @@ public class AnimationManager{
 
     public void updateFrame(int action, boolean loop, boolean attacking){
         aniTick++;
-        if(aniTick >= ANI_SPEED){
+        if(aniTick >= (attacking ? ATTACK_ANI_SPEED : ANI_SPEED)){
             aniTick = 0;
             aniIndex++;
             if (aniIndex >= GetSpriteAmount(action) && !attacking){

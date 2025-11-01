@@ -34,6 +34,7 @@ public class Menu extends State implements StateMethods{
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 , 200, 50, 1, "settings", GameState.SETTINGS),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 2, "quit", GameState.QUIT),
         };
+
         
         // Load background image
         backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.UI + "menu_background.jpg");
@@ -58,7 +59,7 @@ public class Menu extends State implements StateMethods{
         
         // Draw menu title
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, (int) (24 * SCALE)));
+        g.setFont(new Font("Arial", Font.BOLD, (int) (16 * SCALE)));
         g.drawString(languageString, GAME_WIDTH / 2 - g.getFontMetrics().stringWidth(languageString) / 2, 100);
         
         // Draw buttons

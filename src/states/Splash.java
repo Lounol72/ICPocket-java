@@ -48,7 +48,7 @@ public class Splash extends State implements StateMethods {
     }
     
     private void loadStrings() {
-        gameName = utilz.HelpMethods.GetPhrase("game_name");
+        gameName = "Pocket";
         pressEnterText = utilz.HelpMethods.GetPhrase("press_enter");
     }
 

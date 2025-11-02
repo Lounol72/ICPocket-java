@@ -82,17 +82,16 @@ public class Splash extends State implements StateMethods {
             g2d.drawImage(logo, x, y, scaledWidth, scaledHeight, null);
         }
 
-        // Draw title
-        g2d.setFont(new Font("Arial", Font.BOLD, 28));
-        g2d.setColor(Color.WHITE);
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = centerX - fm.stringWidth(gameName) / 2;
-        int textY = centerY + (logo == null ? 0 : (int) (logo.getHeight() * 0.5f + 40));
-        g2d.drawString(gameName, textX, textY);
-
         g2d.setComposite(prev);
 
-        // Prompt
+        // Draw title (always visible, not affected by fade animation)
+        g.setFont(new Font("Arial", Font.BOLD, 28));
+        g.setColor(Color.WHITE);
+        int textX = (int) (GAME_WIDTH * 0.1f);
+        int textY = (int) (GAME_HEIGHT * 0.1f);
+        g.drawString(gameName, textX, textY);
+
+        
         g2d.setColor(new Color(255, 255, 255, 200));
         g2d.setFont(new Font("Arial", Font.PLAIN, 16));
         if (!promptPosCalc) {

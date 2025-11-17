@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import static entities.PlayerStateEnum.IDLE;
 import static entities.PlayerStateEnum.JUMP;
 import static entities.PlayerStateEnum.RUN;
+import static entities.PlayerStateEnum.DASH;
 import physics.ForceType;
 import physics.Vector2D;
 import static utilz.Constants.PLAYER.ACCELERATION;
@@ -72,8 +73,6 @@ import utilz.PhysicsDebugger;
  */
 public class Player extends Entity {
 
-    
-
     // ================================
     // ÉTAT DU JOUEUR
     // ================================
@@ -86,6 +85,16 @@ public class Player extends Entity {
     // INPUTS
     // ================================
     private boolean left, up, right, down, jump, attack;
+
+    // ================================
+    // DASH
+    // ================================
+    private boolean isDashing = false;
+    private int dashDurationFrames = 12; // durée du dash en frames
+    private int dashTimer = 0;
+    private int dashCooldownFrames = 30; // cooldown après dash
+    private int dashCooldownTimer = 0;
+    private float dashSpeed = 24f * utilz.Constants.SCALE; // vitesse appliquée pendant le dash
 
     // ================================
     // SYSTÈME DE SAUT
@@ -109,16 +118,16 @@ public class Player extends Entity {
     // ================================
     // ANIMATIONS
     // ================================
-    private AnimationManager animManager;           // Gestionnaire unique pour toutes les animations
-    
+    private AnimationManager animManager; // Gestionnaire unique pour toutes les animations
+
     // === GESTION DES SPRITES D'ATTAQUE ===
-    private boolean isUsingAttackSprites = false;     // Flag pour savoir si on utilise les sprites d'attaque
-    private boolean isAttacking = false;              // Flag pour savoir si on est en train d'attaquer
+    private boolean isUsingAttackSprites = false; // Flag pour savoir si on utilise les sprites d'attaque
+    private boolean isAttacking = false; // Flag pour savoir si on est en train d'attaquer
 
     // ================================
     // CONSTRUCTEUR
     // ================================
-    
+
     /**
      * Constructeur du joueur
      * 
@@ -127,11 +136,11 @@ public class Player extends Entity {
      * - Initialise la hitbox avec les dimensions définies dans Constants
      * - Détermine l'état initial (air/sol) basé sur la position
      * 
-     * @param x Position X initiale du joueur
-     * @param y Position Y initiale du joueur
-     * @param width Largeur du sprite du joueur
+     * @param x      Position X initiale du joueur
+     * @param y      Position Y initiale du joueur
+     * @param width  Largeur du sprite du joueur
      * @param height Hauteur du sprite du joueur
-     * @param level Niveau contenant les données de collision
+     * @param level  Niveau contenant les données de collision
      */
     public Player(float x, float y, int width, int height, levels.Level level) {
         super(x, y, width, height);
@@ -139,7 +148,7 @@ public class Player extends Entity {
         initHitbox(x, y, HITBOX_WIDTH, HITBOX_HEIGHT);
         this.currentLevel = level;
         this.levelData = level.getLevelData();
-        
+
         // DÉTERMINATION DE L'ÉTAT INITIAL
         // Vérifier si le joueur commence en l'air ou au sol
         inAir = !IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity());
@@ -166,14 +175,14 @@ public class Player extends Entity {
      * - Gestion du flip horizontal pour les sprites
      * - Synchronisation avec l'état physique du joueur
      * 
-     * @param g Graphics context pour le rendu
+     * @param g          Graphics context pour le rendu
      * @param xLvlOffset Offset horizontal du niveau (caméra)
      * @param yLvlOffset Offset vertical du niveau (caméra)
      */
     public void render(Graphics g, int xLvlOffset, int yLvlOffset) {
         // === DÉTERMINATION DES OFFSETS SELON L'ÉTAT ===
         float currentXOffset, currentYOffset;
-        
+
         if (isUsingAttackSprites) {
             // Utiliser les offsets pour les sprites d'attaque (80x48)
             currentXOffset = ATTACK_X_DRAW_OFFSET;
@@ -183,34 +192,33 @@ public class Player extends Entity {
             currentXOffset = X_DRAW_OFFSET;
             currentYOffset = Y_DRAW_OFFSET;
         }
-        
+
         // Calcul de la position de rendu avec offset de caméra
         int drawX = (int) (hitbox.x - currentXOffset) - xLvlOffset;
         int drawY = (int) (hitbox.y - currentYOffset) - yLvlOffset;
-    
+
         // Mise à jour de la direction basée sur la vélocité horizontale
         updateDirection();
-    
+
         // Gestion du flip horizontal pour les sprites
         // IMPORTANT: Toujours utiliser les dimensions originales pour l'affichage
         int drawWidth = (int) (isUsingAttackSprites ? ATTACK_SPRITE_WIDTH * 1.6 * direction : width * direction);
-        
+
         int correctedX = (direction == -1) ? drawX + (isUsingAttackSprites ? ATTACK_SPRITE_WIDTH : width) : drawX;
-    
+
         // Rendu du sprite avec animation
         // Utiliser l'index approprié selon l'état
         int animationIndex = isUsingAttackSprites ? 13 : playerAction; // Ligne 13 pour l'attaque
-        
+
         g.drawImage(
-            animManager.getFrame(animationIndex, true),
-            correctedX, drawY,
-            drawWidth, height,
-            null
-        );
-        
+                animManager.getFrame(animationIndex, true),
+                correctedX, drawY,
+                drawWidth, height,
+                null);
+
         // DEBUG: Décommenter pour afficher l'état du joueur
         // if(inAir) System.out.println("inAir");
-        
+
         // DEBUG: Décommenter pour afficher la hitbox
         // drawHitbox(g, xLvlOffset, yLvlOffset);
     }
@@ -222,7 +230,8 @@ public class Player extends Entity {
     /**
      * Met à jour la physique du joueur avec le système de vecteurs
      * 
-     * ORDRE D'EXÉCUTION CRITIQUE (ne pas modifier sans comprendre les dépendances) :
+     * ORDRE D'EXÉCUTION CRITIQUE (ne pas modifier sans comprendre les dépendances)
+     * :
      * 
      * 1. handleOneWayTiles() - Gère le drop-through AVANT les autres calculs
      * 2. handleJumpInput() - Gère les inputs de saut
@@ -230,7 +239,8 @@ public class Player extends Entity {
      * 4. applyForces() + add(acceleration) - Calcule la nouvelle vélocité
      * 5. applyResistances() - Applique friction/air resistance
      * 6. limitAndNormalizeVelocity() - Limite la vélocité
-     * 7. handleCollisions() - Gère les collisions (peut modifier inAir via resetInAir())
+     * 7. handleCollisions() - Gère les collisions (peut modifier inAir via
+     * resetInAir())
      * 8. applyMovement() - Applique le mouvement final à la hitbox
      * 9. cleanupAndSync() - Nettoie les forces expirées
      * 10. updateStates() - Met à jour inAir (DÉPEND de handleCollisions())
@@ -240,38 +250,102 @@ public class Player extends Entity {
      */
     private void updatePhysics() {
         // === PHASE 1: GESTION DES INPUTS ===
-        handleOneWayTiles();  // Drop-through one-way platforms
+        handleOneWayTiles(); // Drop-through one-way platforms
         moving = false;
-        handleJumpInput();    // Jump inputs avec coyote time
-        
+        handleJumpInput(); // Jump inputs avec coyote time
+
         // === PHASE 2: CALCUL DES FORCES ===
-        applyGravity();       // Gravité avec modificateurs Hollow Knight
+        applyGravity(); // Gravité avec modificateurs Hollow Knight
         applyMovementInput(); // Forces d'input horizontal
-        
+
         // === PHASE 3: APPLICATION DES FORCES ===
         physicsBody.applyForces();
         physicsBody.getVelocity().add(physicsBody.getAcceleration());
-        
+
         // === PHASE 4: RÉSISTANCES ET LIMITATIONS ===
-        applyResistances();           // Friction sol / résistance air
-        limitAndNormalizeVelocity();  // Limites de vitesse Hollow Knight
-        
+        applyResistances(); // Friction sol / résistance air
+        limitAndNormalizeVelocity(); // Limites de vitesse Hollow Knight
+
         // === PHASE 5: COLLISIONS (PEUT MODIFIER inAir) ===
-        handleCollisions();   // Collisions solides + one-way (appelle resetInAir())
-        
+        handleCollisions(); // Collisions solides + one-way (appelle resetInAir())
+
         // === PHASE 6: MOUVEMENT FINAL ===
-        applyMovement();      // Applique le mouvement à la hitbox
-        
+        applyMovement(); // Applique le mouvement à la hitbox
+
         // === PHASE 7: NETTOYAGE ET SYNCHRONISATION ===
-        cleanupAndSync();    // Nettoie les forces expirées
-        updateStates();       // Met à jour inAir (DÉPEND de handleCollisions)
+        cleanupAndSync(); // Nettoie les forces expirées
+        updateStates(); // Met à jour inAir (DÉPEND de handleCollisions)
+        // Mettre à jour les timers de dash (si actif ou en cooldown)
+        updateDashTimers();
+    }
+
+    /**
+     * Lance un dash si possible (cooldown, pas en l'air, pas d'attaque en cours)
+     */
+    public void startDash() {
+        // Allow dash while jumping/moving: only block if already dashing, attacking, or
+        // in cooldown
+        if (isDashing || isAttacking || dashCooldownTimer > 0)
+            return;
+
+        // Prefer input direction if available (arrow keys or A/D)
+        if (right)
+            direction = 1;
+        else if (left)
+            direction = -1;
+
+        isDashing = true;
+        dashTimer = dashDurationFrames;
+
+        // Force immediate horizontal velocity for the dash
+        physicsBody.getVelocity().x = dashSpeed * direction;
+
+        // Force dash animation
+        playerAction = DASH.ordinal();
+        animManager.reset();
+
+        // Debug
+        System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction + " inAir=" + inAir);
+    }
+
+    /**
+     * Termine le dash en cours et démarre le cooldown
+     */
+    private void finishDash() {
+        if (!isDashing)
+            return;
+        isDashing = false;
+        dashCooldownTimer = dashCooldownFrames;
+
+        // Rétablir une vitesse raisonnable (clamp à MAX_SPEED_X)
+        float vx = physicsBody.getVelocity().x;
+        if (Math.abs(vx) > MAX_SPEED_X) {
+            physicsBody.getVelocity().x = Math.signum(vx) * MAX_SPEED_X;
+        }
+
+        System.out.println("Dash finished");
+    }
+
+    /**
+     * Met à jour timers liés au dash
+     */
+    private void updateDashTimers() {
+        if (isDashing) {
+            dashTimer--;
+            if (dashTimer <= 0) {
+                finishDash();
+            }
+        } else if (dashCooldownTimer > 0) {
+            dashCooldownTimer--;
+        }
     }
 
     /**
      * Gère le drop-through des plateformes one-way
      * 
      * SYSTÈME DROP-THROUGH AMÉLIORÉ:
-     * - Détection AABB pour vérifier si le joueur est SUR une plateforme (pas dedans)
+     * - Détection AABB pour vérifier si le joueur est SUR une plateforme (pas
+     * dedans)
      * - Impulsion vers le bas pour garantir le passage à travers
      * - Grace frames pour éviter la re-collision immédiate
      * 
@@ -289,35 +363,35 @@ public class Player extends Entity {
             }
             return; // Sortir immédiatement pour empêcher tout drop-through
         }
-        
+
         // === DROP-THROUGH NORMAL (seulement si pas en train d'attaquer) ===
         // Décrémenter les grace frames si actives
         if (dropThroughGraceFrames > 0) {
             dropThroughGraceFrames--;
         }
-        
+
         // Vérifier si le joueur est debout sur une plateforme one-way
         if (down && !inAir && dropThroughGraceFrames == 0) {
             // Créer une hitbox de test légèrement en dessous pour détecter la plateforme
             Rectangle2D.Float groundCheckHitbox = new Rectangle2D.Float(
-                hitbox.x, 
-                hitbox.y + hitbox.height + 1, 
-                hitbox.width, 
-                1
-            );
-            
+                    hitbox.x,
+                    hitbox.y + hitbox.height + 1,
+                    hitbox.width,
+                    1);
+
             // Vérifier s'il y a une plateforme one-way sous les pieds
-            if (HelpMethods.checkOneWayPlatformCollision(groundCheckHitbox, currentLevel, physicsBody.getVelocity(), false)) {
+            if (HelpMethods.checkOneWayPlatformCollision(groundCheckHitbox, currentLevel, physicsBody.getVelocity(),
+                    false)) {
                 // DROP-THROUGH DÉTECTÉ → Forcer le passage à travers
                 PhysicsDebugger.logPhysicsState("DROP THROUGH ONE-WAY", inAir, isJumping, physicsBody.getVelocity());
-                
+
                 // 1. Marquer comme en l'air
                 inAir = true;
-                
+
                 // 2. Ajouter une petite impulsion vers le bas pour garantir le passage
                 float dropThroughForce = 2.0f; // Force suffisante pour traverser
                 physicsBody.getVelocity().y = dropThroughForce;
-                
+
                 // 3. Activer les grace frames pour éviter la re-collision
                 dropThroughGraceFrames = DROP_THROUGH_GRACE_FRAMES;
             }
@@ -336,21 +410,21 @@ public class Player extends Entity {
     private void applyGravity() {
         if (inAir) {
             float gravityMultiplier = GRAVITY_MULTIPLIER_BASE;
-            
+
             // FAST FALL: Gravité augmentée si appui sur down
             if (down) {
                 gravityMultiplier *= FAST_FALL_MULT;
             }
-            
+
             // APEX BONUS: Gravité réduite au sommet du saut (effet floatiness)
             if (Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
                 gravityMultiplier *= APEX_GRAVITY_MULT;
             }
-            
+
             // Application de la force de gravité
             Vector2D gravityForce = new Vector2D(0, GRAVITY * gravityMultiplier);
             physicsBody.replaceForceOfType(gravityForce, ForceType.GRAVITY);
-            
+
             // Debug: Logger la force appliquée
             PhysicsDebugger.logForceApplied("GRAVITY", 0, GRAVITY * gravityMultiplier);
         } else {
@@ -372,7 +446,14 @@ public class Player extends Entity {
             physicsBody.removeForcesOfType(ForceType.INPUT);
             return; // Sortir immédiatement pour empêcher tout mouvement
         }
-        
+        // === BLOCAGE DU MOUVEMENT PENDANT LE DASH ===
+        if (isDashing) {
+            // Pendant le dash, on force la vitesse horizontale et on ignore les inputs
+            physicsBody.removeForcesOfType(ForceType.INPUT);
+            physicsBody.getVelocity().x = dashSpeed * direction;
+            return;
+        }
+
         // === MOUVEMENT NORMAL (seulement si pas en train d'attaquer) ===
         if (left && !right) {
             applyHorizontalForce(-ACCELERATION);
@@ -390,12 +471,12 @@ public class Player extends Entity {
      */
     private void applyHorizontalForce(float baseAcceleration) {
         float acceleration = baseAcceleration;
-        
+
         // Apex control - meilleur contrôle au sommet du saut
         if (inAir && Math.abs(physicsBody.getVelocity().y) < APEX_THRESHOLD) {
             acceleration *= APEX_ACCEL_MULT;
         }
-        
+
         // AMÉLIORATION : Utilise replaceForceOfType pour éviter l'accumulation
         physicsBody.replaceForceOfType(new Vector2D(acceleration, 0), ForceType.INPUT);
     }
@@ -404,6 +485,10 @@ public class Player extends Entity {
      * Applique les résistances (friction/air)
      */
     private void applyResistances() {
+        // Ne pas appliquer de résistances horizontales pendant un dash
+        if (isDashing)
+            return;
+
         if (!inAir) {
             physicsBody.applyResistance(GROUND_FRICTION, 1.0f);
         } else {
@@ -420,14 +505,17 @@ public class Player extends Entity {
      */
     private void limitAndNormalizeVelocity() {
         Vector2D velocity = physicsBody.getVelocity();
-        
+
         // Sauvegarder pour debug
         float originalVelX = velocity.x;
         float originalVelY = velocity.y;
-        
-        // === LIMITATION HORIZONTALE  ===
-        velocity.x = Math.max(-MAX_SPEED_X, Math.min(MAX_SPEED_X, velocity.x));
-        
+
+        // === LIMITATION HORIZONTALE ===
+        // Pendant le dash, ne pas clampper la vitesse X pour laisser le dash complet
+        if (!isDashing) {
+            velocity.x = Math.max(-MAX_SPEED_X, Math.min(MAX_SPEED_X, velocity.x));
+        }
+
         // === LIMITATION VERTICALE (stricte, différenciée) ===
         // Montée: limite plus basse pour saut réactif
         // Descente: limite plus haute pour chute naturelle
@@ -438,7 +526,7 @@ public class Player extends Entity {
             // Tombe - GRAVITÉ STRICTEMENT LIMITÉE
             velocity.y = Math.min(MAX_FALL_SPEED, velocity.y);
         }
-        
+
         // Debug: Logger si limitation appliquée
         if (Math.abs(originalVelX - velocity.x) > 0.001f) {
             PhysicsDebugger.logVelocityLimited("X", originalVelX, velocity.x, MAX_SPEED_X);
@@ -455,25 +543,27 @@ public class Player extends Entity {
      */
     private void handleCollisions() {
         Vector2D velocity = physicsBody.getVelocity();
-        
+
         // === COLLISIONS HORIZONTALES (murs) ===
         if (velocity.x != 0) {
-            if (!CanMoveHereAABB(hitbox.x + velocity.x, hitbox.y, hitbox.width, hitbox.height, currentLevel, velocity, down)) {
+            if (!CanMoveHereAABB(hitbox.x + velocity.x, hitbox.y, hitbox.width, hitbox.height, currentLevel, velocity,
+                    down)) {
                 physicsBody.getVelocity().x = 0;
                 PhysicsDebugger.logCollision("WALL", velocity.x);
             }
         }
-        
+
         // === COLLISIONS VERTICALES ===
         if (velocity.y != 0) {
             // 1. Vérifier collisions solides (murs, plafonds, sol)
-            if (!CanMoveHereAABB(hitbox.x, hitbox.y + velocity.y, hitbox.width, hitbox.height, currentLevel, velocity, down)) {
+            if (!CanMoveHereAABB(hitbox.x, hitbox.y + velocity.y, hitbox.width, hitbox.height, currentLevel, velocity,
+                    down)) {
                 handleVerticalCollision(velocity.y);
             }
             // 2. Vérifier plateformes one-way (seulement si pas déjà en collision solide)
             else if (velocity.y >= 0) {
                 // Seulement pour la descente
-                 handleOneWayPlatformCollisions();
+                handleOneWayPlatformCollisions();
             }
         }
     }
@@ -483,21 +573,21 @@ public class Player extends Entity {
      */
     private void handleVerticalCollision(float collisionVelocityY) {
         PhysicsDebugger.logCollision(collisionVelocityY > 0 ? "FLOOR" : "CEILING", collisionVelocityY);
-        
+
         physicsBody.getVelocity().y = 0;
-        
+
         if (collisionVelocityY > 0) {
             // Toucher le sol en tombant
             resetInAir();
         } else {
             // Toucher le plafond en sautant
             physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION;
-            
+
             isJumping = false;
             physicsBody.removeForcesOfType(ForceType.JUMP);
         }
     }
-    
+
     /**
      * Gère les collisions avec les plateformes one-way
      * 
@@ -512,44 +602,45 @@ public class Player extends Entity {
      * 
      * CORRECTION VÉLOCITÉ ÉLEVÉE:
      * - Vérifie le chemin du mouvement, pas seulement la position finale
-     * - Utilise un système de raycast pour détecter les collisions pendant le mouvement
+     * - Utilise un système de raycast pour détecter les collisions pendant le
+     * mouvement
      * 
      * @return true si une collision one-way a été gérée
      */
     private boolean handleOneWayPlatformCollisions() {
         Vector2D velocity = physicsBody.getVelocity();
-        
+
         // GRACE FRAMES: Ignorer les collisions one-way pendant le drop-through
         if (dropThroughGraceFrames > 0) {
             return false; // En drop-through → ignorer toutes les collisions one-way
         }
-        
+
         // RÈGLE ONE-WAY: Ignorer si on monte ACTIVEMENT sans appuyer sur down
         if (velocity.y < 0 && !down && isJumping) {
             return false; // Montée ACTIVE → passer à travers
         }
-        
+
         // CORRECTION: Vérifier le chemin du mouvement pour les vélocités élevées
         Rectangle2D.Float blockingPlatform = findOneWayPlatformInPath(velocity);
-        
+
         if (blockingPlatform != null) {
             // COLLISION DÉTECTÉE → Atterrir sur la plateforme
             PhysicsDebugger.logCollision("ONE-WAY PLATFORM (HIGH VELOCITY)", velocity.y);
-            
+
             // Positionner le joueur juste au-dessus de la plateforme
             float targetY = blockingPlatform.y - hitbox.height;
             hitbox.y = targetY;
-            
+
             // Arrêter le mouvement vertical et marquer comme au sol
             physicsBody.getVelocity().y = 0;
             resetInAir();
-            
+
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Trouve une plateforme one-way dans le chemin du mouvement
      * 
@@ -565,38 +656,36 @@ public class Player extends Entity {
         if (velocity.y == 0) {
             return null;
         }
-        
+
         // Pour les vélocités élevées, vérifier le chemin par étapes
         float stepSize = Math.max(1.0f, Math.abs(velocity.y) / 10.0f); // Diviser en 10 étapes max
         float totalDistance = Math.abs(velocity.y);
-        int steps = Math.max(1, (int)(totalDistance / stepSize));
-        
+        int steps = Math.max(1, (int) (totalDistance / stepSize));
+
         for (int i = 1; i <= steps; i++) {
-            float progress = (float)i / steps;
+            float progress = (float) i / steps;
             float currentX = hitbox.x + velocity.x * progress;
             float currentY = hitbox.y + velocity.y * progress;
-            
+
             // Créer une hitbox de test pour cette position intermédiaire
             Rectangle2D.Float testHitbox = new Rectangle2D.Float(
-                currentX,
-                currentY,
-                hitbox.width,
-                hitbox.height
-            );
-            
+                    currentX,
+                    currentY,
+                    hitbox.width,
+                    hitbox.height);
+
             // Vérifier s'il y a une plateforme one-way qui bloque à cette position
             Rectangle2D.Float blockingPlatform = HelpMethods.getBlockingOneWayPlatform(
-                testHitbox, 
-                currentLevel, 
-                velocity, 
-                down
-            );
-            
+                    testHitbox,
+                    currentLevel,
+                    velocity,
+                    down);
+
             if (blockingPlatform != null) {
                 return blockingPlatform;
             }
         }
-        
+
         return null;
     }
 
@@ -606,15 +695,15 @@ public class Player extends Entity {
     private void applyMovement() {
         float velocityXBeforeCollision = physicsBody.getVelocity().x;
         float velocityYBeforeCollision = physicsBody.getVelocity().y;
-        
+
         hitbox.x += physicsBody.getVelocity().x;
         hitbox.y += physicsBody.getVelocity().y;
-        
+
         // Ajuster la position en cas de collision
         if (velocityXBeforeCollision != 0 && physicsBody.getVelocity().x == 0) {
             hitbox.x = GetEntityXPosNextToWallAABB(hitbox, velocityXBeforeCollision, currentLevel);
         }
-        
+
         if (velocityYBeforeCollision != 0 && physicsBody.getVelocity().y == 0) {
             hitbox.y = GetEntityYPosUnderRoofOrAboveFloorAABB(hitbox, velocityYBeforeCollision, currentLevel);
         }
@@ -640,7 +729,7 @@ public class Player extends Entity {
 
         // Mettre à jour l'état inAir
         updateAirState();
-        
+
         // Déterminer si le joueur bouge
         moving = Math.abs(physicsBody.getVelocity().x) > 0.1f || Math.abs(physicsBody.getVelocity().y) > 0.5f;
     }
@@ -664,7 +753,7 @@ public class Player extends Entity {
             }
             return; // Sortir immédiatement pour empêcher tout saut
         }
-        
+
         // === SAUT NORMAL (seulement si pas en train d'attaquer) ===
         if (jump && jumpReleased) {
             jumpReleased = false;
@@ -675,13 +764,13 @@ public class Player extends Entity {
             jumpReleased = true;
             handleJumpRelease();
         }
-        
+
         // Empêcher le saut continu si on touche le plafond
         if (isJumping && checkCeilingCollision()) {
             isJumping = false;
             physicsBody.getVelocity().y = FALL_SPEED_AFTER_COLLISION;
         }
-        
+
         updateCoyoteTime();
     }
 
@@ -711,27 +800,26 @@ public class Player extends Entity {
      */
     private void jump() {
         // VALIDATION DES CONDITIONS DE SAUT
-        boolean canJump = !isJumping && 
-                         (!inAir || coyoteTimeCounter > 0) && 
-                         !checkCeilingCollision();
-        
+        boolean canJump = !isJumping &&
+                (!inAir || coyoteTimeCounter > 0) &&
+                !checkCeilingCollision();
+
         if (!canJump) {
             return; // Conditions non remplies → pas de saut
         }
-        
+
         // INITIALISATION DU SAUT
         isJumping = true;
         inAir = true;
-        
+
         // Debug: Logger les paramètres du saut
         PhysicsDebugger.logJump(JUMP_FORCE, physicsBody.getVelocity().y);
-        
+
         // APPLICATION DE LA FORCE DE SAUT
         physicsBody.addForce(
-            new Vector2D(0, JUMP_FORCE), 
-            ForceType.JUMP, 
-            JUMP_MAX_TIME
-        );
+                new Vector2D(0, JUMP_FORCE),
+                ForceType.JUMP,
+                JUMP_MAX_TIME);
     }
 
     /**
@@ -739,18 +827,17 @@ public class Player extends Entity {
      */
     private boolean checkCeilingCollision() {
         Rectangle2D.Float ceilingCheckHitbox = new Rectangle2D.Float(
-            hitbox.x, 
-            hitbox.y,
-            hitbox.width, 
-            1
-        );
-        
+                hitbox.x,
+                hitbox.y,
+                hitbox.width,
+                1);
+
         for (Rectangle2D.Float collisionRect : currentLevel.getSolidCollisions()) {
             if (ceilingCheckHitbox.intersects(collisionRect)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -789,7 +876,7 @@ public class Player extends Entity {
         } else {
             // Utiliser l'index approprié selon l'état
             int animationIndex = isUsingAttackSprites ? 13 : playerAction; // Ligne 13 pour l'attaque
-            
+
             animManager.updateFrame(animationIndex, true, isAttack());
         }
     }
@@ -799,15 +886,14 @@ public class Player extends Entity {
      */
     private void handleAirAnimation() {
         int spriteCount = GetSpriteAmount(playerAction);
-        
+
         int airIndex = mapAndClamp(
-            physicsBody.getVelocity().y,
-            JUMP_SPEED_MAX,
-            -JUMP_SPEED_MAX,
-            0,
-            spriteCount - 1
-        );
-        
+                physicsBody.getVelocity().y,
+                JUMP_SPEED_MAX,
+                -JUMP_SPEED_MAX,
+                0,
+                spriteCount - 1);
+
         animManager.setAniIndex(airIndex);
     }
 
@@ -835,7 +921,9 @@ public class Player extends Entity {
         }
         // === PRIORITÉ 2: AUTRES ANIMATIONS (seulement si pas en train d'attaquer) ===
         else if (!isAttacking) {
-            if (inAir) {
+            if (isDashing) {
+                playerAction = DASH.ordinal();
+            } else if (inAir) {
                 playerAction = JUMP.ordinal();
             } else if (moving) {
                 playerAction = RUN.ordinal();
@@ -865,7 +953,7 @@ public class Player extends Entity {
             direction = 1;
         }
     }
-    
+
     /**
      * Commence une nouvelle attaque
      * 
@@ -876,14 +964,14 @@ public class Player extends Entity {
         isAttacking = true;
         isUsingAttackSprites = true;
         playerAction = PlayerStateEnum.ATTACK.ordinal();
-        
+
         // Reset de l'animation pour recommencer l'attaque
         animManager.reset();
-        
+
         // Debug: Logger le début de l'attaque
         System.out.println("Starting attack animation - non-interruptible");
     }
-    
+
     /**
      * Termine l'attaque en cours
      * 
@@ -893,11 +981,11 @@ public class Player extends Entity {
     private void finishAttack() {
         isAttacking = false;
         isUsingAttackSprites = false;
-        
+
         // Debug: Logger la fin de l'attaque
         System.out.println("Attack animation finished - returning to normal animations");
     }
-    
+
     /**
      * Vérifie si l'animation d'attaque est terminée
      * 
@@ -910,26 +998,28 @@ public class Player extends Entity {
         if (!isAttacking) {
             return false;
         }
-        
+
         // Vérifier si l'animation d'attaque a atteint sa dernière frame
         int currentFrame = animManager.getAniIndex();
         int totalFrames = 10; // Nombre total de frames d'attaque
-        
+
         // L'animation est terminée si on a atteint la dernière frame
         boolean animationFinished = currentFrame >= totalFrames - 1;
-        
+
         if (animationFinished) {
             System.out.println("Attack animation completed at frame " + currentFrame + "/" + totalFrames);
         }
-        
+
         return animationFinished;
     }
 
     /**
      * Met à jour l'état inAir - SOURCE UNIQUE DE VÉRITÉ pour la détection du sol
      * 
-     * TIMING CRITIQUE: Cette méthode est appelée APRÈS handleCollisions() dans updatePhysics().
-     * Elle ne doit PAS surcharger inAir si handleCollisions() vient de le changer via resetInAir().
+     * TIMING CRITIQUE: Cette méthode est appelée APRÈS handleCollisions() dans
+     * updatePhysics().
+     * Elle ne doit PAS surcharger inAir si handleCollisions() vient de le changer
+     * via resetInAir().
      * 
      * LOGIQUE DE DÉTECTION:
      * - Utilise IsEntityOnFloorAABB() qui gère correctement les plateformes one-way
@@ -943,7 +1033,7 @@ public class Player extends Entity {
         // Vérifier si le joueur est réellement sur le sol
         // CORRECTION: IsEntityOnFloorAABB() gère maintenant velocity.y == 0
         boolean isOnFloor = IsEntityOnFloorAABB(hitbox, currentLevel, physicsBody.getVelocity());
-        
+
         // TRANSITION: Sol → Air (le joueur quitte le sol)
         if (!inAir && !isOnFloor) {
             inAir = true;
@@ -974,35 +1064,33 @@ public class Player extends Entity {
     private void loadAnimations() {
         BufferedImage imgNormal = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
         BufferedImage imgAttack = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATTACK_ATLAS);
-        
+
         // === CRÉATION D'UN SEUL TABLEAU D'ANIMATIONS ===
         BufferedImage[][] allAnimations = new BufferedImage[14][10]; // 13 animations normales + 1 attaque
-        
+
         // === CHARGEMENT DES ANIMATIONS NORMALES (lignes 0-12) ===
         for (int j = 0; j < 13; j++) {
             for (int i = 0; i < allAnimations[j].length; i++) {
                 allAnimations[j][i] = imgNormal.getSubimage(
-                    i * SPRITE_WIDTH_DEFAULT, 
-                    j * SPRITE_HEIGHT_DEFAULT, 
-                    SPRITE_WIDTH_DEFAULT, 
-                    SPRITE_HEIGHT_DEFAULT
-                );
+                        i * SPRITE_WIDTH_DEFAULT,
+                        j * SPRITE_HEIGHT_DEFAULT,
+                        SPRITE_WIDTH_DEFAULT,
+                        SPRITE_HEIGHT_DEFAULT);
             }
         }
-        
+
         // === CHARGEMENT DE L'ANIMATION D'ATTAQUE (ligne 13) ===
         for (int i = 0; i < allAnimations[13].length; i++) {
             allAnimations[13][i] = imgAttack.getSubimage(
-                i * ATTACK_SPRITE_WIDTH_DEFAULT, 
-                0, 
-                ATTACK_SPRITE_WIDTH_DEFAULT, 
-                SPRITE_HEIGHT_DEFAULT
-            );
+                    i * ATTACK_SPRITE_WIDTH_DEFAULT,
+                    0,
+                    ATTACK_SPRITE_WIDTH_DEFAULT,
+                    SPRITE_HEIGHT_DEFAULT);
         }
-        
+
         // === CRÉATION DU GESTIONNAIRE UNIQUE ===
         animManager = new AnimationManager(allAnimations);
-        
+
         // Debug: Logger le chargement
         System.out.println("Animations loaded: Unified system with 14 animation sets");
     }
@@ -1011,8 +1099,10 @@ public class Player extends Entity {
      * Charge les données de niveau (ancien système)
      * 
      * @deprecated Utiliser loadLevel(Level) pour le nouveau système AABB
-     * Cette méthode est conservée pour la compatibilité mais ne doit plus être utilisée.
-     * Le nouveau système AABB offre de meilleures performances et une détection plus précise.
+     *             Cette méthode est conservée pour la compatibilité mais ne doit
+     *             plus être utilisée.
+     *             Le nouveau système AABB offre de meilleures performances et une
+     *             détection plus précise.
      */
     @Deprecated
     public void loadLvlData(int[][] lvlData) {
@@ -1021,7 +1111,7 @@ public class Player extends Entity {
             inAir = true;
         }
     }
-    
+
     /**
      * Charge le niveau avec les rectangles de collision AABB
      * 
@@ -1035,7 +1125,7 @@ public class Player extends Entity {
     public void loadLevel(levels.Level level) {
         this.currentLevel = level;
         this.levelData = level.getLevelData();
-        
+
         // DÉTERMINATION DE L'ÉTAT INITIAL avec le système AABB
         if (!IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity())) {
             inAir = true;
@@ -1064,20 +1154,42 @@ public class Player extends Entity {
     // ================================
     // GETTERS/SETTERS POUR LES INPUTS
     // ================================
-    
-    public boolean isLeft() { return left; }
-    public void setLeft(boolean left) { this.left = left; }
 
-    public boolean isUp() { return up; }
-    public void setUp(boolean up) { this.up = up; }
+    public boolean isLeft() {
+        return left;
+    }
 
-    public boolean isRight() { return right; }
-    public void setRight(boolean right) { this.right = right; }
+    public void setLeft(boolean left) {
+        this.left = left;
+    }
 
-    public boolean isDown() { return down; }
-    public void setDown(boolean down) { this.down = down; }
+    public boolean isUp() {
+        return up;
+    }
 
-    public void setJump(boolean jump) { this.jump = jump; }
+    public void setUp(boolean up) {
+        this.up = up;
+    }
+
+    public boolean isRight() {
+        return right;
+    }
+
+    public void setRight(boolean right) {
+        this.right = right;
+    }
+
+    public boolean isDown() {
+        return down;
+    }
+
+    public void setDown(boolean down) {
+        this.down = down;
+    }
+
+    public void setJump(boolean jump) {
+        this.jump = jump;
+    }
 
     public boolean isAttack() {
         return attack;
@@ -1086,7 +1198,7 @@ public class Player extends Entity {
     public void setAttack(boolean attack) {
         this.attack = attack;
     }
-    
+
     /**
      * Vérifie si le joueur peut commencer une nouvelle attaque
      * 
@@ -1095,7 +1207,7 @@ public class Player extends Entity {
     public boolean canAttack() {
         return !isAttacking;
     }
-    
+
     /**
      * Vérifie si le joueur est en train d'attaquer
      * 

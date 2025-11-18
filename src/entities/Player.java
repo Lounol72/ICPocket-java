@@ -5,10 +5,10 @@ import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
+import static entities.PlayerStateEnum.DASH;
 import static entities.PlayerStateEnum.IDLE;
 import static entities.PlayerStateEnum.JUMP;
 import static entities.PlayerStateEnum.RUN;
-import static entities.PlayerStateEnum.DASH;
 import physics.ForceType;
 import physics.Vector2D;
 import static utilz.Constants.PLAYER.ACCELERATION;
@@ -305,7 +305,7 @@ public class Player extends Entity {
         animManager.reset();
 
         // Debug
-        System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction + " inAir=" + inAir);
+        //System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction + " inAir=" + inAir);
     }
 
     /**

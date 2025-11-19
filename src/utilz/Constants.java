@@ -74,6 +74,31 @@ public class Constants {
             public static final int HURTBOX_HEIGHT = (int) (HURTBOX_HEIGHT_DEFAULT * SCALE);
         }
 
+        public static class ATTACK_HITBOX {
+            private static final int ATTACK_HITBOX_WIDTH_DEFAULT = 64;
+            private static final int ATTACK_HITBOX_HEIGHT_DEFAULT = 32;
+            private static final int ATTACK_HITBOX_OFFSET_X_DEFAULT = 6;
+            private static final int ATTACK_HITBOX_OFFSET_Y_DEFAULT = -12;
+
+            public static final int ATTACK_HITBOX_WIDTH = (int) (ATTACK_HITBOX_WIDTH_DEFAULT * SCALE);
+            public static final int ATTACK_HITBOX_HEIGHT = (int) (ATTACK_HITBOX_HEIGHT_DEFAULT * SCALE);
+            public static final int ATTACK_HITBOX_OFFSET_X = (int) (ATTACK_HITBOX_OFFSET_X_DEFAULT * SCALE);
+            public static final int ATTACK_HITBOX_OFFSET_Y = (int) (ATTACK_HITBOX_OFFSET_Y_DEFAULT * SCALE);
+
+            public static final int[][] ATTACK_HITBOX_FRAMES = new int[][] {
+                    { 24, 8, 6, -6 }, // frame 0
+                    { 40, 12, 8, -8 }, // frame 1
+                    { 64, 20, 10, -14 }, // frame 2
+                    { 72, 24, 12, -18 }, // frame 3
+                    { 56, 18, 10, -12 }, // frame 4
+                    { 48, 16, 8, -10 }, // frame 5
+                    { 36, 10, 6, -6 }, // frame 6
+                    { 28, 8, 4, -4 }, // frame 7
+                    { 20, 6, 2, -2 }, // frame 8
+                    { 18, 6, 2, -2 } // frame 9
+            };
+        }
+
         public static class SPRITE {
             // ================================
             // DIMENSIONS DES SPRITES

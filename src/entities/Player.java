@@ -52,8 +52,12 @@ import static utilz.HelpMethods.IsEntityOnFloorAABB;
 import static utilz.HelpMethods.mapAndClamp;
 import utilz.LoadSave;
 import utilz.PhysicsDebugger;
-import static utilz.Constants.PLAYER.HURTBOX.HURTBOX_WIDTH;
-import static utilz.Constants.PLAYER.HURTBOX.HURTBOX_HEIGHT;
+import static utilz.Constants.PLAYER.ATTACK_HITBOX.ATTACK_HITBOX_WIDTH;
+import static utilz.Constants.PLAYER.ATTACK_HITBOX.ATTACK_HITBOX_HEIGHT;
+import static utilz.Constants.PLAYER.ATTACK_HITBOX.ATTACK_HITBOX_OFFSET_X;
+import static utilz.Constants.PLAYER.ATTACK_HITBOX.ATTACK_HITBOX_OFFSET_Y;
+import static utilz.Constants.PLAYER.ATTACK_HITBOX.ATTACK_HITBOX_FRAMES;
+import static utilz.Constants.SCALE;
 
 /**
  * Classe représentant le joueur avec système de physique avancé
@@ -125,6 +129,11 @@ public class Player extends Entity {
     // ================================
     private AnimationManager animManager; // Gestionnaire unique pour toutes les animations
 
+    // Attack frame bounding boxes (relative to the drawX/drawY used when rendering
+    // the
+    // attack sprite). Computed at load time by scanning non-transparent pixels.
+    private java.awt.geom.Rectangle2D.Float[] attackFrameBBoxes;
+
     // === GESTION DES SPRITES D'ATTAQUE ===
     private boolean isUsingAttackSprites = false; // Flag pour savoir si on utilise les sprites d'attaque
     private boolean isAttacking = false; // Flag pour savoir si on est en train d'attaquer
@@ -139,29 +148,53 @@ public class Player extends Entity {
     public Rectangle2D.Float getActiveAttackBox() {
         if (!isAttacking || animManager == null)
             return null;
-
         int currentFrame = animManager.getAniIndex();
-        if (currentFrame < ATTACK_ACTIVE_FRAME_START || currentFrame > ATTACK_ACTIVE_FRAME_END)
-            return null; // Hors frames infligeantes
 
-        // Calculer taille et position selon la direction (utiliser constantes dans
-        // Constants)
-        float w = HURTBOX_WIDTH;
-        float h = HURTBOX_HEIGHT;
+        // if (currentFrame < ATTACK_ACTIVE_FRAME_START || currentFrame >
+        // ATTACK_ACTIVE_FRAME_END)
+        // return null;
+
+        if (attackFrameBBoxes != null && currentFrame >= 0 && currentFrame < attackFrameBBoxes.length) {
+            java.awt.geom.Rectangle2D.Float bbox = attackFrameBBoxes[currentFrame];
+
+            float drawX = hitbox.x - ATTACK_X_DRAW_OFFSET;
+            float drawY = hitbox.y - ATTACK_Y_DRAW_OFFSET;
+
+            float worldX;
+            if (direction >= 0) {
+                worldX = drawX + bbox.x;
+            } else {
+                float drawWidth = ATTACK_SPRITE_WIDTH * 1.6f;
+                worldX = drawX + (drawWidth - (bbox.x + bbox.width));
+            }
+
+            float worldY = drawY + bbox.y;
+
+            return new Rectangle2D.Float(worldX, worldY, bbox.width, bbox.height);
+        }
+
+        int idx = currentFrame;
+        if (idx < 0)
+            idx = 0;
+        if (idx >= ATTACK_HITBOX_FRAMES.length)
+            idx = ATTACK_HITBOX_FRAMES.length - 1;
+        int[] frameData = ATTACK_HITBOX_FRAMES[idx];
+        float w = frameData[0] * SCALE;
+        float h = frameData[1] * SCALE;
+        float frameOffX = frameData[2] * SCALE;
+        float frameOffY = frameData[3] * SCALE;
 
         float x;
         if (direction >= 0) {
-            // Attaque vers la droite: hitbox collée au côté droit de la hitbox joueur
-            x = hitbox.x + hitbox.width;
+            x = hitbox.x + hitbox.width + frameOffX;
         } else {
-            // Attaque vers la gauche: hitbox collée au côté gauche
-            x = hitbox.x - w;
+            x = hitbox.x - w - frameOffX;
         }
 
-        // Centrer verticalement sur la hitbox du joueur
-        float y = hitbox.y + (hitbox.height - h) / 2.0f;
+        float y = hitbox.y + (hitbox.height - h) / 2.0f + frameOffY;
 
         return new Rectangle2D.Float(x, y, w, h);
+
     }
 
     // ================================
@@ -1139,6 +1172,50 @@ public class Player extends Entity {
                     0,
                     ATTACK_SPRITE_WIDTH_DEFAULT,
                     SPRITE_HEIGHT_DEFAULT);
+        }
+
+        // === CALCUL DES HITBOX PAR FRAME POUR L'ATTAQUE ===
+        attackFrameBBoxes = new java.awt.geom.Rectangle2D.Float[allAnimations[13].length];
+        for (int i = 0; i < allAnimations[13].length; i++) {
+            BufferedImage frameImg = allAnimations[13][i];
+            int wImg = frameImg.getWidth();
+            int hImg = frameImg.getHeight();
+
+            int minX = wImg, minY = hImg, maxX = 0, maxY = 0;
+            boolean anyPixel = false;
+            for (int y = 0; y < hImg; y++) {
+                for (int x = 0; x < wImg; x++) {
+                    int px = frameImg.getRGB(x, y);
+                    int alpha = (px >> 24) & 0xff;
+                    if (alpha > 8) {
+                        anyPixel = true;
+                        if (x < minX)
+                            minX = x;
+                        if (y < minY)
+                            minY = y;
+                        if (x > maxX)
+                            maxX = x;
+                        if (y > maxY)
+                            maxY = y;
+                    }
+                }
+            }
+
+            if (!anyPixel) {
+                int cx = wImg / 2;
+                int cy = hImg / 2;
+                attackFrameBBoxes[i] = new java.awt.geom.Rectangle2D.Float(cx * SCALE, cy * SCALE, 4 * SCALE,
+                        4 * SCALE);
+            } else {
+
+                float scaleX = SCALE * 1.6f;
+                float scaleY = SCALE;
+                float bx = minX * scaleX;
+                float by = minY * scaleY;
+                float bw = (maxX - minX + 1) * scaleX;
+                float bh = (maxY - minY + 1) * scaleY;
+                attackFrameBBoxes[i] = new java.awt.geom.Rectangle2D.Float(bx, by, bw, bh);
+            }
         }
 
         // === CRÉATION DU GESTIONNAIRE UNIQUE ===

@@ -777,15 +777,29 @@ public class Settings extends State implements StateMethods {
      */
     private void applySettings() {
         // Sauvegarder la configuration
-        if (save_config()) {
+        boolean success = save_config();
+        if (success) {
             showConfirm(GetPhrase("settings_changes_applied"));
+        } else {
+            showConfirm(GetPhrase("save_error"));
         }
     }
 
     /**
      * Annule et retourne au menu
+     * Recharge la configuration sauvegardée pour annuler les modifications
      */
     private void cancelSettings() {
+        // Recharger la configuration sauvegardée pour annuler les modifications
+        if (utilz.HelpMethods.detect_save()) {
+            utilz.HelpMethods.charger_config();
+            // Mettre à jour tous les sliders avec les valeurs rechargées
+            for (SettingsCategory category : categories) {
+                for (SettingItem item : category.getItems()) {
+                    item.updateSlider();
+                }
+            }
+        }
         GameState.setState(GameState.MENU);
     }
 

@@ -43,17 +43,11 @@ public class Start extends State implements StateMethods{
 
     private void initClasses(){
         buttons = new StartButtons[3];
-        String[] lang = {"fr", "en", "ger"};
+        String[] lang = {"fr", "en", "de"};
         String[] text = {"Français","English", "Deutsch"};
         for (int i = 0; i < buttons.length ; i++)
             buttons[i] = new StartButtons(X_BUTTON_POS + ((i % 2) * X_BUTTON_OFFSET), Y_BUTTON_POS + ((i / 2) * Y_BUTTON_OFFSET * 2),WIDTH, HEIGHT,0,lang[i],text[i]);
         languageString = GetPhrase("langue");
-
-        // scrollText = new ScrollingText( 300, 300, 300, 50);
-        // scrollText.reset(GetPhrase("no_very_eff"));
-        // scrollText.setCharDelay(130); // Plus rapide
-        // scrollText.setFont(new Font("Arial", Font.BOLD, 18));
-        // scrollText.setTextColor(Color.white);
     }
 
     @Override

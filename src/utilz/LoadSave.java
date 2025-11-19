@@ -53,6 +53,7 @@ public class LoadSave {
     }
 
     /**
+     * @deprecated
      * Méthode pour récupérer un sprite d'un ICMon
      * @param file nom du fichier du sprite
      * @return BufferedImage le sprite
@@ -70,6 +71,7 @@ public class LoadSave {
 
     }
     /**
+     * 
      * Méthode pour récupérer les données du niveau depuis le fichier JSON
      * Charge spécifiquement la layer "out" du fichier LevelOne.json
      * @return int[][] les données du niveau

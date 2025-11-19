@@ -1099,13 +1099,13 @@ public class Player extends Entity {
     /**
      * Charge les données de niveau (ancien système)
      * 
-     * @deprecated Utiliser loadLevel(Level) pour le nouveau système AABB
-     *             Cette méthode est conservée pour la compatibilité mais ne doit
-     *             plus être utilisée.
-     *             Le nouveau système AABB offre de meilleures performances et une
-     *             détection plus précise.
+     * Utiliser loadLevel(Level) pour le nouveau système AABB
+     * Cette méthode est conservée pour la compatibilité mais ne doit
+     * plus être utilisée.
+     * Le nouveau système AABB offre de meilleures performances et une
+     * détection plus précise.
      */
-    @Deprecated
+    
     public void loadLvlData(int[][] lvlData) {
         this.levelData = lvlData;
         if (!IsEntityOnFloor(hitbox, lvlData, physicsBody.getVelocity())) {

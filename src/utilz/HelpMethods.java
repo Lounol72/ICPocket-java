@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -21,7 +20,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import static utilz.Constants.WORLD.TILES_DEFAULT_SIZE;
 import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
 /**
@@ -55,6 +53,16 @@ public class HelpMethods {
         return jsonCache.get(filePath);
     }
     /**
+     * Convertit un code de langue en Locale
+     * @param langCode Code de langue (ex: "en", "fr", "de")
+     * @return Locale correspondant
+     */
+    private static Locale getLocaleFromLanguageCode(String langCode) {
+        // Utiliser forLanguageTag pour les codes standards (en, fr, etc.)
+        return Locale.forLanguageTag(langCode);
+    }
+    
+    /**
      * Retourne une phrase à partir de son nom
      * @param name Nom de la phrase
      * @return Phrase
@@ -62,7 +70,7 @@ public class HelpMethods {
     public static String GetPhrase(String name){
         try {
             // Utilisation du chemin complet correspondant à la structure de vos fichiers
-            bundle = ResourceBundle.getBundle("data.langue", new Locale(language), new ResourceControl());
+            bundle = ResourceBundle.getBundle("data.langue", getLocaleFromLanguageCode(language), new ResourceControl());
             return bundle.getString(name);
 
 
@@ -70,7 +78,7 @@ public class HelpMethods {
             System.err.printf("Erreur lors de la récupération de la phrase : {%s} - {%s}%n", name, e.getMessage());
             // Tentative de fallback vers l'anglais si la langue demandée n'existe pas
             try {
-                bundle = ResourceBundle.getBundle("res.data.langue", new Locale("en"));
+                bundle = ResourceBundle.getBundle("res.data.langue", Locale.ENGLISH);
                 return bundle.getString(name);
             } catch (MissingResourceException e2) {
                 return "Error: " + name;
@@ -79,12 +87,28 @@ public class HelpMethods {
             }
         }
     }
-    // Classe pour gérer le chargement des ressources depuis le dossier res
+    /**
+     * Classe interne pour gérer le chargement des ressources depuis le dossier res
+     */
     private static class ResourceControl extends ResourceBundle.Control {
-        public URL getResource( String baseName, String locale) {
-            String bundleName = toBundleName(baseName, Locale.of(locale));
-            String resourceName = toResourceName(bundleName, "properties");
-            return ClassLoader.getSystemResource("res/" + resourceName);
+        @Override
+        public ResourceBundle newBundle(String baseName, Locale locale, String format,
+                ClassLoader loader, boolean reload) throws IllegalAccessException,
+                InstantiationException, IOException {
+            if (format.equals("java.properties")) {
+                String bundleName = toBundleName(baseName, locale);
+                String resourceName = toResourceName(bundleName, "properties");
+                
+                
+                try (java.io.InputStream stream = loader.getResourceAsStream("res/" + resourceName)) {
+                    if (stream != null) {
+                        try (java.io.InputStreamReader reader = new java.io.InputStreamReader(stream, "UTF-8")) {
+                            return new java.util.PropertyResourceBundle(reader);
+                        }
+                    }
+                }
+            }
+            return super.newBundle(baseName, locale, format, loader, reload);
         }
     }
 
@@ -225,57 +249,6 @@ public class HelpMethods {
 
 
 
-    // ========== MÉTHODES PIXEL-BASED DÉPRÉCIÉES (à supprimer après migration complète) ==========
-    
-    /**
-     * @deprecated Utiliser IsEntityOnFloorAABB à la place
-     */
-    @Deprecated
-    private static boolean IsSolid(float x, float y, int[][] lvlData) {
-        return (GetLvlDataValue(x, y, lvlData) != 21);
-    }
-    
-    /**
-     * @deprecated Utiliser IsEntityOnFloorAABB à la place
-     */
-    @Deprecated
-    public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
-        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
-            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
-                return false;
-        return true;
-    }
-    /**
-     * @deprecated Utiliser GetEntityXPosNextToWallAABB à la place
-     */
-    @Deprecated
-    public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
-        int currentTile = (int) (hitbox.x / TILES_SIZE);
-        if (xSpeed > 0) {
-            // Right
-            int tileXPos = currentTile * TILES_SIZE;
-            int xOffset = (int) (TILES_SIZE - hitbox.width);
-            return tileXPos + xOffset - 1;
-        } else
-            // Left
-            return currentTile * TILES_SIZE;
-    }
-    
-    /**
-     * @deprecated Utiliser GetEntityYPosUnderRoofOrAboveFloorAABB à la place
-     */
-    @Deprecated
-    public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
-        int currentTile = (int) (hitbox.y / TILES_SIZE);
-        if (airSpeed > 0) {
-            // Falling - touching floor
-            int tileYPos = currentTile * TILES_SIZE;
-            int yOffset = (int) (TILES_DEFAULT_SIZE - hitbox.height );
-            return tileYPos - yOffset + TILES_DEFAULT_SIZE - 1;
-        } else
-            // Jumping
-            return currentTile * TILES_SIZE;
-    }
 
     /**
      * Vérifie si une tile est une plateforme one-way

@@ -11,6 +11,7 @@ import java.util.List;
 import game.Game;
 import ui.settings.ActionButton;
 import ui.settings.DefaultValues;
+import ui.settings.LanguageButton;
 import ui.settings.SettingItem;
 import ui.settings.SettingSlider;
 import ui.settings.SettingsCategory;
@@ -40,6 +41,7 @@ public class Settings extends State implements StateMethods {
     // Composants UI
     private List<SettingsCategory> categories;
     private List<ActionButton> actionButtons;
+    private List<LanguageButton> languageButtons;
     
     // État de navigation
     private SettingsCategory selectedCategory;
@@ -68,8 +70,12 @@ public class Settings extends State implements StateMethods {
         languageString = GetPhrase("settings");
         categories = new ArrayList<>();
         actionButtons = new ArrayList<>();
+        languageButtons = new ArrayList<>();
         currentState = SettingsState.BROWSING;
         showConfirmMessage = false;
+        
+        // Créer les boutons de langue
+        createLanguageButtons();
         
         // Créer les catégories et leurs paramètres
         createCategories();
@@ -94,7 +100,7 @@ public class Settings extends State implements StateMethods {
      */
     private void createCategories() {
         int tabX = SettingsConfig.TAB_START_X;
-        int tabY = SettingsConfig.TAB_START_Y;
+        int tabY = SettingsConfig.TAB_START_Y; // Déjà ajusté dans SettingsConfig
         
         // === CATÉGORIE GAMEPLAY ===
         SettingsCategory gameplayCategory = new SettingsCategory(
@@ -278,6 +284,25 @@ public class Settings extends State implements StateMethods {
     }
 
     /**
+     * Crée les boutons de sélection de langue
+     */
+    private void createLanguageButtons() {
+        String[] langCodes = {"fr", "en", "de"};
+        String[] langNames = {"Français", "English", "Deutsch"};
+        
+        for (int i = 0; i < langCodes.length; i++) {
+            languageButtons.add(new LanguageButton(
+                SettingsConfig.LANGUAGE_BUTTON_START_X + i * (SettingsConfig.LANGUAGE_BUTTON_WIDTH + SettingsConfig.LANGUAGE_BUTTON_SPACING),
+                SettingsConfig.LANGUAGE_BUTTON_START_Y,
+                SettingsConfig.LANGUAGE_BUTTON_WIDTH,
+                SettingsConfig.LANGUAGE_BUTTON_HEIGHT,
+                langCodes[i],
+                langNames[i]
+            ));
+        }
+    }
+
+    /**
      * Crée les boutons d'action
      */
     private void createActionButtons() {
@@ -336,6 +361,9 @@ public class Settings extends State implements StateMethods {
             drawSettingsPanel(g);
         }
         
+        // Boutons de langue (en dessous des sliders)
+        drawLanguageButtons(g);
+        
         // Boutons d'action
         drawActionButtons(g);
         
@@ -378,6 +406,25 @@ public class Settings extends State implements StateMethods {
         g.setColor(SettingsConfig.PANEL_BORDER_COLOR);
         g.drawRect(SettingsConfig.PANEL_X, SettingsConfig.PANEL_Y,
                    SettingsConfig.PANEL_WIDTH, SettingsConfig.PANEL_HEIGHT);
+    }
+
+    /**
+     * Dessine les boutons de langue
+     * @param g Contexte graphique
+     */
+    private void drawLanguageButtons(Graphics g) {
+        // Label "Langue"
+        g.setColor(SettingsConfig.TEXT_COLOR);
+        g.setFont(new Font("Arial", Font.BOLD, SettingsConfig.FONT_SIZE_LABEL));
+        String label = GetPhrase("settings_language");
+        int labelX = SettingsConfig.LABEL_X;
+        int labelY = SettingsConfig.LANGUAGE_BUTTON_START_Y + SettingsConfig.FONT_SIZE_LABEL;
+        g.drawString(label, labelX, labelY);
+        
+        // Boutons de langue
+        for (LanguageButton button : languageButtons) {
+            button.draw(g);
+        }
     }
 
     /**
@@ -430,7 +477,12 @@ public class Settings extends State implements StateMethods {
             category.update();
         }
         
-        // Mettre à jour les boutons
+        // Mettre à jour les boutons de langue
+        for (LanguageButton button : languageButtons) {
+            button.update();
+        }
+        
+        // Mettre à jour les boutons d'action
         for (ActionButton button : actionButtons) {
             button.update();
         }
@@ -579,6 +631,11 @@ public class Settings extends State implements StateMethods {
         int x = e.getX();
         int y = e.getY();
         
+        // Mettre à jour les boutons de langue
+        for (LanguageButton button : languageButtons) {
+            button.handleMouseMove(x, y);
+        }
+        
         // Mettre à jour les onglets
         for (SettingsCategory category : categories) {
             category.getTab().isMouseOver(x, y);
@@ -592,7 +649,7 @@ public class Settings extends State implements StateMethods {
             }
         }
         
-        // Mettre à jour les boutons
+        // Mettre à jour les boutons d'action
         for (ActionButton button : actionButtons) {
             button.handleMouseMove(x, y);
         }
@@ -640,6 +697,16 @@ public class Settings extends State implements StateMethods {
         int x = e.getX();
         int y = e.getY();
         
+        // Vérifier les boutons de langue
+        for (LanguageButton button : languageButtons) {
+            if (button.handleClick(x, y)) {
+                // Langue changée, mettre à jour tous les textes
+                UpdateStrings();
+                game.UpdateEveryStrings();
+                return;
+            }
+        }
+        
         // Vérifier les onglets
         for (SettingsCategory category : categories) {
             if (category.getTab().isMouseOver(x, y)) {
@@ -676,12 +743,11 @@ public class Settings extends State implements StateMethods {
 
     /**
      * Gère le relâchement de souris
-     * Inspiré du code C : SDL_MOUSEBUTTONUP avec slider->dragging = 0
      * @param e Événement souris
      */
     @Override
     public void mouseReleased(MouseEvent e) {
-        // Relâcher le drag des sliders (comme dans le code C : slider->dragging = 0)
+        // Relâcher le drag des sliders
         if (selectedCategory != null) {
             for (SettingItem item : selectedCategory.getItems()) {
                 item.getSlider().handleMouseRelease();

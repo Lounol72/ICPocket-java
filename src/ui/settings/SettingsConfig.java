@@ -16,13 +16,6 @@ public class SettingsConfig {
     public static final int PANEL_WIDTH = 800;
     public static final int PANEL_HEIGHT = 600;
     
-    // Onglets de catégories
-    public static final int TAB_START_X = PANEL_X;
-    public static final int TAB_START_Y = PANEL_Y - 40;
-    public static final int TAB_WIDTH = 150;
-    public static final int TAB_HEIGHT = 35;
-    public static final int TAB_SPACING = 10;
-    
     // Labels (à gauche du slider)
     public static final int LABEL_X = PANEL_X + 20;
     public static final int LABEL_WIDTH = 180;
@@ -31,6 +24,15 @@ public class SettingsConfig {
     // Sliders (après le label)
     public static final int SLIDER_START_X = LABEL_X + LABEL_WIDTH + 20;
     public static final int SLIDER_START_Y = PANEL_Y + 40;
+    
+    // Onglets de catégories
+    public static final int TAB_START_X = PANEL_X;
+    public static final int TAB_START_Y = PANEL_Y - 40; // En haut du panneau
+    public static final int TAB_WIDTH = 150;
+    public static final int TAB_HEIGHT = 35;
+    public static final int TAB_SPACING = 10;
+    
+    // Sliders - dimensions
     public static final int SLIDER_WIDTH = 350;
     public static final int SLIDER_HEIGHT = 30;
     public static final int SLIDER_SPACING = 45;
@@ -40,6 +42,13 @@ public class SettingsConfig {
     // Valeur (à droite du slider)
     public static final int VALUE_X = SLIDER_START_X + SLIDER_WIDTH + 15;
     public static final int VALUE_WIDTH = 80;
+    
+    // Boutons de langue (en dessous des sliders)
+    public static final int LANGUAGE_BUTTON_START_X = SLIDER_START_X;
+    public static final int LANGUAGE_BUTTON_START_Y = SLIDER_START_Y + (SLIDER_SPACING * 6) + 20; // Après 6 sliders + espacement
+    public static final int LANGUAGE_BUTTON_WIDTH = 100;
+    public static final int LANGUAGE_BUTTON_HEIGHT = 35;
+    public static final int LANGUAGE_BUTTON_SPACING = 15;
     
     // Boutons d'action
     public static final int BUTTON_WIDTH = 120;

@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import ui.settings.DefaultValues;
 import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
 /**
@@ -212,23 +213,41 @@ public class HelpMethods {
      * Utilisée pour la sérialisation/désérialisation JSON
      */
     private static class PlayerConfigData {
+        // Paramètres Gameplay
         float acceleration;
         float maxSpeedX;
         float jumpForce;
         float gravity;
         float dashSpeed;
+        
+        // Paramètres Advanced Physics
+        float airResistance;
+        float groundFriction;
+        float fastFallMultiplier;
+        int coyoteTimeFrames;
+        float apexGravityMultiplier;
+        float apexAccelerationMultiplier;
+        
         String language;
         
         // Constructeur par défaut requis pour Gson
         PlayerConfigData() {}
         
-        // Constructeur avec valeurs
-        PlayerConfigData(float acceleration, float maxSpeedX, float jumpForce, float gravity, float dashSpeed, String language) {
+        // Constructeur avec toutes les valeurs
+        PlayerConfigData(float acceleration, float maxSpeedX, float jumpForce, float gravity, float dashSpeed,
+                        float airResistance, float groundFriction, float fastFallMultiplier, int coyoteTimeFrames,
+                        float apexGravityMultiplier, float apexAccelerationMultiplier, String language) {
             this.acceleration = acceleration;
             this.maxSpeedX = maxSpeedX;
             this.jumpForce = jumpForce;
             this.gravity = gravity;
             this.dashSpeed = dashSpeed;
+            this.airResistance = airResistance;
+            this.groundFriction = groundFriction;
+            this.fastFallMultiplier = fastFallMultiplier;
+            this.coyoteTimeFrames = coyoteTimeFrames;
+            this.apexGravityMultiplier = apexGravityMultiplier;
+            this.apexAccelerationMultiplier = apexAccelerationMultiplier;
             this.language = language;
         }
 
@@ -253,6 +272,12 @@ public class HelpMethods {
                 Constants.PLAYER.JUMP_FORCE,
                 Constants.PLAYER.GRAVITY,
                 Constants.PLAYER.DASH_SPEED,
+                Constants.PLAYER.AIR_RESISTANCE,
+                Constants.PLAYER.GROUND_FRICTION,
+                Constants.PLAYER.FAST_FALL_MULT,
+                Constants.PLAYER.COYOTE_TIME_FRAMES,
+                Constants.PLAYER.APEX_GRAVITY_MULT,
+                Constants.PLAYER.APEX_ACCEL_MULT,
                 Constants.language
             );
             
@@ -292,6 +317,12 @@ public class HelpMethods {
         System.out.println("  Jump Force   = " + Constants.PLAYER.JUMP_FORCE);
         System.out.println("  Gravity      = " + Constants.PLAYER.GRAVITY);
         System.out.println("  Dash Speed   = " + Constants.PLAYER.DASH_SPEED);
+        System.out.println("  Air Resistance = " + Constants.PLAYER.AIR_RESISTANCE);
+        System.out.println("  Ground Friction = " + Constants.PLAYER.GROUND_FRICTION);
+        System.out.println("  Fast Fall Multiplier = " + Constants.PLAYER.FAST_FALL_MULT);
+        System.out.println("  Coyote Time Frames = " + Constants.PLAYER.COYOTE_TIME_FRAMES);
+        System.out.println("  Apex Gravity Multiplier = " + Constants.PLAYER.APEX_GRAVITY_MULT);
+        System.out.println("  Apex Acceleration Multiplier = " + Constants.PLAYER.APEX_ACCEL_MULT);
         System.out.println("  Langue       = " + Constants.language);
         
         System.out.println("Save done");
@@ -329,12 +360,23 @@ public class HelpMethods {
                     return false;
                 }
                 
-                // Appliquer les valeurs chargées aux constantes du joueur
-                Constants.PLAYER.ACCELERATION = config.acceleration;
-                Constants.PLAYER.MAX_SPEED_X = config.maxSpeedX;
-                Constants.PLAYER.JUMP_FORCE = config.jumpForce;
-                Constants.PLAYER.GRAVITY = config.gravity;
-                Constants.PLAYER.DASH_SPEED = config.dashSpeed;
+                // Valider et appliquer les valeurs chargées aux constantes du joueur
+                // Utiliser les valeurs par défaut si les valeurs chargées sont invalides
+                Constants.PLAYER.ACCELERATION = validateFloat(config.acceleration, 0f, 5f, DefaultValues.getDefaultAcceleration());
+                Constants.PLAYER.MAX_SPEED_X = validateFloat(config.maxSpeedX, 0.1f, 50f, DefaultValues.getDefaultMaxSpeedX());
+                Constants.PLAYER.JUMP_FORCE = validateFloat(config.jumpForce, -100f, 100f, DefaultValues.getDefaultJumpForce());
+                Constants.PLAYER.GRAVITY = validateFloat(config.gravity, -5f, 50f, DefaultValues.getDefaultGravity());
+                Constants.PLAYER.DASH_SPEED = validateFloat(config.dashSpeed, 0f, 500f, DefaultValues.getDefaultDashSpeed());
+                
+                // Paramètres Advanced Physics
+                // validateFloat retourne la valeur par défaut si invalide, donc compatible avec anciennes sauvegardes
+                Constants.PLAYER.AIR_RESISTANCE = validateFloat(config.airResistance, 0.5f, 1.0f, DefaultValues.getDefaultAirResistance());
+                Constants.PLAYER.GROUND_FRICTION = validateFloat(config.groundFriction, 0.5f, 1.0f, DefaultValues.getDefaultGroundFriction());
+                Constants.PLAYER.FAST_FALL_MULT = validateFloat(config.fastFallMultiplier, 1.0f, 2.0f, DefaultValues.getDefaultFastFallMultiplier());
+                int validatedCoyote = (int) validateFloat(config.coyoteTimeFrames, 0f, 10f, DefaultValues.getDefaultCoyoteTimeFrames());
+                Constants.PLAYER.COYOTE_TIME_FRAMES = validatedCoyote;
+                Constants.PLAYER.APEX_GRAVITY_MULT = validateFloat(config.apexGravityMultiplier, 0.1f, 1.0f, DefaultValues.getDefaultApexGravityMultiplier());
+                Constants.PLAYER.APEX_ACCEL_MULT = validateFloat(config.apexAccelerationMultiplier, 1.0f, 3.0f, DefaultValues.getDefaultApexAccelerationMultiplier());
                 
                 // Appliquer la langue sauvegardée si elle existe
                 if (config.language != null && !config.language.isEmpty()) {
@@ -878,6 +920,30 @@ public class HelpMethods {
      */
     public static float clamp(float v, float min, float max) {
         return Math.max(min, Math.min(max, v));
+    }
+
+    /**
+     * Valide une valeur float et retourne la valeur par défaut si invalide
+     * @param value Valeur à valider
+     * @param min Valeur minimale acceptée
+     * @param max Valeur maximale acceptée
+     * @param defaultValue Valeur par défaut si invalide
+     * @return Valeur validée ou valeur par défaut
+     */
+    private static float validateFloat(float value, float min, float max, float defaultValue) {
+        // Vérifier si la valeur est NaN ou Infinity
+        if (Float.isNaN(value) || Float.isInfinite(value)) {
+            System.err.println("Valeur invalide détectée (NaN ou Infinity), utilisation de la valeur par défaut: " + defaultValue);
+            return defaultValue;
+        }
+        
+        // Vérifier si la valeur est dans la plage valide
+        if (value < min || value > max) {
+            System.err.println("Valeur hors limites [" + min + ", " + max + "]: " + value + ", utilisation de la valeur par défaut: " + defaultValue);
+            return defaultValue;
+        }
+        
+        return value;
     }
 
 }

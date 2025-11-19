@@ -231,11 +231,22 @@ public class SettingSlider {
     }
     
     /**
-     * Définit la valeur (avec clamp automatique)
+     * Définit la valeur (avec clamp automatique et arrondi aux incréments de step)
      * @param value Nouvelle valeur
      */
     public void setValue(float value) {
-        currentValue = Math.max(minValue, Math.min(maxValue, value));
+        // Clamp la valeur entre min et max
+        float clampedValue = Math.max(minValue, Math.min(maxValue, value));
+        
+        // Arrondir à l'incrément de step le plus proche
+        if (step > 0) {
+            float steps = Math.round((clampedValue - minValue) / step);
+            currentValue = minValue + steps * step;
+            // Re-clamp après arrondi pour éviter les erreurs d'arrondi
+            currentValue = Math.max(minValue, Math.min(maxValue, currentValue));
+        } else {
+            currentValue = clampedValue;
+        }
     }
     
     /**

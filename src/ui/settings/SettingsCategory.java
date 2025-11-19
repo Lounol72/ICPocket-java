@@ -4,7 +4,14 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ui.settings.SettingsConfig.*;
+import static ui.settings.SettingsConfig.FONT_SIZE_LABEL;
+import static ui.settings.SettingsConfig.FONT_SIZE_VALUE;
+import static ui.settings.SettingsConfig.LABEL_X;
+import static ui.settings.SettingsConfig.SLIDER_HEIGHT;
+import static ui.settings.SettingsConfig.SLIDER_SPACING;
+import static ui.settings.SettingsConfig.SLIDER_START_Y;
+import static ui.settings.SettingsConfig.TEXT_COLOR;
+import static ui.settings.SettingsConfig.VALUE_X;
 
 /**
  * Gère une catégorie de paramètres avec sa collection de SettingItem.
@@ -64,12 +71,16 @@ public class SettingsCategory {
     
     /**
      * Met à jour tous les items
+     * Note: Ne synchronise PAS les valeurs depuis le slider pour permettre
+     * les modifications externes des constantes de persister.
+     * La synchronisation se fait uniquement lors des interactions actives.
      */
     public void update() {
         for (SettingItem item : items) {
             item.getSlider().update();
-            // Synchroniser la valeur depuis le slider si nécessaire
-            item.updateFromSlider();
+            // Synchroniser le slider depuis la valeur actuelle (pour l'affichage)
+            // mais ne PAS synchroniser la valeur depuis le slider (évite d'écraser les modifications externes)
+            item.updateSlider();
         }
         tab.update();
     }

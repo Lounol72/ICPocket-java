@@ -109,7 +109,20 @@ public class LanguageButton {
      * @param y Position Y
      */
     public void handleMouseMove(int x, int y) {
-        isHovered = bounds.contains(x, y);
+        // Réinitialiser l'état hover si la position est invalide ou si la souris n'est pas sur le bouton
+        if (x < 0 || y < 0) {
+            isHovered = false;
+        } else {
+            isHovered = bounds.contains(x, y);
+        }
+    }
+    
+    /**
+     * Définit l'état hover manuellement
+     * @param hovered true si survolé
+     */
+    public void setHovered(boolean hovered) {
+        this.isHovered = hovered;
     }
     
     /**

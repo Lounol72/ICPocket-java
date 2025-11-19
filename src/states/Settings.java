@@ -528,8 +528,10 @@ public class Settings extends State implements StateMethods {
                 
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_RIGHT:
-                if (activeSlider != null) {
+                if (activeSlider != null && selectedItem != null) {
                     activeSlider.handleKeyboard(e.getKeyCode(), shiftPressed);
+                    // Synchroniser la valeur lors de l'ajustement clavier
+                    selectedItem.updateFromSlider();
                 }
                 break;
                 
@@ -631,9 +633,10 @@ public class Settings extends State implements StateMethods {
         int x = e.getX();
         int y = e.getY();
         
-        // Mettre à jour les boutons de langue
+        // Mettre à jour les boutons de langue et réinitialiser l'état de survol
         for (LanguageButton button : languageButtons) {
-            button.handleMouseMove(x, y);
+            boolean isOver = button.isMouseOver(x, y);
+            button.setHovered(isOver);
         }
         
         // Mettre à jour les onglets
@@ -728,8 +731,17 @@ public class Settings extends State implements StateMethods {
         // Vérifier les sliders
         if (selectedCategory != null) {
             for (SettingItem item : selectedCategory.getItems()) {
-                if (item.getSlider().handleMouseClick(x, y)) {
+                SettingSlider slider = item.getSlider();
+                if (slider.handleMouseClick(x, y)) {
+                    // Arrêter le drag de tous les autres sliders pour garantir qu'un seul est actif
+                    for (SettingItem otherItem : selectedCategory.getItems()) {
+                        if (otherItem != item) {
+                            otherItem.getSlider().handleMouseRelease();
+                        }
+                    }
                     selectItem(item);
+                    // Synchroniser la valeur lors du clic initial
+                    item.updateFromSlider();
                     return;
                 }
             }

@@ -20,6 +20,12 @@ public class Menu extends State implements StateMethods{
     private String languageString;
     private MenuButtons[] buttons;
     private BufferedImage backgroundImage;
+    
+    // Message de confirmation/erreur pour la sauvegarde
+    private String saveMessage;
+    private long saveMessageTime;
+    private boolean showSaveMessage;
+    private boolean saveSuccess;
     /**
      * Constructor
      * */
@@ -38,6 +44,8 @@ public class Menu extends State implements StateMethods{
 
         };
 
+        showSaveMessage = false;
+        saveSuccess = false;
         
         // Load background image
         backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.UI + "menu_background.jpg");
@@ -68,6 +76,25 @@ public class Menu extends State implements StateMethods{
         // Draw buttons
         for (MenuButtons mb : buttons)
             mb.draw(g);
+        
+        // Draw save message if visible
+        if (showSaveMessage) {
+            drawSaveMessage(g);
+        }
+    }
+    
+    /**
+     * Dessine le message de sauvegarde (succès ou erreur)
+     * @param g Contexte graphique
+     */
+    private void drawSaveMessage(Graphics g) {
+        Color messageColor = saveSuccess ? new Color(100, 200, 100) : new Color(200, 100, 100);
+        g.setColor(messageColor);
+        g.setFont(new Font("Arial", Font.BOLD, 16));
+        
+        int messageX = GAME_WIDTH / 2 - g.getFontMetrics().stringWidth(saveMessage) / 2;
+        int messageY = GAME_HEIGHT / 2 + 120;
+        g.drawString(saveMessage, messageX, messageY);
     }
 
     /**
@@ -77,6 +104,14 @@ public class Menu extends State implements StateMethods{
     public void update() {
         for (MenuButtons mb : buttons)
             mb.update();
+        
+        // Gérer le message de sauvegarde
+        if (showSaveMessage) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - saveMessageTime > 2000) { // 2 secondes
+                showSaveMessage = false;
+            }
+        }
     }
 
     /**
@@ -152,7 +187,8 @@ public class Menu extends State implements StateMethods{
             if (isIn(e,mb)) {
                 // Si c'est le bouton de sauvegarde, appeler save_all() au lieu de changer d'état
                 if ("save_game".equals(mb.getBaseText())) {
-                    HelpMethods.save_all();
+                    boolean success = HelpMethods.save_all();
+                    showSaveMessage(success);
                 } else {
                     mb.action();
                 }
@@ -160,6 +196,21 @@ public class Menu extends State implements StateMethods{
         }
         for (MenuButtons mb : buttons)
             mb.resetBools();
+    }
+
+    /**
+     * Affiche un message de sauvegarde (succès ou erreur)
+     * @param success true si la sauvegarde a réussi, false sinon
+     */
+    private void showSaveMessage(boolean success) {
+        saveSuccess = success;
+        if (success) {
+            saveMessage = GetPhrase("save_success");
+        } else {
+            saveMessage = GetPhrase("save_error");
+        }
+        saveMessageTime = System.currentTimeMillis();
+        showSaveMessage = true;
     }
 
     @Override

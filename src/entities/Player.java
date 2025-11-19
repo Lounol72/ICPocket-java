@@ -4,6 +4,7 @@ package entities;
 import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.Color;
 
 import config.PlayerConfig;
 
@@ -51,6 +52,8 @@ import static utilz.HelpMethods.IsEntityOnFloorAABB;
 import static utilz.HelpMethods.mapAndClamp;
 import utilz.LoadSave;
 import utilz.PhysicsDebugger;
+import static utilz.Constants.PLAYER.HURTBOX.HURTBOX_WIDTH;
+import static utilz.Constants.PLAYER.HURTBOX.HURTBOX_HEIGHT;
 
 /**
  * Classe représentant le joueur avec système de physique avancé
@@ -125,6 +128,41 @@ public class Player extends Entity {
     // === GESTION DES SPRITES D'ATTAQUE ===
     private boolean isUsingAttackSprites = false; // Flag pour savoir si on utilise les sprites d'attaque
     private boolean isAttacking = false; // Flag pour savoir si on est en train d'attaquer
+
+    // ================================
+    // ATTACK HITBOX / TIMING
+    // ================================
+
+    private static final int ATTACK_ACTIVE_FRAME_START = 2;
+    private static final int ATTACK_ACTIVE_FRAME_END = 4;
+
+    public Rectangle2D.Float getActiveAttackBox() {
+        if (!isAttacking || animManager == null)
+            return null;
+
+        int currentFrame = animManager.getAniIndex();
+        if (currentFrame < ATTACK_ACTIVE_FRAME_START || currentFrame > ATTACK_ACTIVE_FRAME_END)
+            return null; // Hors frames infligeantes
+
+        // Calculer taille et position selon la direction (utiliser constantes dans
+        // Constants)
+        float w = HURTBOX_WIDTH;
+        float h = HURTBOX_HEIGHT;
+
+        float x;
+        if (direction >= 0) {
+            // Attaque vers la droite: hitbox collée au côté droit de la hitbox joueur
+            x = hitbox.x + hitbox.width;
+        } else {
+            // Attaque vers la gauche: hitbox collée au côté gauche
+            x = hitbox.x - w;
+        }
+
+        // Centrer verticalement sur la hitbox du joueur
+        float y = hitbox.y + (hitbox.height - h) / 2.0f;
+
+        return new Rectangle2D.Float(x, y, w, h);
+    }
 
     // ================================
     // CONSTRUCTEUR
@@ -225,8 +263,18 @@ public class Player extends Entity {
         // DEBUG: Décommenter pour afficher l'état du joueur
         // if(inAir) System.out.println("inAir");
 
-        // DEBUG: Décommenter pour afficher la hitbox
-        // drawHitbox(g, xLvlOffset, yLvlOffset);
+        // Afficher la hitbox du joueur en permanence (pour debug visuel)
+        drawHitbox(g, xLvlOffset, yLvlOffset);
+
+        // Afficher la hitbox d'attaque active (rouge) si présente
+        Rectangle2D.Float atkBox = getActiveAttackBox();
+        if (atkBox != null) {
+            Color prev = g.getColor();
+            g.setColor(Color.RED);
+            g.drawRect((int) atkBox.x - xLvlOffset, (int) atkBox.y - yLvlOffset,
+                    (int) atkBox.width, (int) atkBox.height);
+            g.setColor(prev);
+        }
     }
 
     // ================================
@@ -311,7 +359,8 @@ public class Player extends Entity {
         animManager.reset();
 
         // Debug
-        //System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction + " inAir=" + inAir);
+        // System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction +
+        // " inAir=" + inAir);
     }
 
     /**

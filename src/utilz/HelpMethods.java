@@ -2,7 +2,9 @@ package utilz;
 
 // Java standard library imports
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -200,6 +202,154 @@ public class HelpMethods {
             .registerTypeAdapter(typeOfT, typeAdapter)
             .create();
     }
+    
+    /**
+     * =============================== Sauvegarde / Chargement config ========================
+     */
+    
+    /**
+     * Classe interne pour stocker la configuration du joueur
+     * Utilisée pour la sérialisation/désérialisation JSON
+     */
+    private static class PlayerConfigData {
+        float acceleration;
+        float maxSpeedX;
+        float jumpForce;
+        float gravity;
+        float dashSpeed;
+        String language;
+        
+        // Constructeur par défaut requis pour Gson
+        PlayerConfigData() {}
+        
+        // Constructeur avec valeurs
+        PlayerConfigData(float acceleration, float maxSpeedX, float jumpForce, float gravity, float dashSpeed, String language) {
+            this.acceleration = acceleration;
+            this.maxSpeedX = maxSpeedX;
+            this.jumpForce = jumpForce;
+            this.gravity = gravity;
+            this.dashSpeed = dashSpeed;
+            this.language = language;
+        }
+
+    }
+    
+    /**
+     * Chemin vers le fichier de sauvegarde de configuration
+     */
+    private static final String SAVE_CONFIG_PATH = "res/data/save_config.json";
+
+    /**
+     * Sauvegarde les paramètres de la configuration des constantes du joueur dans un fichier JSON
+     * Sauvegarde aussi la langue sélectionnée
+     * @return true si la sauvegarde a réussi, false sinon
+     */
+    public static boolean save_config(){
+        try {
+            // Créer un objet de configuration avec les valeurs actuelles
+            PlayerConfigData config = new PlayerConfigData(
+                Constants.PLAYER.ACCELERATION,
+                Constants.PLAYER.MAX_SPEED_X,
+                Constants.PLAYER.JUMP_FORCE,
+                Constants.PLAYER.GRAVITY,
+                Constants.PLAYER.DASH_SPEED,
+                Constants.language
+            );
+            
+            // Sérialiser en JSON avec formatage
+            Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
+            String json = prettyGson.toJson(config);
+            
+            // Créer le répertoire parent s'il n'existe pas
+            File file = new File(SAVE_CONFIG_PATH);
+            File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            
+            // Écrire dans le fichier
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(json);
+            }
+            
+            return true;
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la sauvegarde de la configuration: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Sauvegarde toutes les données du jeu (config, partie, etc.)
+     * @return true si toutes les sauvegardes ont réussi, false sinon
+     */
+    public static boolean save_all(){        
+        // Affichage des données sauvegardées
+        System.out.println("Données sauvegardées :");
+        System.out.println("  Acceleration = " + Constants.PLAYER.ACCELERATION);
+        System.out.println("  Max Speed X  = " + Constants.PLAYER.MAX_SPEED_X);
+        System.out.println("  Jump Force   = " + Constants.PLAYER.JUMP_FORCE);
+        System.out.println("  Gravity      = " + Constants.PLAYER.GRAVITY);
+        System.out.println("  Dash Speed   = " + Constants.PLAYER.DASH_SPEED);
+        System.out.println("  Langue       = " + Constants.language);
+        
+        System.out.println("Save done");
+        return save_config();
+    }
+    
+    /**
+     * Détecte s'il y a un fichier save_config.json
+     * @return true si le fichier existe, false sinon
+     */
+    public static boolean detect_save(){
+        File file = new File(SAVE_CONFIG_PATH);
+        return file.exists() && file.isFile();
+    }
+
+    /**
+     * Charge la configuration depuis save_config.json et remplace la configuration par défaut
+     * Charge aussi la langue sauvegardée
+     * @return true si le chargement a réussi, false sinon
+     */
+    public static boolean charger_config(){
+        // Vérifier si le fichier existe
+        if (!detect_save()) {
+            return false;
+        }
+        
+        try {
+            // Lire et parser le fichier JSON
+            try (FileReader reader = new FileReader(SAVE_CONFIG_PATH)) {
+                PlayerConfigData config = gson.fromJson(reader, PlayerConfigData.class);
+                
+                // Vérifier que la configuration a été chargée correctement
+                if (config == null) {
+                    System.err.println("Erreur: Impossible de parser la configuration depuis le fichier JSON");
+                    return false;
+                }
+                
+                // Appliquer les valeurs chargées aux constantes du joueur
+                Constants.PLAYER.ACCELERATION = config.acceleration;
+                Constants.PLAYER.MAX_SPEED_X = config.maxSpeedX;
+                Constants.PLAYER.JUMP_FORCE = config.jumpForce;
+                Constants.PLAYER.GRAVITY = config.gravity;
+                Constants.PLAYER.DASH_SPEED = config.dashSpeed;
+                
+                // Appliquer la langue sauvegardée si elle existe
+                if (config.language != null && !config.language.isEmpty()) {
+                    Constants.SetLanguage(config.language);
+                }
+                
+                return true;
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors du chargement de la configuration: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /**
      * Map des nombres de sprites pour chaque action
      */

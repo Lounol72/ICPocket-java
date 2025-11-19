@@ -15,8 +15,8 @@ public class Constants {
         // === PHYSICS DEBUG ===
         public static boolean DEBUG_PHYSICS = false; // Activer logs physique
 
-        // === VITESSES LIMITES (Hollow Knight style) ===
-        // Hollow Knight: ~5-6 unités/s horizontal, ~15-20 unités/s vertical
+        // === VITESSES LIMITES ===
+        // ~5-6 unités/s horizontal, ~15-20 unités/s vertical
         public static float MAX_SPEED_X = 2f * SCALE; // Vitesse horizontale max
         public static float MAX_FALL_SPEED = 6f * SCALE; // Chute plus rapide type HK
         public static float MAX_RISE_SPEED = 8f * SCALE; // Cohérente avec JUMP_FORCE plus forte

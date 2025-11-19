@@ -12,6 +12,7 @@ import ui.MenuButtons;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
+import utilz.HelpMethods;
 import static utilz.HelpMethods.GetPhrase;
 import utilz.LoadSave;
 public class Menu extends State implements StateMethods{
@@ -30,9 +31,11 @@ public class Menu extends State implements StateMethods{
     private void initClasses() {
         languageString = GetPhrase("menu");
         buttons = new MenuButtons[]{
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 0, "start", GameState.WORLD),
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 , 200, 50, 1, "settings", GameState.SETTINGS),
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 2, "quit", GameState.QUIT),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 100, 200, 50, 0, "start", GameState.WORLD),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 1, "settings", GameState.SETTINGS),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2, 200, 50, 2, "save_game", GameState.MENU),
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 3, "quit", GameState.QUIT),
+
         };
 
         
@@ -116,6 +119,14 @@ public class Menu extends State implements StateMethods{
      * @param e
      */
     @Override
+    public void mouseDragged( MouseEvent e ) {
+        // Pas de drag nécessaire pour Menu
+    }
+
+    /**
+     * @param e
+     */
+    @Override
     public void mouseClicked( MouseEvent e ) {
 
     }
@@ -138,8 +149,14 @@ public class Menu extends State implements StateMethods{
     public void mouseReleased(MouseEvent e) {
         
         for (MenuButtons mb : buttons) {
-            if (isIn(e,mb)) 
-                mb.action(); 
+            if (isIn(e,mb)) {
+                // Si c'est le bouton de sauvegarde, appeler save_all() au lieu de changer d'état
+                if ("save_game".equals(mb.getBaseText())) {
+                    HelpMethods.save_all();
+                } else {
+                    mb.action();
+                }
+            }
         }
         for (MenuButtons mb : buttons)
             mb.resetBools();

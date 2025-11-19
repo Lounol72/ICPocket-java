@@ -82,9 +82,9 @@ public class Game implements Runnable{
     private void initClasses() {
         this.menu = new Menu(this);
         this.world = new World(this);
-        this.start = new Start(this);
         this.settings = new Settings(this);
         this.splash = new Splash(this);
+        this.start = new Start(this);
     }
 
     /**

@@ -5,10 +5,12 @@ import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
+import config.PlayerConfig;
+
+import static entities.PlayerStateEnum.DASH;
 import static entities.PlayerStateEnum.IDLE;
 import static entities.PlayerStateEnum.JUMP;
 import static entities.PlayerStateEnum.RUN;
-import static entities.PlayerStateEnum.DASH;
 import physics.ForceType;
 import physics.Vector2D;
 import static utilz.Constants.PLAYER.ACCELERATION;
@@ -141,6 +143,10 @@ public class Player extends Entity {
      */
     public Player(float x, float y, int width, int height, levels.Level level) {
         super(x, y, width, height);
+        if (!PlayerConfig.validateConfig()) {
+            PlayerConfig.getConfigDescription();
+            throw new IllegalStateException("Invalid Player configuration");
+        }
         loadAnimations();
         initHitbox(x, y, HITBOX_WIDTH, HITBOX_HEIGHT);
         this.currentLevel = level;
@@ -302,8 +308,7 @@ public class Player extends Entity {
         animManager.reset();
 
         // Debug
-        System.out.println(
-                "Dash started: speed=" + utilz.Constants.PLAYER.DASH_SPEED + " dir=" + direction + " inAir=" + inAir);
+        //System.out.println("Dash started: speed=" + dashSpeed + " dir=" + direction + " inAir=" + inAir);
     }
 
     /**
@@ -320,8 +325,6 @@ public class Player extends Entity {
         if (Math.abs(vx) > MAX_SPEED_X) {
             physicsBody.getVelocity().x = Math.signum(vx) * MAX_SPEED_X;
         }
-
-        System.out.println("Dash finished");
     }
 
     /**

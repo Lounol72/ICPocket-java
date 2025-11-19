@@ -102,9 +102,6 @@ public class World extends State implements StateMethods {
             case KeyEvent.VK_D -> {
                 player.setRight(false);
             }
-            case KeyEvent.VK_RIGHT -> {
-                player.setRight(false);
-            }
             case KeyEvent.VK_S -> {
                 player.setDown(false);
             }
@@ -128,7 +125,7 @@ public class World extends State implements StateMethods {
                 player.setRight(true);
             }
             case KeyEvent.VK_RIGHT -> {
-                // Touche flèche droite active le déplacement droite et déclenche un dash
+                // Touche flèche droite déclenche un dash
 
                 player.startDash();
             }

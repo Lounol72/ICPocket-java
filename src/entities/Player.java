@@ -26,9 +26,7 @@ import static utilz.Constants.PLAYER.GRAVITY_MULTIPLIER_BASE;
 import static utilz.Constants.PLAYER.GROUND_FRICTION;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_HEIGHT;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_WIDTH;
-import static utilz.Constants.PLAYER.JUMP_CUT_MULTIPLIER;
-import static utilz.Constants.PLAYER.JUMP_FORCE;
-import static utilz.Constants.PLAYER.JUMP_MAX_TIME;
+
 import static utilz.Constants.PLAYER.JUMP_SPEED_MAX;
 import static utilz.Constants.PLAYER.MAX_FALL_SPEED;
 import static utilz.Constants.PLAYER.MAX_RISE_SPEED;
@@ -96,7 +94,6 @@ public class Player extends Entity {
     private int dashTimer = 0;
     private int dashCooldownFrames = 30; // cooldown après dash
     private int dashCooldownTimer = 0;
-    private float dashSpeed = 24f * utilz.Constants.SCALE; // vitesse appliquée pendant le dash
 
     // ================================
     // SYSTÈME DE SAUT
@@ -304,7 +301,7 @@ public class Player extends Entity {
         dashTimer = dashDurationFrames;
 
         // Force immediate horizontal velocity for the dash
-        physicsBody.getVelocity().x = dashSpeed * direction;
+        physicsBody.getVelocity().x = utilz.Constants.PLAYER.DASH_SPEED * direction;
 
         // Force dash animation
         playerAction = DASH.ordinal();
@@ -454,7 +451,7 @@ public class Player extends Entity {
         if (isDashing) {
             // Pendant le dash, on force la vitesse horizontale et on ignore les inputs
             physicsBody.removeForcesOfType(ForceType.INPUT);
-            physicsBody.getVelocity().x = dashSpeed * direction;
+            physicsBody.getVelocity().x = utilz.Constants.PLAYER.DASH_SPEED * direction;
             return;
         }
 
@@ -783,7 +780,7 @@ public class Player extends Entity {
      */
     private void handleJumpRelease() {
         if (isJumping && physicsBody.getVelocity().y < 0) {
-            physicsBody.getVelocity().y *= JUMP_CUT_MULTIPLIER;
+            physicsBody.getVelocity().y *= utilz.Constants.PLAYER.JUMP_CUT_MULTIPLIER;
             isJumping = false;
             physicsBody.removeForcesOfType(ForceType.JUMP);
         }
@@ -817,13 +814,13 @@ public class Player extends Entity {
         inAir = true;
 
         // Debug: Logger les paramètres du saut
-        PhysicsDebugger.logJump(JUMP_FORCE, physicsBody.getVelocity().y);
+        PhysicsDebugger.logJump(utilz.Constants.PLAYER.JUMP_FORCE, physicsBody.getVelocity().y);
 
-        // APPLICATION DE LA FORCE DE SAUT
+        // APPLICATION DE LA FORCE DE SAUT (lecture dynamique depuis Constants)
         physicsBody.addForce(
-                new Vector2D(0, JUMP_FORCE),
+                new Vector2D(0, utilz.Constants.PLAYER.JUMP_FORCE),
                 ForceType.JUMP,
-                JUMP_MAX_TIME);
+                utilz.Constants.PLAYER.JUMP_MAX_TIME);
     }
 
     /**

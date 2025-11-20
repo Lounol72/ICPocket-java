@@ -20,9 +20,9 @@ import static ui.settings.SettingsConfig.VALUE_X;
 public class SettingsCategory {
     
     // === PROPRIÉTÉS ===
-    private String nameKey;
-    private List<SettingItem> items;
-    private CategoryTab tab;
+    private final String nameKey;
+    private final List<SettingItem> items;
+    private final CategoryTab tab;
     
     /**
      * Constructeur

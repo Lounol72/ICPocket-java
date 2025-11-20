@@ -85,6 +85,7 @@ public class PlayerConfig {
     // ================================
     
     /**
+     * @test
      * Valide la configuration du joueur afin de détecter les erreurs potentielles avant l'exécution
      * 
      * @return true si la configuration est valide

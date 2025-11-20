@@ -19,24 +19,25 @@ public class World extends State implements StateMethods {
 
     private boolean paused;
 
-    private Player player;
-    private LevelManager level;
+    private final Player player;
+    private final LevelManager level;
 
     private int xLvlOffset;
     private int yLvlOffset;
-    private int leftBorder = (int) (0.2 * GAME_WIDTH);
-    private int rightBorder = (int) (0.8 * GAME_WIDTH);
-    private int topBorder = (int) (0.3 * GAME_HEIGHT);
-    private int bottomBorder = (int) (0.90 * GAME_HEIGHT);
-    private int lvlTilesWide = GetLevelData()[0].length;
-    private int lvlTilesHigh = GetLevelData().length;
-    private int maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
-    private int maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
-    private int maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
-    private int maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
+    private final int LEFT_BORDER = (int) (0.45f * GAME_WIDTH);
+    private final int RIGHT_BORDER = (int) (0.55f * GAME_WIDTH);
+    private final int TOP_BORDER = (int) (0.4f * GAME_HEIGHT);
+    private final int BOTTOM_BORDER = (int) (0.90 * GAME_HEIGHT);
+    private int lvlTilesWide;
+    private int lvlTilesHigh;
+    private int maxTilesOffsetX;
+    private int maxLvlOffsetX;
+    private int maxTilesOffsetY;
+    private int maxLvlOffsetY;
 
     public World(Game game) {
         super(game);
+        loadLevel();
         level = new LevelManager(game);
         player = new Player(5 * TILES_SIZE, 5 * TILES_SIZE, (int) (64 * SCALE), (int) (64 * SCALE),
                 level.getCurrentLevel());
@@ -44,26 +45,36 @@ public class World extends State implements StateMethods {
 
     }
 
+    private void loadLevel(){
+        lvlTilesWide = GetLevelData()[0].length;
+        lvlTilesHigh = GetLevelData().length;
+        maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
+        maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
+        maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
+        maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
+    }
+
+
     private void checkCloseToBorder() {
         int playerX = (int) player.getHitbox().x;
         int playerY = (int) player.getHitbox().y;
         int diffX = playerX - xLvlOffset;
         int diffY = playerY - yLvlOffset;
 
-        if (diffX > rightBorder)
-            xLvlOffset += diffX - rightBorder;
-        else if (diffX < leftBorder)
-            xLvlOffset += diffX - leftBorder;
+        if (diffX > RIGHT_BORDER)
+            xLvlOffset += diffX - RIGHT_BORDER;
+        else if (diffX < LEFT_BORDER)
+            xLvlOffset += diffX - LEFT_BORDER;
 
         if (xLvlOffset > maxLvlOffsetX)
             xLvlOffset = maxLvlOffsetX;
         else if (xLvlOffset < 0)
             xLvlOffset = 0;
 
-        if (diffY > bottomBorder)
-            yLvlOffset += diffY - bottomBorder;
-        else if (diffY < topBorder)
-            yLvlOffset += diffY - topBorder;
+        if (diffY > BOTTOM_BORDER)
+            yLvlOffset += diffY - BOTTOM_BORDER;
+        else if (diffY < TOP_BORDER)
+            yLvlOffset += diffY - TOP_BORDER;
 
         if (yLvlOffset > maxLvlOffsetY)
             yLvlOffset = maxLvlOffsetY;

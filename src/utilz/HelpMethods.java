@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.google.gson.Gson;
@@ -21,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import ui.settings.DefaultValues;
 import static utilz.Constants.WORLD.TILES_SIZE;
@@ -30,9 +30,6 @@ import static utilz.Constants.language;
  * @implNote Cette classe est utilisée pour gérer les données du jeu
  */
 public class HelpMethods {
-
-    
-    private static final Random rnd = new Random();
 
     // Cache des données pour éviter des lectures répétées
     private static Map<String, JsonObject> jsonCache = new HashMap<>();
@@ -160,9 +157,8 @@ public class HelpMethods {
             }
             
             return levelData;
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Erreur lors du chargement du niveau depuis le JSON: " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
     }
@@ -189,7 +185,7 @@ public class HelpMethods {
                     .getAsJsonObject();
 
             return gson.fromJson(elementData, classOfT);
-        } catch (Exception e) {
+        } catch (JsonSyntaxException | IOException e) {
             System.err.println("Erreur lors du chargement de la ressource: " + e.getMessage());
             return null;
         }

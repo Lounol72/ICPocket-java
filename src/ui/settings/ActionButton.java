@@ -5,7 +5,11 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-import static ui.settings.SettingsConfig.*;
+import static ui.settings.SettingsConfig.BUTTON_HOVER_COLOR;
+import static ui.settings.SettingsConfig.BUTTON_NORMAL_COLOR;
+import static ui.settings.SettingsConfig.BUTTON_PRESSED_COLOR;
+import static ui.settings.SettingsConfig.BUTTON_TEXT_COLOR;
+import static ui.settings.SettingsConfig.FONT_SIZE_BUTTON;
 import static utilz.HelpMethods.GetPhrase;
 
 /**
@@ -22,9 +26,9 @@ public class ActionButton {
     }
     
     // === PROPRIÉTÉS ===
-    private Rectangle bounds;
-    private String textKey;
-    private Runnable onClickAction;
+    private final Rectangle bounds;
+    private final String textKey;
+    private final Runnable onClickAction;
     private ButtonState state;
     
     /**
@@ -50,17 +54,11 @@ public class ActionButton {
     public void draw(Graphics g) {
         Color bgColor;
         
-        switch (state) {
-            case PRESSED:
-                bgColor = BUTTON_PRESSED_COLOR;
-                break;
-            case HOVER:
-                bgColor = BUTTON_HOVER_COLOR;
-                break;
-            default:
-                bgColor = BUTTON_NORMAL_COLOR;
-                break;
-        }
+        bgColor = switch (state) {
+            case PRESSED -> BUTTON_PRESSED_COLOR;
+            case HOVER -> BUTTON_HOVER_COLOR;
+            default -> BUTTON_NORMAL_COLOR;
+        };
         
         // Fond
         g.setColor(bgColor);

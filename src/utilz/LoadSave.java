@@ -12,6 +12,8 @@ public class LoadSave {
 
     public static final String ASSETS = "/assets/";
     public static final String UI = ASSETS + "UI/";
+    public static final String LEVEL_FOLDER = ASSETS + "Levels/";
+    public static final String LEVEL_ONE_FOLDER = LEVEL_FOLDER + "LevelOne/";
 
     
     public static final String BUTTONS = UI + "Buttons/ButtonsAtlas.png";
@@ -20,7 +22,8 @@ public class LoadSave {
     //public static final String PLAYER_ATLAS = ASSETS + "Hooded Character-Sheet.png";
     public static final String PLAYER_ATLAS = ASSETS + "PlayerSheet.png";
     public static final String PLAYER_ATTACK_ATLAS = ASSETS + "PlayerSheetAttacks.png";
-    public static final String LEVEL_ONE_DATA = ASSETS + "Levels/LevelOne.png";
+    
+    public static final String LEVEL_ONE_DATA = LEVEL_ONE_FOLDER + "LevelOne.png";
     public static final String LEVEL_ATLAS = ASSETS + "tileset/GrassTileSet.png";
     /**
      * Méthode pour récupérer un sprite d'un atlas
@@ -78,7 +81,7 @@ public class LoadSave {
      */
     public static int[][] GetLevelData(){
         // Utilisation de la nouvelle fonction de chargement JSON
-        String levelJsonPath = "res/assets/Levels/LevelOne.json";
+        String levelJsonPath = "res/assets/Levels/LevelOne/LevelOne.json";
         int[][] levelData = HelpMethods.loadLevelDataFromJson(levelJsonPath, "out");
         
         if (levelData == null) {

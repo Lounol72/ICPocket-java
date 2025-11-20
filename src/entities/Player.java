@@ -6,7 +6,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 import config.PlayerConfig;
-
 import static entities.PlayerStateEnum.DASH;
 import static entities.PlayerStateEnum.IDLE;
 import static entities.PlayerStateEnum.JUMP;
@@ -26,7 +25,6 @@ import static utilz.Constants.PLAYER.GRAVITY_MULTIPLIER_BASE;
 import static utilz.Constants.PLAYER.GROUND_FRICTION;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_HEIGHT;
 import static utilz.Constants.PLAYER.HITBOX.HITBOX_WIDTH;
-
 import static utilz.Constants.PLAYER.JUMP_SPEED_MAX;
 import static utilz.Constants.PLAYER.MAX_FALL_SPEED;
 import static utilz.Constants.PLAYER.MAX_RISE_SPEED;
@@ -90,9 +88,9 @@ public class Player extends Entity {
     // DASH
     // ================================
     private boolean isDashing = false;
-    private int dashDurationFrames = 12; // durée du dash en frames
+    private final int dashDurationFrames = 12; // durée du dash en frames
     private int dashTimer = 0;
-    private int dashCooldownFrames = 30; // cooldown après dash
+    private final int dashCooldownFrames = 30; // cooldown après dash
     private int dashCooldownTimer = 0;
 
     // ================================
@@ -111,7 +109,6 @@ public class Player extends Entity {
     // ================================
     // NIVEAU ET COLLISIONS
     // ================================
-    private int[][] levelData;
     private levels.Level currentLevel;
 
     // ================================
@@ -150,7 +147,7 @@ public class Player extends Entity {
         loadAnimations();
         initHitbox(x, y, HITBOX_WIDTH, HITBOX_HEIGHT);
         this.currentLevel = level;
-        this.levelData = level.getLevelData();
+        
 
         // DÉTERMINATION DE L'ÉTAT INITIAL
         // Vérifier si le joueur commence en l'air ou au sol
@@ -970,7 +967,7 @@ public class Player extends Entity {
         animManager.reset();
 
         // Debug: Logger le début de l'attaque
-        System.out.println("Starting attack animation - non-interruptible");
+        //System.out.println("Starting attack animation - non-interruptible");
     }
 
     /**
@@ -984,7 +981,7 @@ public class Player extends Entity {
         isUsingAttackSprites = false;
 
         // Debug: Logger la fin de l'attaque
-        System.out.println("Attack animation finished - returning to normal animations");
+        //System.out.println("Attack animation finished - returning to normal animations");
     }
 
     /**
@@ -1008,7 +1005,7 @@ public class Player extends Entity {
         boolean animationFinished = currentFrame >= totalFrames - 1;
 
         if (animationFinished) {
-            System.out.println("Attack animation completed at frame " + currentFrame + "/" + totalFrames);
+            //System.out.println("Attack animation completed at frame " + currentFrame + "/" + totalFrames);
         }
 
         return animationFinished;
@@ -1093,7 +1090,7 @@ public class Player extends Entity {
         animManager = new AnimationManager(allAnimations);
 
         // Debug: Logger le chargement
-        System.out.println("Animations loaded: Unified system with 14 animation sets");
+        System.out.println("Animations loaded: Unified system with "+ allAnimations.length +" animation sets");
     }
 
     /**
@@ -1107,7 +1104,6 @@ public class Player extends Entity {
      */
     
     public void loadLvlData(int[][] lvlData) {
-        this.levelData = lvlData;
         if (!IsEntityOnFloor(hitbox, lvlData, physicsBody.getVelocity())) {
             inAir = true;
         }
@@ -1125,7 +1121,6 @@ public class Player extends Entity {
      */
     public void loadLevel(levels.Level level) {
         this.currentLevel = level;
-        this.levelData = level.getLevelData();
 
         // DÉTERMINATION DE L'ÉTAT INITIAL avec le système AABB
         if (!IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity())) {

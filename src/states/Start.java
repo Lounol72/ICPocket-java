@@ -9,12 +9,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import game.Game;
+import static states.GameState.MENU;
 import ui.StartButtons;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.UI.BUTTONS.HEIGHT;
 import static utilz.Constants.UI.BUTTONS.WIDTH;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
+import utilz.HelpMethods;
 import static utilz.HelpMethods.GetPhrase;
 
 public class Start extends State implements StateMethods{
@@ -38,7 +40,14 @@ public class Start extends State implements StateMethods{
 
     public Start(Game game){
         super(game);
+
         initClasses();
+
+        if (HelpMethods.detect_save()){
+            HelpMethods.charger_config();
+            UpdateStrings();
+            GameState.setState(MENU);
+        }
     }
 
     private void initClasses(){
@@ -98,6 +107,11 @@ public class Start extends State implements StateMethods{
         for (StartButtons mb : buttons)
             if (isIn(e,mb))
                 mb.setMouseOver(true);
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        // Pas de drag nécessaire pour Start
     }
 
     @Override

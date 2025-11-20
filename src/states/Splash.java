@@ -42,6 +42,7 @@ public class Splash extends State implements StateMethods {
 
     public Splash(Game game) {
         super(game);
+
         // Try to load logo; fall back if missing
         logo = LoadSave.GetSpriteAtlas(LoadSave.UI + "logo.png");
         loadStrings();
@@ -148,6 +149,9 @@ public class Splash extends State implements StateMethods {
 
     @Override
     public void mouseMoved(MouseEvent e) { }
+
+    @Override
+    public void mouseDragged(MouseEvent e) { }
 
     @Override
     public void mouseClicked(MouseEvent e) { }

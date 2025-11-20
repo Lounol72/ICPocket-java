@@ -151,6 +151,11 @@ public class World extends State implements StateMethods {
     }
 
     @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
     public void mouseClicked(MouseEvent e) {
 
     }

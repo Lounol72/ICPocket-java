@@ -1,0 +1,14 @@
+{
+  "acceleration": 0.4,
+  "maxSpeedX": 4.0,
+  "jumpForce": -8.0,
+  "gravity": 0.3,
+  "dashSpeed": 48.0,
+  "airResistance": 0.98,
+  "groundFriction": 0.88,
+  "fastFallMultiplier": 1.25,
+  "coyoteTimeFrames": 3,
+  "apexGravityMultiplier": 0.3,
+  "apexAccelerationMultiplier": 1.5,
+  "language": "en"
+}

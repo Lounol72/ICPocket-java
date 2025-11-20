@@ -43,7 +43,7 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        // implémentation future si nécessaire
+        handleMouseEvent(e, (state, event) -> state.mouseDragged(event));
     }
 
     @Override

@@ -39,6 +39,7 @@ public class Menu extends State implements StateMethods{
     private void initClasses() {
         languageString = GetPhrase("menu");
         buttons = new MenuButtons[]{
+            // Bouton "Start" redirige vers l'écran de sélection de niveau
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 100, 200, 50, 0, "start", GameState.LEVEL_SELECT),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 1, "settings", GameState.SETTINGS),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2, 200, 50, 2, "save_game", GameState.MENU),

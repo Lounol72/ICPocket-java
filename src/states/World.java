@@ -8,6 +8,7 @@ import java.util.Random;
 
 import entities.Player;
 import game.Game;
+import levels.Level;
 import levels.LevelManager;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.ENVIRONMENT.BIG_CLOUDS_HEIGHT;
@@ -66,33 +67,52 @@ public class World extends State implements StateMethods {
     }
 
     /**
-     * Calcule les offsets du niveau actuel
+     * Calcule les offsets et limites du niveau actuel.
+     * Utilisé pour déterminer les limites de déplacement de la caméra.
      */
-    private void calcOffsets(){
-        lvlTilesWide = levels.getCurrentLevel().getLvlTilesWide();
-        lvlTilesHigh = levels.getCurrentLevel().getLvlTilesHigh();
-        maxTilesOffsetX = levels.getCurrentLevel().getMaxTilesOffsetX();
-        maxLvlOffsetX = levels.getCurrentLevel().getMaxLvlOffsetX();
-        maxTilesOffsetY = levels.getCurrentLevel().getMaxTilesOffsetY();
-        maxLvlOffsetY = levels.getCurrentLevel().getMaxLvlOffsetY();
+    private void calcOffsets() {
+        Level currentLevel = levels.getCurrentLevel();
+        lvlTilesWide = currentLevel.getLvlTilesWide();
+        lvlTilesHigh = currentLevel.getLvlTilesHigh();
+        maxTilesOffsetX = currentLevel.getMaxTilesOffsetX();
+        maxLvlOffsetX = currentLevel.getMaxLvlOffsetX();
+        maxTilesOffsetY = currentLevel.getMaxTilesOffsetY();
+        maxLvlOffsetY = currentLevel.getMaxLvlOffsetY();
     }
 
     /**
-     * Change le niveau actuel et recharge les données nécessaires
+     * Change le niveau actuel et recharge toutes les données nécessaires.
+     * 
+     * <p>Actions effectuées :</p>
+     * <ul>
+     *   <li>Change le niveau dans le LevelManager</li>
+     *   <li>Recalcule les offsets de caméra</li>
+     *   <li>Met à jour les collisions AABB du joueur</li>
+     *   <li>Réinitialise la position du joueur au point de départ</li>
+     *   <li>Réinitialise la caméra</li>
+     * </ul>
+     * 
      * @param levelIndex Index du niveau à charger (0-indexed)
      */
     public void changeLevel(int levelIndex) {
+        // Changer le niveau dans le LevelManager
         levels.setLevel(levelIndex);
+        
+        // Recalculer les offsets de caméra pour le nouveau niveau
         calcOffsets();
-        // Charger le nouveau niveau avec le système AABB (met à jour currentLevel dans Player)
+        
+        // Charger le nouveau niveau avec le système AABB
+        // Cela met à jour la référence currentLevel dans Player et les rectangles de collision
         player.loadLevel(levels.getCurrentLevel());
-        // Réinitialiser la position du joueur au début du niveau
+        
+        // Réinitialiser la position du joueur au point de départ du niveau
         float startX = 5 * TILES_SIZE;
         float startY = 5 * TILES_SIZE;
         player.getHitbox().x = startX;
         player.getHitbox().y = startY;
         player.getPhysicsBody().setPosition(startX, startY);
-        // Réinitialiser les offsets de caméra
+        
+        // Réinitialiser les offsets de caméra au début du niveau
         xLvlOffset = 0;
         yLvlOffset = 0;
     }

@@ -84,10 +84,15 @@ public class Game implements Runnable{
     /**
      * Initialise les différents états du jeu.
      */
+    /**
+     * Initialise tous les états du jeu.
+     * L'ordre d'initialisation est important car certains états peuvent dépendre d'autres.
+     */
     private void initClasses() {
-
+        // Charger toutes les données de niveau en premier
         LoadSave.GetAllLevelData();
 
+        // Initialiser tous les états du jeu
         this.menu = new Menu(this);
         this.world = new World(this);
         this.settings = new Settings(this);
@@ -243,11 +248,16 @@ public class Game implements Runnable{
         return menu;
     }
 
+    /**
+     * Met à jour toutes les chaînes de caractères traduites dans tous les états.
+     * Appelé lors d'un changement de langue.
+     */
     public void UpdateEveryStrings() {
         System.out.println("Every Strings Updated");
         menu.UpdateStrings();
         settings.UpdateStrings();
         splash.UpdateStrings();
+        // Vérifier que levelSelect est initialisé avant de mettre à jour ses strings
         if (levelSelect != null) {
             levelSelect.UpdateStrings();
         }
@@ -268,6 +278,11 @@ public class Game implements Runnable{
         return splash;
     }
 
+    /**
+     * Retourne l'instance du state de sélection de niveau.
+     * 
+     * @return L'instance de LevelSelect
+     */
     public LevelSelect getLevelSelect() {
         return levelSelect;
     }

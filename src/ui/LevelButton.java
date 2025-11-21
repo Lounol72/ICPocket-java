@@ -9,13 +9,28 @@ import static utilz.Constants.UI.BUTTONS.DEFAULT_WIDTH;
 import utilz.LoadSave;
 
 /**
- * Bouton pour sélectionner un niveau spécifique
- * Affiche "Level X" où X est le numéro du niveau (1-indexed)
+ * Bouton pour sélectionner un niveau spécifique.
+ * 
+ * <p>Fonctionnalités :</p>
+ * <ul>
+ *   <li>Affiche "Level X" où X est le numéro du niveau (1-indexed pour l'utilisateur)</li>
+ *   <li>Gère les états visuels (normal, hover, pressed)</li>
+ *   <li>Change le niveau actuel lors du clic et lance le jeu</li>
+ * </ul>
+ * 
+ * @author ICPocket Team
  */
 public class LevelButton extends Button {
+    /** Index de la ligne dans l'atlas de boutons */
     private int rowIndex = 0;
+    
+    /** Texte affiché sur le bouton (ex: "Level 1") */
     private String text;
-    private int levelIndex; // Index du niveau (0-indexed)
+    
+    /** Index du niveau (0-indexed, sera affiché comme levelIndex + 1) */
+    private int levelIndex;
+    
+    /** Instance du jeu pour accéder au World et changer le niveau */
     private Game game;
 
     /**
@@ -38,46 +53,69 @@ public class LevelButton extends Button {
     }
 
     /**
-     * Charge les images du bouton depuis l'atlas
+     * Charge les images du bouton depuis l'atlas de boutons.
+     * Extrait les 3 états du bouton (normal, hover, pressed) depuis l'atlas.
      */
     private void loadImages() {
         BufferedImage temp = LoadSave.GetSpriteAtlas(LoadSave.BUTTONS);
-        for (int i = 0; i < img.length; i++)
-            img[i] = temp.getSubimage((rowIndex * DEFAULT_WIDTH), i * DEFAULT_HEIGHT, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        if (temp != null) {
+            for (int i = 0; i < img.length; i++) {
+                img[i] = temp.getSubimage(
+                    (rowIndex * DEFAULT_WIDTH), 
+                    i * DEFAULT_HEIGHT, 
+                    DEFAULT_WIDTH, 
+                    DEFAULT_HEIGHT
+                );
+            }
+        }
     }
 
     /**
-     * Met à jour l'état visuel du bouton
+     * Met à jour l'état visuel du bouton selon les interactions de la souris.
+     * Index 0 = normal, 1 = hover, 2 = pressed
      */
     public void update() {
-        index = 0;
-        if (isMouseOver)
-            index = 1;
-        if (isMousePressed)
-            index = 2;
+        index = 0; // État normal par défaut
+        if (isMouseOver) {
+            index = 1; // Souris survol
+        }
+        if (isMousePressed) {
+            index = 2; // Bouton pressé
+        }
     }
 
     /**
-     * Dessine le bouton et son texte
+     * Dessine le bouton et son texte centré.
+     * 
+     * @param g Contexte graphique pour le dessin
      */
     public void draw(Graphics g) {
-        g.drawImage(img[index], x, y, width, height, null);
-        g.drawString(text, x + width / 2 - g.getFontMetrics().stringWidth(text) / 2, 
-                     y + height / 2 + g.getFontMetrics().getHeight() / 2);
+        // Dessiner l'image du bouton si disponible
+        if (img != null && img[index] != null) {
+            g.drawImage(img[index], x, y, width, height, null);
+        }
+        
+        // Dessiner le texte centré sur le bouton
+        int textX = x + width / 2 - g.getFontMetrics().stringWidth(text) / 2;
+        int textY = y + height / 2 + g.getFontMetrics().getHeight() / 2;
+        g.drawString(text, textX, textY);
     }
 
     /**
-     * Action effectuée lors du clic sur le bouton
-     * Change le niveau dans LevelManager et passe à l'état WORLD
+     * Action effectuée lors du clic sur le bouton.
+     * Change le niveau actuel dans le World et passe à l'état WORLD pour lancer le jeu.
      */
     public void action() {
-        // Obtenir le LevelManager depuis World et changer le niveau
+        // Changer le niveau dans le World
         game.getWorld().changeLevel(levelIndex);
+        // Passer à l'état WORLD pour lancer le jeu
         states.GameState.setState(states.GameState.WORLD);
     }
 
     /**
-     * Retourne l'index du niveau
+     * Retourne l'index du niveau associé à ce bouton.
+     * 
+     * @return Index du niveau (0-indexed)
      */
     public int getLevelIndex() {
         return levelIndex;

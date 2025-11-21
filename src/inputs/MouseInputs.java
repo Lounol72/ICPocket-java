@@ -19,11 +19,16 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
     }
 
     /**
-     * Méthode générique pour gérer tous les événements souris
+     * Méthode générique pour gérer tous les événements souris.
+     * Délègue l'événement à l'état approprié selon le GameState actuel.
+     * 
+     * @param e Événement souris à traiter
+     * @param action Action à exécuter sur l'état (ex: mouseMoved, mousePressed)
      */
     private void handleMouseEvent(MouseEvent e, BiConsumer<StateMethods, MouseEvent> action) {
         StateMethods state = null;
 
+        // Sélectionner l'état approprié selon le GameState actuel
         switch(currentState) {
             case SPLASH -> state = gamePanel.getGame().getSplash();
             case START -> state = gamePanel.getGame().getStart();
@@ -32,11 +37,12 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
             case WORLD -> state = gamePanel.getGame().getWorld();
             case SETTINGS -> state = gamePanel.getGame().getSettings();
 
-            case INFOS -> { /* à implémenter */ }
+            case INFOS -> { /* État réservé pour usage futur */ }
             case QUIT -> System.exit(0);
-            default -> throw new IllegalStateException("État de jeu non géré");
+            default -> throw new IllegalStateException("État de jeu non géré: " + currentState);
         }
 
+        // Exécuter l'action sur l'état si celui-ci existe
         if (state != null) {
             action.accept(state, e);
         }

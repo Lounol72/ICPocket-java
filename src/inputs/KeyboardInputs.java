@@ -5,12 +5,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import game.GamePanel;
-import static states.GameState.INFOS;
-import static states.GameState.MENU;
-import static states.GameState.SETTINGS;
-import static states.GameState.SPLASH;
-import static states.GameState.START;
-import static states.GameState.WORLD;
 import static states.GameState.currentState;
 
 /**
@@ -53,7 +47,6 @@ public class KeyboardInputs implements KeyListener {
 	 */
 	@Override
 	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
 		switch(currentState){
 			case SPLASH -> {
 				gamePanel.getGame().getSplash().keyTyped(e);

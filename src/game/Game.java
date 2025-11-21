@@ -32,14 +32,17 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import states.GameState;
 import static states.GameState.currentState;
 import states.Menu;
 import states.Settings;
 import states.Splash;
 import states.Start;
 import states.World;
+import utilz.LoadSave;
 
 public class Game implements Runnable{
+
     // Composants principaux du jeu
     private final GamePanel gamePanel;      // Panneau où le jeu est rendu
     private final GameWindow gameWindow;    // Fenêtre qui contient le panneau
@@ -80,6 +83,9 @@ public class Game implements Runnable{
      * Initialise les différents états du jeu.
      */
     private void initClasses() {
+
+        LoadSave.GetAllLevelData();
+
         this.menu = new Menu(this);
         this.world = new World(this);
         this.settings = new Settings(this);
@@ -256,4 +262,9 @@ public class Game implements Runnable{
     public void startTransition(states.GameState target, Color color) {
         fader.start(target, 400, 400, color);
     }
+
+    public void windowFocusLost() {
+		if (GameState.currentState == GameState.WORLD)
+			world.getPlayer().resetDirBooleans();
+	}
 }

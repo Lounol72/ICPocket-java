@@ -3,16 +3,23 @@ package states;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.Random;
 
 import entities.Player;
 import game.Game;
 import levels.LevelManager;
 import static utilz.Constants.SCALE;
+import static utilz.Constants.WORLD.ENVIRONMENT.BIG_CLOUDS_HEIGHT;
+import static utilz.Constants.WORLD.ENVIRONMENT.BIG_CLOUDS_WIDTH;
+import static utilz.Constants.WORLD.ENVIRONMENT.SMALL_CLOUD_1_HEIGHT;
+import static utilz.Constants.WORLD.ENVIRONMENT.SMALL_CLOUD_1_WIDTH;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
 import static utilz.Constants.WORLD.TILES_IN_WIDTH;
 import static utilz.Constants.WORLD.TILES_SIZE;
+import utilz.LoadSave;
 import static utilz.LoadSave.GetLevelData;
 
 public class World extends State implements StateMethods {
@@ -35,6 +42,13 @@ public class World extends State implements StateMethods {
     private int maxTilesOffsetY;
     private int maxLvlOffsetY;
 
+
+    private final BufferedImage backgroundImage;
+    private final BufferedImage bigCloud;
+    private final BufferedImage smallCloud1;
+    private int[] smallCloudsPos;
+    private Random rnd = new Random();
+
     public World(Game game) {
         super(game);
         loadLevel();
@@ -43,6 +57,15 @@ public class World extends State implements StateMethods {
                 level.getCurrentLevel());
         player.loadLvlData(level.getCurrentLevel().getLevelData());
 
+
+        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.WORLD_BACKGROUND);
+        bigCloud = LoadSave.GetSpriteAtlas(LoadSave.BIG_CLOUDS);
+        smallCloud1 = LoadSave.GetSpriteAtlas(LoadSave.SMALL_CLOUD_1);
+        smallCloudsPos = new int[8];
+
+        for (int i = 0; i < smallCloudsPos.length; i++) {
+            smallCloudsPos[i] = (int) (90 * SCALE) + rnd.nextInt((int) (100 * SCALE));
+        }
     }
 
     private void loadLevel(){
@@ -82,8 +105,31 @@ public class World extends State implements StateMethods {
             yLvlOffset = 0;
     }
 
+    private void drawClouds(Graphics g){
+        if (bigCloud != null) {
+            for (int i = 0; i < 3; i++) {
+                g.drawImage(bigCloud, (int)((i * BIG_CLOUDS_WIDTH) - (0.3 * xLvlOffset)), (int)(204 * SCALE), BIG_CLOUDS_WIDTH,  BIG_CLOUDS_HEIGHT,null);
+            }
+        }
+        if (smallCloud1 != null) {
+            for (int i = 0; i< smallCloudsPos.length; i++) {
+                g.drawImage(smallCloud1, (int)((i * SMALL_CLOUD_1_WIDTH * 4) - (0.7 * xLvlOffset)) , smallCloudsPos[i], SMALL_CLOUD_1_WIDTH, SMALL_CLOUD_1_HEIGHT, null);
+            }
+            
+        }
+    }
+
+    private void drawEnvironment(Graphics g){
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
+        }
+        drawClouds(g);
+    }
+
     @Override
     public void draw(Graphics g) {
+        drawEnvironment(g);
+        
         level.draw(g, xLvlOffset, yLvlOffset);
         player.render(g, xLvlOffset, yLvlOffset);
 
@@ -183,6 +229,9 @@ public class World extends State implements StateMethods {
 
     @Override
     public void UpdateStrings() {
-
+        
+    }
+    public Player getPlayer(){
+        return player;
     }
 }

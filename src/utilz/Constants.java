@@ -128,6 +128,20 @@ public class Constants {
             public static final float ONE_WAY_TOLERANCE = 3f * SCALE; // Moins d'accrochage
             public static final float ONE_WAY_PASS_THROUGH_TOLERANCE = 8f * SCALE; // Tolérance pour down
         }
+
+        public static class ENVIRONMENT {
+            public static final int BIG_CLOUDS_WIDTH_DEFAULT = 448;
+            public static final int BIG_CLOUDS_HEIGHT_DEFAULT = 101;
+
+            public static final int BIG_CLOUDS_WIDTH = (int)(BIG_CLOUDS_WIDTH_DEFAULT * SCALE);
+            public static final int BIG_CLOUDS_HEIGHT = (int)(BIG_CLOUDS_HEIGHT_DEFAULT * SCALE);
+
+            public static final int SMALL_CLOUD_1_WIDTH_DEFAULT = 74;
+            public static final int SMALL_CLOUD_1_HEIGHT_DEFAULT = 24;
+
+            public static final int SMALL_CLOUD_1_WIDTH = (int)(SMALL_CLOUD_1_WIDTH_DEFAULT * SCALE);
+            public static final int SMALL_CLOUD_1_HEIGHT = (int)(SMALL_CLOUD_1_HEIGHT_DEFAULT * SCALE);
+        }
     }
 
     public static class DEBUG {

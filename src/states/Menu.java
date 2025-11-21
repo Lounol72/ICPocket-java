@@ -26,12 +26,14 @@ public class Menu extends State implements StateMethods{
     private long saveMessageTime;
     private boolean showSaveMessage;
     private boolean saveSuccess;
+
     /**
      * Constructor
      * */
     public Menu( Game game){
         super(game);
         initClasses();
+        
     }
 
     private void initClasses() {
@@ -48,7 +50,7 @@ public class Menu extends State implements StateMethods{
         saveSuccess = false;
         
         // Load background image
-        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.UI + "menu_background.jpg");
+        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.MENU_BACKGROUND);
     }
 
     /**

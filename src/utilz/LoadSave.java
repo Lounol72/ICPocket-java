@@ -3,8 +3,12 @@ package utilz;
 // Java standard library imports
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -25,6 +29,15 @@ public class LoadSave {
     
     public static final String LEVEL_ONE_DATA = LEVEL_ONE_FOLDER + "LevelOne.png";
     public static final String LEVEL_ATLAS = ASSETS + "tileset/GrassTileSet.png";
+
+    public static final String MENU_BACKGROUND = UI + "menu_background.jpg";
+    public static final String WORLD_BACKGROUND = LEVEL_ONE_FOLDER + "BG Image.png";
+
+
+    // Clouds
+
+    public static final String BIG_CLOUDS = LEVEL_ONE_FOLDER + "Big Clouds.png";
+    public static final String SMALL_CLOUD_1 = LEVEL_ONE_FOLDER +"Small Cloud 1.png";
     /**
      * Méthode pour récupérer un sprite d'un atlas
      * @param path chemin du sprite
@@ -56,24 +69,6 @@ public class LoadSave {
     }
 
     /**
-     * @deprecated
-     * Méthode pour récupérer un sprite d'un ICMon
-     * @param file nom du fichier du sprite
-     * @return BufferedImage le sprite
-     */
-    public static BufferedImage GetICMonSprite(String file){
-        BufferedImage sprite = GetSpriteAtlas(ICMONS + file);
-        if (sprite == null) {
-            System.err.println("Impossible de charger l'image : " + ICMONS + file);
-            sprite = GetSpriteAtlas(ICMONS + "722.png");
-            if (sprite == null) {
-                System.err.println("Image de secours introuvable : " + ICMONS + "772.png");
-            }
-        }
-        return sprite;
-
-    }
-    /**
      * 
      * Méthode pour récupérer les données du niveau depuis le fichier JSON
      * Charge spécifiquement la layer "out" du fichier LevelOne.json
@@ -81,7 +76,7 @@ public class LoadSave {
      */
     public static int[][] GetLevelData(){
         // Utilisation de la nouvelle fonction de chargement JSON
-        String levelJsonPath = "res/assets/Levels/LevelOne/LevelOne.json";
+        String levelJsonPath = "res/assets/Levels/levelsData/Level_1.json";
         int[][] levelData = HelpMethods.loadLevelDataFromJson(levelJsonPath, "out");
         
         if (levelData == null) {
@@ -91,6 +86,75 @@ public class LoadSave {
         }
         
         return levelData;
+    }
+    public static int[][] GetLevelData(String levelJsonPath){
+        // Utilisation de la nouvelle fonction de chargement JSON
+        int[][] levelData = HelpMethods.loadLevelDataFromJson(levelJsonPath, "out");
+        
+        if (levelData == null) {
+            System.err.println("Échec du chargement du niveau depuis le JSON, utilisation de la méthode de fallback");
+            // Méthode de fallback vers l'ancien système si le JSON échoue
+            return getLevelDataFromImage();
+        }
+        
+        return levelData;
+    }
+
+    /**
+     * Récupère toutes les données de niveau depuis tous les fichiers JSON du dossier levelsData
+     * Parcourt chaque fichier JSON dans le dossier et utilise GetLevelData pour charger les données
+     * @return int[][][] tableau contenant toutes les données de niveau (un tableau 2D par niveau)
+     */
+    public static int[][][] GetAllLevelData(){
+        // Chemin vers le dossier contenant les fichiers JSON des niveaux
+        String levelsDataFolderPath = "res/assets/Levels/levelsData/";
+        File levelsDataFolder = new File(levelsDataFolderPath);
+        
+        // Liste pour stocker les données de chaque niveau
+        List<int[][]> allLevelsData = new ArrayList<>();
+        
+        // Vérifier que le dossier existe
+        if (!levelsDataFolder.exists() || !levelsDataFolder.isDirectory()) {
+            System.err.println("Le dossier levelsData n'existe pas : " + levelsDataFolderPath);
+            return new int[0][][];
+        }
+        
+        // Lister tous les fichiers dans le dossier
+        File[] files = levelsDataFolder.listFiles();
+        if (files == null) {
+            System.err.println("Impossible de lister les fichiers du dossier : " + levelsDataFolderPath);
+            return new int[0][][];
+        }
+
+        // Trie le tableau de fichiers par ordre alphabétique pour garantir l'ordre des niveaux
+        Arrays.sort(files, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+        
+        // Parcourir chaque fichier et charger les données si c'est un fichier JSON
+        for (File file : files) {
+            // Vérifier que c'est un fichier et qu'il a l'extension .json
+            if (file.isFile() && file.getName().toLowerCase().endsWith(".json")) {
+                // Construire le chemin complet du fichier
+                String levelJsonPath = levelsDataFolderPath + file.getName();
+                
+                // Charger les données du niveau en utilisant GetLevelData
+                int[][] levelData = GetLevelData(levelJsonPath);
+                
+                // Ajouter les données à la liste si le chargement a réussi
+                if (levelData != null)
+                    allLevelsData.add(levelData);
+                else 
+                    System.err.println("Échec du chargement du niveau : " + file.getName());
+                
+            }
+        }
+        
+        // Convertir la liste en tableau 3D
+        int[][][] result = new int[allLevelsData.size()][][];
+        for (int i = 0; i < allLevelsData.size(); i++) {
+            result[i] = allLevelsData.get(i);
+        }
+        
+        return result;
     }
     
     /**

@@ -57,7 +57,9 @@ public class KeyboardInputs implements KeyListener {
             case MENU -> {
 				gamePanel.getGame().getMenu().keyTyped(e);
             }
-
+            case LEVEL_SELECT -> {
+				gamePanel.getGame().getLevelSelect().keyTyped(e);
+            }
             case WORLD -> {
 				gamePanel.getGame().getWorld().keyTyped(e);
             }
@@ -91,7 +93,9 @@ public class KeyboardInputs implements KeyListener {
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyReleased(e);
 			}
-
+			case LEVEL_SELECT -> {
+				gamePanel.getGame().getLevelSelect().keyReleased(e);
+			}
 			case WORLD -> {
 				gamePanel.getGame().getWorld().keyReleased(e);
 			}
@@ -125,7 +129,9 @@ public class KeyboardInputs implements KeyListener {
 			case MENU -> {
 				gamePanel.getGame().getMenu().keyPressed(e);
 			}
-
+			case LEVEL_SELECT -> {
+				gamePanel.getGame().getLevelSelect().keyPressed(e);
+			}
 			case WORLD -> {
 				gamePanel.getGame().getWorld().keyPressed(e);
 			}

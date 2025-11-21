@@ -34,6 +34,7 @@ import java.awt.Graphics2D;
 
 import states.GameState;
 import static states.GameState.currentState;
+import states.LevelSelect;
 import states.Menu;
 import states.Settings;
 import states.Splash;
@@ -57,6 +58,7 @@ public class Game implements Runnable{
     private World world;
     private Start start;
     private Settings settings;
+    private LevelSelect levelSelect;
     private final ScreenFader fader = new ScreenFader();
     private Splash splash;
     
@@ -91,6 +93,7 @@ public class Game implements Runnable{
         this.settings = new Settings(this);
         this.splash = new Splash(this);
         this.start = new Start(this);
+        this.levelSelect = new LevelSelect(this);
     }
 
     /**
@@ -113,7 +116,9 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.update();
             }
-
+            case LEVEL_SELECT -> {
+                levelSelect.update();
+            }
             case WORLD -> {
                 world.update();
             }
@@ -152,7 +157,9 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.draw(g);
             }
-
+            case LEVEL_SELECT -> {
+                levelSelect.draw(g);
+            }
             case WORLD -> {
                 world.draw(g);
             }
@@ -241,7 +248,9 @@ public class Game implements Runnable{
         menu.UpdateStrings();
         settings.UpdateStrings();
         splash.UpdateStrings();
-        
+        if (levelSelect != null) {
+            levelSelect.UpdateStrings();
+        }
     }
 
     public World getWorld() {return world;
@@ -257,6 +266,10 @@ public class Game implements Runnable{
 
     public Splash getSplash() {
         return splash;
+    }
+
+    public LevelSelect getLevelSelect() {
+        return levelSelect;
     }
 
     public void startTransition(states.GameState target, Color color) {

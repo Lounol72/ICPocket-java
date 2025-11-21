@@ -16,18 +16,15 @@ import static utilz.Constants.WORLD.ENVIRONMENT.SMALL_CLOUD_1_HEIGHT;
 import static utilz.Constants.WORLD.ENVIRONMENT.SMALL_CLOUD_1_WIDTH;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
-import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
-import static utilz.Constants.WORLD.TILES_IN_WIDTH;
 import static utilz.Constants.WORLD.TILES_SIZE;
 import utilz.LoadSave;
-import static utilz.LoadSave.GetLevelData;
 
 public class World extends State implements StateMethods {
 
     private boolean paused;
 
     private final Player player;
-    private final LevelManager level;
+    private final LevelManager levels;
 
     private int xLvlOffset;
     private int yLvlOffset;
@@ -51,11 +48,11 @@ public class World extends State implements StateMethods {
 
     public World(Game game) {
         super(game);
-        loadLevel();
-        level = new LevelManager(game);
+        levels = new LevelManager(game);
+        calcOffsets();
         player = new Player(5 * TILES_SIZE, 5 * TILES_SIZE, (int) (64 * SCALE), (int) (64 * SCALE),
-                level.getCurrentLevel());
-        player.loadLvlData(level.getCurrentLevel().getLevelData());
+                levels.getCurrentLevel());
+        player.loadLvlData(levels.getCurrentLevel().getLevelData());
 
 
         backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.WORLD_BACKGROUND);
@@ -68,13 +65,36 @@ public class World extends State implements StateMethods {
         }
     }
 
-    private void loadLevel(){
-        lvlTilesWide = GetLevelData()[0].length;
-        lvlTilesHigh = GetLevelData().length;
-        maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
-        maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
-        maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
-        maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
+    /**
+     * Calcule les offsets du niveau actuel
+     */
+    private void calcOffsets(){
+        lvlTilesWide = levels.getCurrentLevel().getLvlTilesWide();
+        lvlTilesHigh = levels.getCurrentLevel().getLvlTilesHigh();
+        maxTilesOffsetX = levels.getCurrentLevel().getMaxTilesOffsetX();
+        maxLvlOffsetX = levels.getCurrentLevel().getMaxLvlOffsetX();
+        maxTilesOffsetY = levels.getCurrentLevel().getMaxTilesOffsetY();
+        maxLvlOffsetY = levels.getCurrentLevel().getMaxLvlOffsetY();
+    }
+
+    /**
+     * Change le niveau actuel et recharge les données nécessaires
+     * @param levelIndex Index du niveau à charger (0-indexed)
+     */
+    public void changeLevel(int levelIndex) {
+        levels.setLevel(levelIndex);
+        calcOffsets();
+        // Charger le nouveau niveau avec le système AABB (met à jour currentLevel dans Player)
+        player.loadLevel(levels.getCurrentLevel());
+        // Réinitialiser la position du joueur au début du niveau
+        float startX = 5 * TILES_SIZE;
+        float startY = 5 * TILES_SIZE;
+        player.getHitbox().x = startX;
+        player.getHitbox().y = startY;
+        player.getPhysicsBody().setPosition(startX, startY);
+        // Réinitialiser les offsets de caméra
+        xLvlOffset = 0;
+        yLvlOffset = 0;
     }
 
 
@@ -130,7 +150,7 @@ public class World extends State implements StateMethods {
     public void draw(Graphics g) {
         drawEnvironment(g);
         
-        level.draw(g, xLvlOffset, yLvlOffset);
+        levels.draw(g, xLvlOffset, yLvlOffset);
         player.render(g, xLvlOffset, yLvlOffset);
 
     }
@@ -140,7 +160,7 @@ public class World extends State implements StateMethods {
         if (!paused) {
             checkCloseToBorder();
             player.update();
-            level.update();
+            levels.update();
         }
 
     }

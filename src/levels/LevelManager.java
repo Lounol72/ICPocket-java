@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import game.Game;
 import static utilz.Constants.WORLD.TILES_DEFAULT_SIZE;
@@ -19,12 +20,14 @@ public class LevelManager {
 
     private Game game;
     private BufferedImage[] levelSprite;
-    private Level levelOne;
+    private ArrayList<Level> levels;
+    private int levelIdx = 0;
 
     public LevelManager(Game game) {
         this.game = game;
         importOutsideSprites();
-        levelOne = new Level(LoadSave.GetLevelData());
+        levels = new ArrayList<>();
+        buildAllLevels();
     }
 
     public void importOutsideSprites() {
@@ -41,9 +44,9 @@ public class LevelManager {
 
     public void draw(Graphics g, int xLvlOffset, int yLvlOffset) {
         // Dessiner les sprites du niveau
-        for (int j = 0; j < levelOne.getLevelData().length; j++)
-            for (int i = 0; i < levelOne.getLevelData()[0].length; i++) {
-                int index = levelOne.getSpriteIndex(i, j);
+        for (int j = 0; j < levels.get(levelIdx).getLevelData().length; j++)
+            for (int i = 0; i < levels.get(levelIdx).getLevelData()[0].length; i++) {
+                int index = levels.get(levelIdx).getSpriteIndex(i, j);
                 g.drawImage(levelSprite[index], (i * TILES_SIZE) - xLvlOffset, (j * TILES_SIZE) - yLvlOffset, TILES_SIZE, TILES_SIZE, null);
             }
         
@@ -57,7 +60,7 @@ public class LevelManager {
     private void drawCollisionRectangles(Graphics g, int xLvlOffset, int yLvlOffset) {
         // Dessiner les collisions solides en rouge
         g.setColor(new Color(255, 0, 0, 100)); // Rouge semi-transparent
-        for (Rectangle2D.Float rect : levelOne.getSolidCollisions()) {
+        for (Rectangle2D.Float rect : levels.get(levelIdx).getSolidCollisions()) {
             g.fillRect(
                 (int) (rect.x - xLvlOffset), 
                 (int) (rect.y - yLvlOffset), 
@@ -68,7 +71,7 @@ public class LevelManager {
         
         // Dessiner les plateformes one-way en bleu
         g.setColor(new Color(0, 0, 255, 100)); // Bleu semi-transparent
-        for (Rectangle2D.Float rect : levelOne.getOneWayPlatformCollisions()) {
+        for (Rectangle2D.Float rect : levels.get(levelIdx).getOneWayPlatformCollisions()) {
             g.fillRect(
                 (int) (rect.x - xLvlOffset), 
                 (int) (rect.y - yLvlOffset), 
@@ -79,7 +82,7 @@ public class LevelManager {
         
         // Dessiner les contours des rectangles
         g.setColor(Color.RED);
-        for (Rectangle2D.Float rect : levelOne.getSolidCollisions()) {
+        for (Rectangle2D.Float rect : levels.get(levelIdx).getSolidCollisions()) {
             g.drawRect(
                 (int) (rect.x - xLvlOffset), 
                 (int) (rect.y - yLvlOffset), 
@@ -89,7 +92,7 @@ public class LevelManager {
         }
         
         g.setColor(Color.BLUE);
-        for (Rectangle2D.Float rect : levelOne.getOneWayPlatformCollisions()) {
+        for (Rectangle2D.Float rect : levels.get(levelIdx).getOneWayPlatformCollisions()) {
             g.drawRect(
                 (int) (rect.x - xLvlOffset), 
                 (int) (rect.y - yLvlOffset), 
@@ -104,6 +107,29 @@ public class LevelManager {
     }
 
     public Level getCurrentLevel() {
-        return levelOne;
+        return levels.get(levelIdx);
+    }
+
+    /**
+     * Change le niveau actuel
+     * @param index Index du niveau à charger (0-indexed)
+     * @throws IndexOutOfBoundsException si l'index est invalide
+     */
+    public void setLevel(int index) {
+        if (index < 0 || index >= levels.size()) {
+            throw new IndexOutOfBoundsException("Index de niveau invalide: " + index + ". Nombre de niveaux disponibles: " + levels.size());
+        }
+        this.levelIdx = index;
+    }
+
+    private void buildAllLevels() {
+        int[][][] allData = LoadSave.GetAllLevelData();
+        for (int i = 0; i < allData.length; i++){
+            levels.add(new Level( allData[i]));
+        }
+    }
+
+    public int getAmountOfLevels(){
+        return levels.size();
     }
 }

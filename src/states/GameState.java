@@ -5,6 +5,7 @@ public enum GameState {
     SPLASH,
     START,
     MENU,
+    LEVEL_SELECT,
     WORLD,
     SETTINGS,
     INFOS,

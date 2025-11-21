@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import game.Game;
 import static utilz.Constants.UI.BUTTONS.DEFAULT_HEIGHT;
 import static utilz.Constants.UI.BUTTONS.DEFAULT_WIDTH;
+import static utilz.HelpMethods.GetPhrase;
 import utilz.LoadSave;
 
 /**
@@ -48,7 +49,9 @@ public class LevelButton extends Button {
         this.rowIndex = rowIndex;
         this.levelIndex = levelIndex;
         this.game = game;
-        this.text = "Level " + (levelIndex + 1); // Afficher 1-indexed pour l'utilisateur
+        // Utilise le système de traduction pour récupérer le libellé de base "Level"
+        // puis concatène le numéro (1-indexé) pour l'affichage utilisateur.
+        this.text = GetPhrase("level") + " " + (levelIndex + 1);
         loadImages();
     }
 

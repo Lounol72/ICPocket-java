@@ -167,6 +167,7 @@ public class LevelManager {
         // Logique de mise à jour du niveau à implémenter si nécessaire
     }
 
+    
     /**
      * Retourne le niveau actuellement actif.
      * 
@@ -198,6 +199,15 @@ public class LevelManager {
      */
     private void buildAllLevels() {
         int[][][] allData = LoadSave.GetAllLevelData();
+
+        // Vérifier qu'au moins un niveau est disponible
+        if (allData == null || allData.length == 0) {
+            throw new IllegalStateException(
+                "Aucun niveau trouvé ! Assurez-vous que des fichiers de niveaux JSON sont présents " +
+                "dans le répertoire res/assets/Levels/levelsData/"
+            );
+        }
+
         for (int i = 0; i < allData.length; i++) {
             levels.add(new Level(allData[i]));
         }

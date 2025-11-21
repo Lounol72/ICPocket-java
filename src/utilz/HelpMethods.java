@@ -157,7 +157,7 @@ public class HelpMethods {
             }
             
             return levelData;
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             System.err.println("Erreur lors du chargement du niveau depuis le JSON: " + e.getMessage());
             return null;
         }

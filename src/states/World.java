@@ -274,4 +274,13 @@ public class World extends State implements StateMethods {
     public Player getPlayer(){
         return player;
     }
+
+    /**
+     * Retourne l'instance du gestionnaire de niveaux.
+     *
+     * @return Le LevelManager du monde
+     */
+    public LevelManager getLevelManager() {
+        return levels;
+    }
 }

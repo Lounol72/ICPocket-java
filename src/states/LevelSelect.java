@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import game.Game;
-import levels.LevelManager;
 import ui.LevelButton;
 import ui.MenuButtons;
 import static utilz.Constants.SCALE;
@@ -92,11 +91,9 @@ public class LevelSelect extends State implements StateMethods {
         // Charger le titre traduit
         titleString = GetPhrase("select_level");
         
-        // Créer un LevelManager temporaire pour obtenir le nombre de niveaux
-        // Note: On crée un nouveau LevelManager car on ne peut pas accéder à celui du World
-        // avant que LevelSelect soit initialisé
-        LevelManager tempLevelManager = new LevelManager(game);
-        int numLevels = tempLevelManager.getAmountOfLevels();
+        // Utiliser le LevelManager existant du jeu/monde pour obtenir le nombre de niveaux,
+        // afin d'éviter de dupliquer la logique et de risquer des divergences
+        int numLevels = game.getWorld().getLevelManager().getAmountOfLevels();
         
         // Générer les boutons de niveau dynamiquement
         // Gérer le cas où il n'y a pas de niveaux (tableau vide)

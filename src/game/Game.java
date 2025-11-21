@@ -40,7 +40,6 @@ import states.Settings;
 import states.Splash;
 import states.Start;
 import states.World;
-import utilz.LoadSave;
 
 public class Game implements Runnable{
 
@@ -89,9 +88,6 @@ public class Game implements Runnable{
      * L'ordre d'initialisation est important car certains états peuvent dépendre d'autres.
      */
     private void initClasses() {
-        // Charger toutes les données de niveau en premier
-        LoadSave.GetAllLevelData();
-
         // Initialiser tous les états du jeu
         this.menu = new Menu(this);
         this.world = new World(this);

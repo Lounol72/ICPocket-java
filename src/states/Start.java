@@ -38,6 +38,7 @@ public class Start extends State implements StateMethods{
  
     // private ScrollingText scrollText;
 
+     @SuppressWarnings("OverridableMethodCallInConstructor")
     public Start(Game game){
         super(game);
 

@@ -24,12 +24,12 @@ import static ui.settings.SettingsConfig.SLIDER_TRACK_SELECTED_COLOR;
 public class SettingSlider {
     
     // === PROPRIÉTÉS ===
-    private Rectangle bounds;
-    private float minValue;
-    private float maxValue;
+    private final Rectangle bounds;
+    private final float minValue;
+    private final float maxValue;
     private float currentValue;
-    private float step;
-    private float defaultValue;
+    private final float step;
+    private final float defaultValue;
     
     // États visuels
     private boolean isHovered;

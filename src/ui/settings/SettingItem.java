@@ -9,17 +9,17 @@ import static utilz.HelpMethods.GetPhrase;
  * Représente un paramètre configurable avec getter/setter fonctionnels.
  * Encapsule la logique d'accès aux valeurs et synchronise avec le slider UI.
  */
-public class SettingItem {
+public final class SettingItem {
     
     // === PROPRIÉTÉS ===
-    private String nameKey;
-    private Supplier<Float> valueGetter;
-    private Consumer<Float> valueSetter;
-    private float minValue;
-    private float maxValue;
-    private float step;
-    private float defaultValue;
-    private SettingSlider slider;
+    private final String nameKey;
+    private final Supplier<Float> valueGetter;
+    private final Consumer<Float> valueSetter;
+    private final float minValue;
+    private final float maxValue;
+    private final float step;
+    private final float defaultValue;
+    private final SettingSlider slider;
     
     /**
      * Constructeur

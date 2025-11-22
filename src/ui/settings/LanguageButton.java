@@ -22,9 +22,9 @@ import static utilz.Constants.language;
 public class LanguageButton {
     
     // === PROPRIÉTÉS ===
-    private Rectangle bounds;
-    private String languageCode; // "fr", "en", "de"
-    private String displayName; // "Français", "English", "Deutsch"
+    private final Rectangle bounds;
+    private final String languageCode; // "fr", "en", "de"
+    private final String displayName; // "Français", "English", "Deutsch"
     private boolean isSelected;
     private boolean isHovered;
     

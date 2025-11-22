@@ -26,8 +26,8 @@ import ui.settings.DefaultValues;
 import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
 /**
- * Cette classe contient des méthodes utilitaires pour le jeu
- * @implNote Cette classe est utilisée pour gérer les données du jeu
+ * Cette classe contient des méthodes utilitaires pour le jeu.
+ * Cette classe est utilisée pour gérer les données du jeu.
  */
 public class HelpMethods {
 
@@ -571,8 +571,8 @@ public class HelpMethods {
      * Vérifie si une plateforme one-way doit bloquer le joueur
      * 
      * Règles:
-     * - Montée (velocity.y < 0): Jamais bloquer, toujours passer
-     * - Descente (velocity.y >= 0): Bloquer SI le bas de la hitbox est au-dessus de la plateforme
+     * - Montée (velocity.y &lt; 0): Jamais bloquer, toujours passer
+     * - Descente (velocity.y &gt;= 0): Bloquer SI le bas de la hitbox est au-dessus de la plateforme
      * - Down pressé: Jamais bloquer, forcer le passage
      * 
      * @param hitbox Hitbox du joueur

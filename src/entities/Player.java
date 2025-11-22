@@ -593,8 +593,8 @@ public class Player extends Entity {
      * les collisions solides. Elle peut modifier inAir via resetInAir().
      * 
      * LOGIQUE ONE-WAY:
-     * - Montée (velocity.y < 0) + pas de down → ignorer (passer à travers)
-     * - Descente (velocity.y >= 0) → vérifier collision et atterrir si nécessaire
+     * - Montée (velocity.y &lt; 0) + pas de down → ignorer (passer à travers)
+     * - Descente (velocity.y &gt;= 0) → vérifier collision et atterrir si nécessaire
      * - Down pressé → toujours ignorer (drop-through)
      * - Grace frames actives → ignorer (évite re-collision après drop-through)
      * 

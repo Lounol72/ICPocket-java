@@ -26,18 +26,21 @@ public class Menu extends State implements StateMethods{
     private long saveMessageTime;
     private boolean showSaveMessage;
     private boolean saveSuccess;
+
     /**
      * Constructor
      * */
     public Menu( Game game){
         super(game);
         initClasses();
+        
     }
 
     private void initClasses() {
         languageString = GetPhrase("menu");
         buttons = new MenuButtons[]{
-            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 100, 200, 50, 0, "start", GameState.WORLD),
+            // Bouton "Start" redirige vers l'écran de sélection de niveau
+            new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 100, 200, 50, 0, "start", GameState.LEVEL_SELECT),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 - 50, 200, 50, 1, "settings", GameState.SETTINGS),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2, 200, 50, 2, "save_game", GameState.MENU),
             new MenuButtons(GAME_WIDTH / 2 - 100, GAME_HEIGHT / 2 + 50, 200, 50, 3, "quit", GameState.QUIT),
@@ -48,7 +51,7 @@ public class Menu extends State implements StateMethods{
         saveSuccess = false;
         
         // Load background image
-        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.UI + "menu_background.jpg");
+        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.MENU_BACKGROUND);
     }
 
     /**

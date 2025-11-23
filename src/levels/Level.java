@@ -6,17 +6,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static utilz.Constants.WORLD.ONE_WAY_PLATFORMS.ONE_WAY_TILE_IDS;
+import static utilz.Constants.WORLD.TILES_IN_HEIGHT;
+import static utilz.Constants.WORLD.TILES_IN_WIDTH;
 import static utilz.Constants.WORLD.TILES_SIZE;
 
 public class Level {
     private int [][] levelData;
-    
+    private int lvlTilesWide;
+    private int lvlTilesHigh;
+    private int maxTilesOffsetX;
+    private int maxLvlOffsetX;
+    private int maxTilesOffsetY;
+    private int maxLvlOffsetY;
+
+
     // Collision rectangles for optimized AABB collision detection
     private List<Rectangle2D.Float> solidCollisions;
     private List<Rectangle2D.Float> oneWayPlatformCollisions;
 
     public Level(int[][] levelData) {
         this.levelData = levelData;
+        calcOffsets();
         this.solidCollisions = new ArrayList<>();
         this.oneWayPlatformCollisions = new ArrayList<>();
         generateCollisionRectangles();
@@ -48,8 +58,7 @@ public class Level {
                     } else {
                         // Sauvegarder le rectangle précédent s'il existe
                         if (currentRect != null) {
-                            horizontalMerged.add(currentRect);
-                        }
+                            horizontalMerged.add(currentRect);                      }
                         // Créer un nouveau rectangle
                         currentRect = new Rectangle2D.Float(
                             x * TILES_SIZE, 
@@ -187,5 +196,38 @@ public class Level {
      */
     public List<Rectangle2D.Float> getOneWayPlatformCollisions() {
         return oneWayPlatformCollisions;
+    }
+
+    private void calcOffsets() {
+        lvlTilesWide = levelData[0].length;
+        lvlTilesHigh = levelData.length;
+        maxTilesOffsetX = lvlTilesWide - TILES_IN_WIDTH;
+        maxLvlOffsetX = maxTilesOffsetX * TILES_SIZE;
+        maxTilesOffsetY = lvlTilesHigh - TILES_IN_HEIGHT;
+        maxLvlOffsetY = maxTilesOffsetY * TILES_SIZE;
+    }
+
+    public int getLvlTilesWide() {
+        return lvlTilesWide;
+    }
+
+    public int getLvlTilesHigh() {
+        return lvlTilesHigh;
+    }
+
+    public int getMaxTilesOffsetX() {
+        return maxTilesOffsetX;
+    }
+
+    public int getMaxLvlOffsetX() {
+        return maxLvlOffsetX;
+    }
+
+    public int getMaxTilesOffsetY() {
+        return maxTilesOffsetY;
+    }
+
+    public int getMaxLvlOffsetY() {
+        return maxLvlOffsetY;
     }
 }

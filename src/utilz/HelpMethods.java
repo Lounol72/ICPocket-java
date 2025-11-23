@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.google.gson.Gson;
@@ -21,18 +20,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import ui.settings.DefaultValues;
 import static utilz.Constants.WORLD.TILES_SIZE;
 import static utilz.Constants.language;
 /**
- * Cette classe contient des méthodes utilitaires pour le jeu
- * @implNote Cette classe est utilisée pour gérer les données du jeu
+ * Cette classe contient des méthodes utilitaires pour le jeu.
+ * Cette classe est utilisée pour gérer les données du jeu.
  */
 public class HelpMethods {
-
-    
-    private static final Random rnd = new Random();
 
     // Cache des données pour éviter des lectures répétées
     private static Map<String, JsonObject> jsonCache = new HashMap<>();
@@ -160,9 +157,8 @@ public class HelpMethods {
             }
             
             return levelData;
-        } catch (Exception e) {
+        } catch (IOException | JsonSyntaxException e) {
             System.err.println("Erreur lors du chargement du niveau depuis le JSON: " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
     }
@@ -189,7 +185,7 @@ public class HelpMethods {
                     .getAsJsonObject();
 
             return gson.fromJson(elementData, classOfT);
-        } catch (Exception e) {
+        } catch (JsonSyntaxException | IOException e) {
             System.err.println("Erreur lors du chargement de la ressource: " + e.getMessage());
             return null;
         }
@@ -575,8 +571,8 @@ public class HelpMethods {
      * Vérifie si une plateforme one-way doit bloquer le joueur
      * 
      * Règles:
-     * - Montée (velocity.y < 0): Jamais bloquer, toujours passer
-     * - Descente (velocity.y >= 0): Bloquer SI le bas de la hitbox est au-dessus de la plateforme
+     * - Montée (velocity.y &lt; 0): Jamais bloquer, toujours passer
+     * - Descente (velocity.y &gt;= 0): Bloquer SI le bas de la hitbox est au-dessus de la plateforme
      * - Down pressé: Jamais bloquer, forcer le passage
      * 
      * @param hitbox Hitbox du joueur

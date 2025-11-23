@@ -32,7 +32,9 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import states.GameState;
 import static states.GameState.currentState;
+import states.LevelSelect;
 import states.Menu;
 import states.Settings;
 import states.Splash;
@@ -40,6 +42,7 @@ import states.Start;
 import states.World;
 
 public class Game implements Runnable{
+
     // Composants principaux du jeu
     private final GamePanel gamePanel;      // Panneau où le jeu est rendu
     private final GameWindow gameWindow;    // Fenêtre qui contient le panneau
@@ -54,6 +57,7 @@ public class Game implements Runnable{
     private World world;
     private Start start;
     private Settings settings;
+    private LevelSelect levelSelect;
     private final ScreenFader fader = new ScreenFader();
     private Splash splash;
     
@@ -79,12 +83,18 @@ public class Game implements Runnable{
     /**
      * Initialise les différents états du jeu.
      */
+    /**
+     * Initialise tous les états du jeu.
+     * L'ordre d'initialisation est important car certains états peuvent dépendre d'autres.
+     */
     private void initClasses() {
+        // Initialiser tous les états du jeu
         this.menu = new Menu(this);
         this.world = new World(this);
         this.settings = new Settings(this);
         this.splash = new Splash(this);
         this.start = new Start(this);
+        this.levelSelect = new LevelSelect(this);
     }
 
     /**
@@ -107,7 +117,9 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.update();
             }
-
+            case LEVEL_SELECT -> {
+                levelSelect.update();
+            }
             case WORLD -> {
                 world.update();
             }
@@ -146,7 +158,9 @@ public class Game implements Runnable{
             case MENU -> {
                 menu.draw(g);
             }
-
+            case LEVEL_SELECT -> {
+                levelSelect.draw(g);
+            }
             case WORLD -> {
                 world.draw(g);
             }
@@ -230,12 +244,19 @@ public class Game implements Runnable{
         return menu;
     }
 
+    /**
+     * Met à jour toutes les chaînes de caractères traduites dans tous les états.
+     * Appelé lors d'un changement de langue.
+     */
     public void UpdateEveryStrings() {
         System.out.println("Every Strings Updated");
         menu.UpdateStrings();
         settings.UpdateStrings();
         splash.UpdateStrings();
-        
+        // Vérifier que levelSelect est initialisé avant de mettre à jour ses strings
+        if (levelSelect != null) {
+            levelSelect.UpdateStrings();
+        }
     }
 
     public World getWorld() {return world;
@@ -253,7 +274,21 @@ public class Game implements Runnable{
         return splash;
     }
 
+    /**
+     * Retourne l'instance du state de sélection de niveau.
+     * 
+     * @return L'instance de LevelSelect
+     */
+    public LevelSelect getLevelSelect() {
+        return levelSelect;
+    }
+
     public void startTransition(states.GameState target, Color color) {
         fader.start(target, 400, 400, color);
     }
+
+    public void windowFocusLost() {
+		if (GameState.currentState == GameState.WORLD)
+			world.getPlayer().resetDirBooleans();
+	}
 }

@@ -5,7 +5,13 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-import static ui.settings.SettingsConfig.*;
+import static ui.settings.SettingsConfig.FONT_SIZE_CATEGORY;
+import static ui.settings.SettingsConfig.TAB_ACTIVE_COLOR;
+import static ui.settings.SettingsConfig.TAB_BORDER_COLOR;
+import static ui.settings.SettingsConfig.TAB_HOVER_COLOR;
+import static ui.settings.SettingsConfig.TAB_INACTIVE_COLOR;
+import static ui.settings.SettingsConfig.TEXT_COLOR;
+import static ui.settings.SettingsConfig.TEXT_SECONDARY_COLOR;
 import static utilz.HelpMethods.GetPhrase;
 
 /**
@@ -15,8 +21,8 @@ import static utilz.HelpMethods.GetPhrase;
 public class CategoryTab {
     
     // === PROPRIÉTÉS ===
-    private Rectangle bounds;
-    private String textKey;
+    private final Rectangle bounds;
+    private final String textKey;
     private boolean isActive;
     private boolean isHovered;
     

@@ -58,8 +58,7 @@ public class Level {
                     } else {
                         // Sauvegarder le rectangle précédent s'il existe
                         if (currentRect != null) {
-                            horizontalMerged.add(currentRect);
-                        }
+                            horizontalMerged.add(currentRect);                      }
                         // Créer un nouveau rectangle
                         currentRect = new Rectangle2D.Float(
                             x * TILES_SIZE, 

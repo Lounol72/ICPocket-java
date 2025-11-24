@@ -56,6 +56,12 @@ public class DefaultValues {
         return 1.5f;
     }
     
+    // === PARAMÈTRES PERFORMANCE ===
+    
+    public static int getDefaultFPS() {
+        return utilz.Constants.PERFORMANCE.DEFAULT_FPS;
+    }
+    
     // === PARAMÈTRES DEBUG ===
     
     public static boolean getDefaultDebugPhysics() {

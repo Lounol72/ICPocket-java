@@ -238,6 +238,10 @@ public class World extends State implements StateMethods {
             case KeyEvent.VK_E -> {
                 player.setAttack(true);
             }
+            case KeyEvent.VK_ESCAPE -> {
+                // Activer la pause
+                GameState.setState(GameState.PAUSE);
+            }
             // default -> System.out.println("Unexpected value: " + e.getKeyCode());
         }
     }

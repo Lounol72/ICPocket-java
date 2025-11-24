@@ -36,6 +36,7 @@ import states.GameState;
 import static states.GameState.currentState;
 import states.LevelSelect;
 import states.Menu;
+import states.Pause;
 import states.Settings;
 import states.Splash;
 import states.Start;
@@ -48,9 +49,8 @@ public class Game implements Runnable{
     private final GameWindow gameWindow;    // Fenêtre qui contient le panneau
     private Thread gameLoopThread;          // Thread dédié à la boucle de jeu
 
-    // Paramètres de performance
-    private final int FPS_SET = 120;        // Images par seconde cible
-    private final int UPS_SET = 200;        // Mises à jour par seconde cible
+    // Paramètres de performance (utilisent les constantes de Constants.PERFORMANCE)
+    private static final int TARGET_UPS = utilz.Constants.PERFORMANCE.TARGET_UPS; // UPS fixe
 
 
     private Menu menu;
@@ -58,6 +58,7 @@ public class Game implements Runnable{
     private Start start;
     private Settings settings;
     private LevelSelect levelSelect;
+    private Pause pause;
     private final ScreenFader fader = new ScreenFader();
     private Splash splash;
     
@@ -95,6 +96,7 @@ public class Game implements Runnable{
         this.splash = new Splash(this);
         this.start = new Start(this);
         this.levelSelect = new LevelSelect(this);
+        this.pause = new Pause(this);
     }
 
     /**
@@ -122,6 +124,10 @@ public class Game implements Runnable{
             }
             case WORLD -> {
                 world.update();
+            }
+            case PAUSE -> {
+                pause.update();
+                // Ne pas mettre à jour le monde en pause
             }
             case START -> {
                 start.update();
@@ -164,6 +170,10 @@ public class Game implements Runnable{
             case WORLD -> {
                 world.draw(g);
             }
+            case PAUSE -> {
+                // Pause dessine le monde en arrière-plan avec blur
+                pause.draw(g);
+            }
             case SETTINGS -> {
                 settings.draw(g);
             }
@@ -188,54 +198,88 @@ public class Game implements Runnable{
     }
 
     /**
-     * Implémente la boucle principale du jeu avec synchronisation FPS/UPS.
-     * Utilise un temps delta pour maintenir une cadence régulière.
-     * Affiche les FPS et UPS dans la console pour le suivi des performances.
+     * Implémente la boucle principale du jeu avec découplage complet FPS/UPS.
+     * 
+     * ARCHITECTURE:
+     * - UPS (Logic): Fixed Time Step strict à 200 UPS avec accumulateur
+     * - FPS (Render): Limité mais découplé, configurable depuis les settings
+     * - Utilise System.nanoTime() pour une précision maximale
+     * - Thread.sleep() pour limiter le FPS et économiser les ressources CPU
+     * 
+     * FIXED TIME STEP:
+     * L'UPS utilise un accumulateur qui garantit exactement 200 updates/seconde
+     * même si le rendu est plus lent ou plus rapide. Cela assure une physique
+     * stable et reproductible.
      */
     @Override
     public void run() {
-        // Calcul du temps entre chaque frame et update
-        double timePerFrame = 1000000000.0 / FPS_SET;  // Nanoseconds par frame
-        double timePerUpdate = 1000000000.0 / UPS_SET; // Nanoseconds par update
-
-        long previousTime = System.nanoTime();
-        int frames = 0;      // Compteur de frames rendues
-        int updates = 0;     // Compteur de mises à jour effectuées
-        long lastCheck = System.currentTimeMillis();
-
-        double deltaU = 0;   // Accumulation du temps pour les updates
-        double deltaF = 0;   // Accumulation du temps pour les frames
-
-        // Boucle infinie du jeu
+        // === CONSTANTES DE TEMPS ===
+        // Temps par update en nanosecondes (Fixed Time Step pour UPS)
+        final double NANOS_PER_UPDATE = 1_000_000_000.0 / TARGET_UPS;
+        
+        // Variables pour le tracking FPS/UPS
+        int frames = 0;              // Compteur de frames rendues
+        int updates = 0;             // Compteur de mises à jour effectuées
+        long lastFpsCheck = System.currentTimeMillis();
+        
+        // === FIXED TIME STEP - ACCUMULATEUR ===
+        // L'accumulateur garantit que la logique tourne exactement à TARGET_UPS
+        double accumulator = 0.0;     // Accumulateur pour les updates (Fixed Time Step)
+        
+        // === TIMING ===
+        long previousTime = System.nanoTime(); // Temps précédent en nanosecondes
+        
+        // === BOUCLE PRINCIPALE ===
         while (true) {
             long currentTime = System.nanoTime();
-
-            // Calcul des deltas
-            deltaU += (currentTime - previousTime) / timePerUpdate;
-            deltaF += (currentTime - previousTime) / timePerFrame;
+            long elapsedNanos = currentTime - previousTime;
             previousTime = currentTime;
-
-            // Mise à jour de la logique si nécessaire
-            if (deltaU >= 1) {
-                update();
+            
+            // === PHASE 1: LOGIC (UPS) - FIXED TIME STEP ===
+            // Ajouter le temps écoulé à l'accumulateur
+            accumulator += elapsedNanos;
+            
+            // Exécuter les updates nécessaires pour maintenir TARGET_UPS
+            // L'accumulateur garantit qu'on fait exactement le bon nombre d'updates
+            while (accumulator >= NANOS_PER_UPDATE) {
+                update();            // Mise à jour de la logique du jeu
                 updates++;
-                deltaU--;
+                accumulator -= NANOS_PER_UPDATE; // Retirer un "tick" de l'accumulateur
             }
-
-            // Rendu à l'écran si nécessaire
-            if (deltaF >= 1) {
-                gamePanel.repaint();
-                frames++;
-                deltaF--;
+            
+            // === PHASE 2: RENDERING (FPS) - DÉCOUPLÉ ===
+            // Le rendu est complètement indépendant de la logique
+            // On peut rendre à n'importe quelle fréquence (limitée par TARGET_FPS)
+            gamePanel.repaint();
+            frames++;
+            
+            // === PHASE 3: LIMITATION FPS ET ÉCONOMIE CPU ===
+            // Calculer le temps disponible avant le prochain frame
+            int targetFPS = utilz.Constants.PERFORMANCE.TARGET_FPS;
+            long nanosPerFrame = 1_000_000_000L / targetFPS;
+            long frameTime = System.nanoTime() - currentTime;
+            long sleepTime = (nanosPerFrame - frameTime) / 1_000_000; // Convertir en millisecondes
+            
+            // Dormir seulement si on a le temps (évite les valeurs négatives)
+            if (sleepTime > 0) {
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break; // Sortir de la boucle si interrompu
+                }
             }
-
-            // Affichage des FPS et UPS chaque seconde
-            if (System.currentTimeMillis() - lastCheck >= 1000) {
-                lastCheck = System.currentTimeMillis();
+            // Si sleepTime <= 0, on est en retard et on continue sans dormir
+            
+            // === PHASE 4: TRACKING FPS/UPS (affichage) ===
+            // Mettre à jour les compteurs chaque seconde
+            long currentMillis = System.currentTimeMillis();
+            if (currentMillis - lastFpsCheck >= 1000) {
                 currentFPS = frames;
                 currentUPS = updates;
                 frames = 0;
                 updates = 0;
+                lastFpsCheck = currentMillis;
             }
         }
     }
@@ -281,6 +325,10 @@ public class Game implements Runnable{
      */
     public LevelSelect getLevelSelect() {
         return levelSelect;
+    }
+
+    public Pause getPause() {
+        return pause;
     }
 
     public void startTransition(states.GameState target, Color color) {

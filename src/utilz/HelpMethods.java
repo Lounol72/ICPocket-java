@@ -81,9 +81,9 @@ public class HelpMethods {
                 bundle = ResourceBundle.getBundle("res.data.langue", Locale.ENGLISH);
                 return bundle.getString(name);
             } catch (MissingResourceException e2) {
+                // Retourner une valeur par défaut au lieu de faire planter le jeu
+                System.err.printf("Impossible de charger la phrase '%s' même en anglais. Utilisation de la valeur par défaut.%n", name);
                 return "Error: " + name;
-            }finally{
-                System.exit(3);
             }
         }
     }
@@ -224,6 +224,9 @@ public class HelpMethods {
         float apexGravityMultiplier;
         float apexAccelerationMultiplier;
         
+        // Paramètres Performance
+        int targetFPS;
+        
         String language;
         
         // Constructeur par défaut requis pour Gson
@@ -232,7 +235,7 @@ public class HelpMethods {
         // Constructeur avec toutes les valeurs
         PlayerConfigData(float acceleration, float maxSpeedX, float jumpForce, float gravity, float dashSpeed,
                         float airResistance, float groundFriction, float fastFallMultiplier, int coyoteTimeFrames,
-                        float apexGravityMultiplier, float apexAccelerationMultiplier, String language) {
+                        float apexGravityMultiplier, float apexAccelerationMultiplier, int targetFPS, String language) {
             this.acceleration = acceleration;
             this.maxSpeedX = maxSpeedX;
             this.jumpForce = jumpForce;
@@ -244,6 +247,7 @@ public class HelpMethods {
             this.coyoteTimeFrames = coyoteTimeFrames;
             this.apexGravityMultiplier = apexGravityMultiplier;
             this.apexAccelerationMultiplier = apexAccelerationMultiplier;
+            this.targetFPS = targetFPS;
             this.language = language;
         }
 
@@ -274,6 +278,7 @@ public class HelpMethods {
                 Constants.PLAYER.COYOTE_TIME_FRAMES,
                 Constants.PLAYER.APEX_GRAVITY_MULT,
                 Constants.PLAYER.APEX_ACCEL_MULT,
+                Constants.PERFORMANCE.TARGET_FPS,
                 Constants.language
             );
             
@@ -319,6 +324,7 @@ public class HelpMethods {
         System.out.println("  Coyote Time Frames = " + Constants.PLAYER.COYOTE_TIME_FRAMES);
         System.out.println("  Apex Gravity Multiplier = " + Constants.PLAYER.APEX_GRAVITY_MULT);
         System.out.println("  Apex Acceleration Multiplier = " + Constants.PLAYER.APEX_ACCEL_MULT);
+        System.out.println("  Target FPS   = " + Constants.PERFORMANCE.TARGET_FPS);
         System.out.println("  Langue       = " + Constants.language);
         
         System.out.println("Save done");
@@ -373,6 +379,19 @@ public class HelpMethods {
                 Constants.PLAYER.COYOTE_TIME_FRAMES = validatedCoyote;
                 Constants.PLAYER.APEX_GRAVITY_MULT = validateFloat(config.apexGravityMultiplier, 0.1f, 1.0f, DefaultValues.getDefaultApexGravityMultiplier());
                 Constants.PLAYER.APEX_ACCEL_MULT = validateFloat(config.apexAccelerationMultiplier, 1.0f, 3.0f, DefaultValues.getDefaultApexAccelerationMultiplier());
+                
+                // Paramètres Performance
+                // Valider le FPS (compatible avec anciennes sauvegardes qui n'ont pas ce champ)
+                if (config.targetFPS > 0) {
+                    int validatedFPS = (int) validateFloat(config.targetFPS, 
+                        Constants.PERFORMANCE.MIN_FPS, 
+                        Constants.PERFORMANCE.MAX_FPS, 
+                        DefaultValues.getDefaultFPS());
+                    Constants.PERFORMANCE.TARGET_FPS = validatedFPS;
+                } else {
+                    // Ancienne sauvegarde sans FPS, utiliser la valeur par défaut
+                    Constants.PERFORMANCE.TARGET_FPS = DefaultValues.getDefaultFPS();
+                }
                 
                 // Appliquer la langue sauvegardée si elle existe
                 if (config.language != null && !config.language.isEmpty()) {

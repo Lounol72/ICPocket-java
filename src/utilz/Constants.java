@@ -148,6 +148,26 @@ public class Constants {
         public static final boolean RENDER_FPS_UPS = true; // Afficher FPS/UPS à l'écran
     }
 
+    /**
+     * Constantes de performance pour la boucle de jeu
+     * FPS: Frames per second (rendu) - configurable depuis les settings
+     * UPS: Updates per second (logique) - fixe à 200 pour la précision
+     */
+    public static class PERFORMANCE {
+        // UPS fixe pour la logique du jeu (Fixed Time Step)
+        public static final int TARGET_UPS = 200; // Mises à jour par seconde - FIXE
+        
+        // FPS configurable pour le rendu (limité mais découplé)
+        public static int TARGET_FPS = 120; // Images par seconde - CONFIGURABLE
+        
+        // Valeur par défaut pour le FPS
+        public static final int DEFAULT_FPS = 120;
+        
+        // Limites min/max pour le FPS
+        public static final int MIN_FPS = 30;
+        public static final int MAX_FPS = 240;
+    }
+
     public static void SetLanguage(String name) {
         language = name;
     }

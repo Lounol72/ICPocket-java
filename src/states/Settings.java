@@ -278,6 +278,37 @@ public class Settings extends State implements StateMethods {
         categories.add(advancedCategory);
         tabX += SettingsConfig.TAB_WIDTH + SettingsConfig.TAB_SPACING;
         
+        // === CATÉGORIE PERFORMANCE ===
+        SettingsCategory performanceCategory = new SettingsCategory(
+            "settings_performance",
+            tabX, tabY,
+            SettingsConfig.TAB_WIDTH,
+            SettingsConfig.TAB_HEIGHT
+        );
+        
+        // Target FPS
+        performanceCategory.addItem(new SettingItem(
+            "settings_target_fps",
+            () -> (float) Constants.PERFORMANCE.TARGET_FPS,
+            (v) -> {
+                // Clamper la valeur entre MIN_FPS et MAX_FPS
+                int fps = Math.round(v);
+                fps = Math.max(Constants.PERFORMANCE.MIN_FPS, Math.min(Constants.PERFORMANCE.MAX_FPS, fps));
+                Constants.PERFORMANCE.TARGET_FPS = fps;
+            },
+            (float) Constants.PERFORMANCE.MIN_FPS,
+            (float) Constants.PERFORMANCE.MAX_FPS,
+            DefaultValues.getDefaultFPS(),
+            1f, // Step de 1 FPS
+            SettingsConfig.SLIDER_START_X,
+            SettingsConfig.SLIDER_START_Y,
+            SettingsConfig.SLIDER_WIDTH,
+            SettingsConfig.SLIDER_HEIGHT
+        ));
+        
+        categories.add(performanceCategory);
+        tabX += SettingsConfig.TAB_WIDTH + SettingsConfig.TAB_SPACING;
+        
         // === CATÉGORIE DEBUG ===
         // Note: Pour les booléens, on pourrait créer un ToggleButton plus tard
         // Pour l'instant, on les laisse de côté ou on les gère différemment

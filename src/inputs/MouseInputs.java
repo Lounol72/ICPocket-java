@@ -35,6 +35,7 @@ public class MouseInputs implements MouseListener, MouseMotionListener {
             case MENU -> state = gamePanel.getGame().getMenu();
             case LEVEL_SELECT -> state = gamePanel.getGame().getLevelSelect();
             case WORLD -> state = gamePanel.getGame().getWorld();
+            case PAUSE -> state = gamePanel.getGame().getPause();
             case SETTINGS -> state = gamePanel.getGame().getSettings();
 
             case INFOS -> { /* État réservé pour usage futur */ }

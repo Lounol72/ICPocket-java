@@ -106,13 +106,13 @@ public class LevelButton extends Button {
 
     /**
      * Action effectuée lors du clic sur le bouton.
-     * Change le niveau actuel dans le World et passe à l'état WORLD pour lancer le jeu.
+     * Change le niveau actuel dans le World et passe à l'état WORLD pour lancer le jeu avec transition fade.
      */
     public void action() {
         // Changer le niveau dans le World
         game.getWorld().changeLevel(levelIndex);
-        // Passer à l'état WORLD pour lancer le jeu
-        states.GameState.setState(states.GameState.WORLD);
+        // Passer à l'état WORLD avec transition fade sunset
+        game.startTransition(states.GameState.WORLD, new java.awt.Color(255, 140, 60));
     }
 
     /**

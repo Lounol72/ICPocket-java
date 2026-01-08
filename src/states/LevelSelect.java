@@ -10,13 +10,13 @@ import java.awt.image.BufferedImage;
 import game.Game;
 import ui.LevelButton;
 import ui.MenuButtons;
+import utilz.MenuParallaxBackground;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.UI.BUTTONS.HEIGHT;
 import static utilz.Constants.UI.BUTTONS.WIDTH;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import static utilz.HelpMethods.GetPhrase;
-import utilz.LoadSave;
 
 /**
  * State pour sélectionner un niveau.
@@ -42,8 +42,8 @@ public class LevelSelect extends State implements StateMethods {
     /** Bouton pour revenir au menu principal */
     private MenuButtons backButton;
     
-    /** Image de fond de l'écran */
-    private BufferedImage backgroundImage;
+    /** Parallax background with sunset gradient */
+    private MenuParallaxBackground parallaxBg;
     
     // ================================
     // CONFIGURATION DE LA GRILLE
@@ -132,8 +132,8 @@ public class LevelSelect extends State implements StateMethods {
             GameState.MENU
         );
         
-        // Charger l'image de fond (même que le menu principal)
-        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.MENU_BACKGROUND);
+        // Initialize parallax background
+        parallaxBg = new MenuParallaxBackground();
     }
 
     /**
@@ -143,14 +143,8 @@ public class LevelSelect extends State implements StateMethods {
      */
     @Override
     public void draw(Graphics g) {
-        // Dessiner le fond (image ou couleur de fallback)
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
-        } else {
-            // Couleur de fond de secours si l'image n'est pas disponible
-            g.setColor(new Color(30, 52, 62));
-            g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-        }
+        // Draw animated parallax background
+        parallaxBg.draw(g);
         
         // Dessiner le titre centré en haut
         g.setColor(Color.WHITE);
@@ -177,6 +171,9 @@ public class LevelSelect extends State implements StateMethods {
      */
     @Override
     public void update() {
+        // Update parallax background animation
+        parallaxBg.update();
+        
         // Mettre à jour les boutons de niveau (états hover/pressed)
         if (levelButtons != null) {
             for (LevelButton lb : levelButtons) {

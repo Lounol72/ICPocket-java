@@ -1,6 +1,9 @@
 package states;
 
+import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -10,6 +13,8 @@ import entities.Player;
 import game.Game;
 import levels.Level;
 import levels.LevelManager;
+import static utilz.Constants.MENU_SUNSET.*;
+import static utilz.Constants.PERFORMANCE;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.ENVIRONMENT.BIG_CLOUDS_HEIGHT;
 import static utilz.Constants.WORLD.ENVIRONMENT.BIG_CLOUDS_WIDTH;
@@ -41,7 +46,6 @@ public class World extends State implements StateMethods {
     private int maxLvlOffsetY;
 
 
-    private final BufferedImage backgroundImage;
     private final BufferedImage bigCloud;
     private final BufferedImage smallCloud1;
     private int[] smallCloudsPos;
@@ -55,8 +59,7 @@ public class World extends State implements StateMethods {
                 levels.getCurrentLevel());
         player.loadLvlData(levels.getCurrentLevel().getLevelData());
 
-
-        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.WORLD_BACKGROUND);
+        // Load cloud assets (background now uses gradient)
         bigCloud = LoadSave.GetSpriteAtlas(LoadSave.BIG_CLOUDS);
         smallCloud1 = LoadSave.GetSpriteAtlas(LoadSave.SMALL_CLOUD_1);
         smallCloudsPos = new int[8];
@@ -146,23 +149,56 @@ public class World extends State implements StateMethods {
     }
 
     private void drawClouds(Graphics g){
+        boolean animationEnabled = PERFORMANCE.PARALLAX_ENABLED;
+        
         if (bigCloud != null) {
             for (int i = 0; i < 3; i++) {
-                g.drawImage(bigCloud, (int)((i * BIG_CLOUDS_WIDTH) - (0.3 * xLvlOffset)), (int)(204 * SCALE), BIG_CLOUDS_WIDTH,  BIG_CLOUDS_HEIGHT,null);
+                int xPos = animationEnabled ? 
+                    (int)((i * BIG_CLOUDS_WIDTH) - (0.3 * xLvlOffset)) :
+                    (i * BIG_CLOUDS_WIDTH);
+                g.drawImage(bigCloud, xPos, (int)(204 * SCALE), BIG_CLOUDS_WIDTH, BIG_CLOUDS_HEIGHT, null);
             }
         }
         if (smallCloud1 != null) {
-            for (int i = 0; i< smallCloudsPos.length; i++) {
-                g.drawImage(smallCloud1, (int)((i * SMALL_CLOUD_1_WIDTH * 4) - (0.7 * xLvlOffset)) , smallCloudsPos[i], SMALL_CLOUD_1_WIDTH, SMALL_CLOUD_1_HEIGHT, null);
+            for (int i = 0; i < smallCloudsPos.length; i++) {
+                int xPos = animationEnabled ?
+                    (int)((i * SMALL_CLOUD_1_WIDTH * 4) - (0.7 * xLvlOffset)) :
+                    (i * SMALL_CLOUD_1_WIDTH * 4);
+                g.drawImage(smallCloud1, xPos, smallCloudsPos[i], SMALL_CLOUD_1_WIDTH, SMALL_CLOUD_1_HEIGHT, null);
             }
-            
         }
+    }
+    
+    /**
+     * Draws sunset gradient background for unified aesthetic with menus
+     */
+    private void drawSunsetGradient(Graphics2D g2d) {
+        int horizonY = GAME_HEIGHT / 2;
+        
+        // Top half: Dark purple to warm orange
+        GradientPaint topGradient = new GradientPaint(
+            0, 0, GRADIENT_TOP,
+            0, horizonY, GRADIENT_HORIZON
+        );
+        g2d.setPaint(topGradient);
+        g2d.fillRect(0, 0, GAME_WIDTH, horizonY);
+        
+        // Bottom half: Warm orange to peachy bottom
+        GradientPaint bottomGradient = new GradientPaint(
+            0, horizonY, GRADIENT_HORIZON,
+            0, GAME_HEIGHT, GRADIENT_BOTTOM
+        );
+        g2d.setPaint(bottomGradient);
+        g2d.fillRect(0, horizonY, GAME_WIDTH, GAME_HEIGHT - horizonY);
     }
 
     private void drawEnvironment(Graphics g){
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
-        }
+        Graphics2D g2d = (Graphics2D) g;
+        
+        // Draw sunset gradient background (unified with menus)
+        drawSunsetGradient(g2d);
+        
+        // Draw clouds with parallax
         drawClouds(g);
     }
 

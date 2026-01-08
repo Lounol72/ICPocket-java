@@ -10,6 +10,7 @@
   "coyoteTimeFrames": 3,
   "apexGravityMultiplier": 0.3,
   "apexAccelerationMultiplier": 1.5,
-  "targetFPS": 240,
+  "targetFPS": 120,
+  "parallaxEnabled": true,
   "language": "en"
 }

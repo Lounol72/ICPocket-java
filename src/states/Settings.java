@@ -17,6 +17,7 @@ import ui.settings.SettingSlider;
 import ui.settings.SettingsCategory;
 import ui.settings.SettingsConfig;
 import utilz.Constants;
+import utilz.MenuParallaxBackground;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import static utilz.HelpMethods.GetPhrase;
@@ -37,6 +38,12 @@ public class Settings extends State implements StateMethods {
 
     // === PROPRIÉTÉS ===
     private String languageString;
+    
+    // Parallax background
+    private MenuParallaxBackground parallaxBg;
+    
+    // Temporary setting values (applied on "Apply" button)
+    private boolean tempParallaxEnabled;
     
     // Composants UI
     private List<SettingsCategory> categories;
@@ -73,6 +80,12 @@ public class Settings extends State implements StateMethods {
         languageButtons = new ArrayList<>();
         currentState = SettingsState.BROWSING;
         showConfirmMessage = false;
+        
+        // Initialize parallax background
+        parallaxBg = new MenuParallaxBackground();
+        
+        // Load current parallax setting
+        tempParallaxEnabled = Constants.PERFORMANCE.PARALLAX_ENABLED;
         
         // Créer les boutons de langue
         createLanguageButtons();
@@ -340,6 +353,15 @@ public class Settings extends State implements StateMethods {
         int buttonX = SettingsConfig.BUTTON_START_X;
         int buttonY = SettingsConfig.BUTTON_START_Y;
         
+        // Bouton Background Animation Toggle (placed first for visibility)
+        String parallaxText = tempParallaxEnabled ? "settings_parallax_on" : "settings_parallax_off";
+        actionButtons.add(new ActionButton(
+            buttonX, buttonY - (SettingsConfig.BUTTON_HEIGHT + 20), // Above other buttons
+            SettingsConfig.BUTTON_WIDTH, SettingsConfig.BUTTON_HEIGHT,
+            parallaxText,
+            this::toggleParallax
+        ));
+        
         // Bouton Apply
         actionButtons.add(new ActionButton(
             buttonX, buttonY,
@@ -409,8 +431,8 @@ public class Settings extends State implements StateMethods {
      * @param g Contexte graphique
      */
     private void drawBackground(Graphics g) {
-        g.setColor(SettingsConfig.BACKGROUND_COLOR);
-        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        // Draw animated parallax background
+        parallaxBg.draw(g);
     }
 
     /**
@@ -503,6 +525,9 @@ public class Settings extends State implements StateMethods {
      */
     @Override
     public void update() {
+        // Update parallax background animation (slower for stability)
+        parallaxBg.update();
+        
         // Mettre à jour toutes les catégories
         for (SettingsCategory category : categories) {
             category.update();
@@ -807,6 +832,9 @@ public class Settings extends State implements StateMethods {
      * Applique les paramètres et sauvegarde
      */
     private void applySettings() {
+        // Apply parallax setting
+        Constants.PERFORMANCE.PARALLAX_ENABLED = tempParallaxEnabled;
+        
         // Sauvegarder la configuration
         boolean success = save_config();
         if (success) {
@@ -824,6 +852,10 @@ public class Settings extends State implements StateMethods {
         // Recharger la configuration sauvegardée pour annuler les modifications
         if (utilz.HelpMethods.detect_save()) {
             utilz.HelpMethods.charger_config();
+            // Reload parallax setting
+            tempParallaxEnabled = Constants.PERFORMANCE.PARALLAX_ENABLED;
+            // Update parallax button text
+            updateParallaxButtonText();
             // Mettre à jour tous les sliders avec les valeurs rechargées
             for (SettingsCategory category : categories) {
                 for (SettingItem item : category.getItems()) {
@@ -832,6 +864,33 @@ public class Settings extends State implements StateMethods {
             }
         }
         GameState.setState(GameState.MENU);
+    }
+    
+    /**
+     * Toggle parallax background animation
+     */
+    private void toggleParallax() {
+        tempParallaxEnabled = !tempParallaxEnabled;
+        updateParallaxButtonText();
+    }
+    
+    /**
+     * Updates the parallax button text based on current state
+     */
+    private void updateParallaxButtonText() {
+        if (!actionButtons.isEmpty()) {
+            // Recreate the button with updated text since ActionButton doesn't have setText()
+            String parallaxText = tempParallaxEnabled ? "settings_parallax_on" : "settings_parallax_off";
+            ActionButton oldButton = actionButtons.get(0);
+            actionButtons.set(0, new ActionButton(
+                oldButton.getBounds().x,
+                oldButton.getBounds().y,
+                oldButton.getBounds().width,
+                oldButton.getBounds().height,
+                parallaxText,
+                this::toggleParallax
+            ));
+        }
     }
 
     /**

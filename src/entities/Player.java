@@ -88,6 +88,7 @@ public class Player extends Entity {
     // DASH
     // ================================
     private boolean isDashing = false;
+    private boolean hasDashedinAir = false;
     private final int dashDurationFrames = 12; // durée du dash en frames
     private int dashTimer = 0;
     private final int dashCooldownFrames = 30; // cooldown après dash
@@ -285,7 +286,7 @@ public class Player extends Entity {
     public void startDash() {
         // Allow dash while jumping/moving: only block if already dashing, attacking, or
         // in cooldown
-        if (isDashing || isAttacking || dashCooldownTimer > 0)
+        if (isDashing || isAttacking || dashCooldownTimer > 0 || hasDashedinAir )
             return;
 
         // Prefer input direction if available (arrow keys or A/D)
@@ -296,6 +297,8 @@ public class Player extends Entity {
 
         isDashing = true;
         dashTimer = dashDurationFrames;
+        if (inAir)
+            hasDashedinAir = true;
 
         // Force immediate horizontal velocity for the dash
         physicsBody.getVelocity().x = utilz.Constants.PLAYER.DASH_SPEED * direction;
@@ -427,6 +430,8 @@ public class Player extends Entity {
             PhysicsDebugger.logForceApplied("GRAVITY", 0, GRAVITY * gravityMultiplier);
         } else {
             // Le joueur est au sol → supprimer la gravité
+            if(hasDashedinAir)
+                hasDashedinAir = false;
             physicsBody.removeForcesOfType(ForceType.GRAVITY);
         }
     }

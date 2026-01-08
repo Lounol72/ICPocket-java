@@ -1,5 +1,7 @@
 package utilz;
 
+import java.awt.Color;
+
 /**
  * This class contains constants and utility methods used throughout the
  * application.
@@ -144,6 +146,29 @@ public class Constants {
         }
     }
 
+    /**
+     * Constants for menu sunset parallax background system.
+     * Defines colors, positions, and animation parameters for cozy warm sunset aesthetic.
+     */
+    public static class MENU_SUNSET {
+        // Sunset gradient colors (3-point gradient for smooth transition)
+        public static final Color GRADIENT_TOP = new Color(74, 30, 66);        // #4A1E42 - Deep purple dusk
+        public static final Color GRADIENT_HORIZON = new Color(255, 140, 60);  // #FF8C3C - Warm orange horizon
+        public static final Color GRADIENT_BOTTOM = new Color(255, 200, 150);  // #FFC896 - Peachy bottom
+        
+        // Warm overlay tint (applied over clouds for sunset atmosphere)
+        public static final Color WARM_OVERLAY_COLOR = new Color(255, 180, 100); // Soft orange tint
+        public static final float WARM_OVERLAY_ALPHA = 0.3f;                     // 30% opacity
+        
+        // Cloud positions (Y coordinates)
+        public static final int BIG_CLOUD_Y = (int)(204 * SCALE);           // 408px - Fixed horizon position
+        public static final int SMALL_CLOUD_BASE_Y = (int)(60 * SCALE);     // 120px - Base for randomization
+        public static final int SMALL_CLOUD_VARIANCE = (int)(150 * SCALE);  // 300px - Random range (120-360px)
+        
+        // Animation settings
+        public static final float SCROLL_SPEED = 0.3f;  // Pixels per frame at 200 UPS (slow, contemplative)
+    }
+
     public static class DEBUG {
         public static final boolean RENDER_FPS_UPS = true; // Afficher FPS/UPS à l'écran
     }
@@ -166,6 +191,9 @@ public class Constants {
         // Limites min/max pour le FPS
         public static final int MIN_FPS = 30;
         public static final int MAX_FPS = 240;
+        
+        // Parallax background animation toggle (for performance)
+        public static boolean PARALLAX_ENABLED = true; // Enable animated backgrounds
     }
 
     public static void SetLanguage(String name) {

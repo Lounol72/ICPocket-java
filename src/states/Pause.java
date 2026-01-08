@@ -3,6 +3,7 @@ package states;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -11,6 +12,9 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import game.Game;
+import ui.MenuButtons;
+import static utilz.Constants.UI.BUTTONS.HEIGHT;
+import static utilz.Constants.UI.BUTTONS.WIDTH;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import static utilz.HelpMethods.GetPhrase;
@@ -36,15 +40,32 @@ import static utilz.HelpMethods.GetPhrase;
 public class Pause extends State implements StateMethods {
 
     // === EFFET DE BLUR ===
-    private static final int BLUR_RADIUS = 5; // Rayon du flou (plus élevé = plus flou)
-    private static final float OVERLAY_ALPHA = 0.5f; // Opacité de l'overlay (0.0 = transparent, 1.0 = opaque)
-    
-    // === COULEURS ===
+    private static final int BLUR_RADIUS = 2; // Rayon du flou réduit pour performance (plus élevé = plus flou)
+    private static final float OVERLAY_ALPHA = 0.8f; // Opacité de l'overlay augmentée pour meilleur contraste (0.0 = transparent, 1.0 = opaque)
+
+    // === COULEURS (adjusted for sunset background) ===
     private static final Color OVERLAY_COLOR = new Color(0, 0, 0, (int)(OVERLAY_ALPHA * 255)); // Noir semi-transparent
+    private static final Color OVERLAY_GRADIENT_START = new Color(40, 20, 10, 200); // Warm brown pour dégradé
+    private static final Color OVERLAY_GRADIENT_END = new Color(20, 10, 5, 240); // Dark brown pour dégradé
+    private static final Color PAUSE_TEXT_COLOR = new Color(255, 255, 255, 255); // Blanc pur
+    private static final Color PAUSE_GLOW_COLOR = new Color(255, 200, 150, 150); // Warm glow pour cohérence avec sunset
+
+    // === OVERLAY DES BOUTONS ===
+    private static final int BUTTON_SPACING = 20; // Espacement vertical entre les boutons
+    private static final int BUTTONS_PANEL_Y_OFFSET = 100; // Décalage vertical du panneau de boutons par rapport au centre
+    private static final int PANEL_WIDTH = 300; // Largeur du panneau central
+    private static final int PANEL_HEIGHT = 220; // Hauteur du panneau central
+    private static final int PANEL_CORNER_RADIUS = 15; // Rayon des coins arrondis
+    private static final Color PANEL_BACKGROUND = new Color(30, 30, 50, 200); // Fond du panneau
+    private static final Color PANEL_BORDER = new Color(100, 150, 255, 255); // Bordure du panneau
     
     // === TEXTE ===
     private String pauseText;
     private Font pauseFont;
+
+    // === BOUTONS ===
+    private MenuButtons[] buttons;
+
 
     /**
      * Constructeur de l'état de pause
@@ -53,8 +74,18 @@ public class Pause extends State implements StateMethods {
     public Pause(Game game) {
         super(game);
         pauseFont = new Font("Arial", Font.BOLD, 48);
+        initClasses();
+    }
+
+    private void initClasses() {
+        buttons = new MenuButtons[]{
+            new MenuButtons(GAME_WIDTH / 2 - WIDTH / 2, GAME_HEIGHT / 2 + BUTTONS_PANEL_Y_OFFSET - HEIGHT - BUTTON_SPACING, WIDTH, HEIGHT, 1, "back", GameState.WORLD),
+            new MenuButtons(GAME_WIDTH / 2 - WIDTH / 2, GAME_HEIGHT / 2 + BUTTONS_PANEL_Y_OFFSET, WIDTH, HEIGHT, 2, "settings", GameState.SETTINGS),
+            new MenuButtons(GAME_WIDTH / 2 - WIDTH / 2, GAME_HEIGHT / 2 + BUTTONS_PANEL_Y_OFFSET + HEIGHT + BUTTON_SPACING, WIDTH, HEIGHT, 0, "quit", GameState.MENU),
+        };
         UpdateStrings();
     }
+
 
     /**
      * Dessine l'état de pause.
@@ -70,139 +101,84 @@ public class Pause extends State implements StateMethods {
      */
     @Override
     public void draw(Graphics g) {
-        // === ÉTAPE 1: CRÉER UNE IMAGE TEMPORAIRE POUR CAPTURER LE MONDE ===
-        BufferedImage worldImage = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D worldGraphics = worldImage.createGraphics();
-        
-        // Dessiner le monde dans l'image (sans mise à jour)
-        World world = game.getWorld();
-        if (world != null) {
-            world.draw(worldGraphics);
-        }
-        worldGraphics.dispose();
-
-        // === ÉTAPE 2: APPLIQUER LE BLUR ===
-        BufferedImage blurredImage = applyBlur(worldImage, BLUR_RADIUS);
-        
-        // === ÉTAPE 3: DESSINER L'IMAGE FLOUTÉE ===
         Graphics2D g2d = (Graphics2D) g;
-        g2d.drawImage(blurredImage, 0, 0, null);
-
-        // === ÉTAPE 4: DESSINER L'OVERLAY SEMI-TRANSPARENT ===
+        
+        // === ÉTAPE 4: DESSINER L'OVERLAY AVEC DÉGRADÉ ===
+        GradientPaint gradient = new GradientPaint(
+            0, 0, OVERLAY_GRADIENT_START,
+            0, GAME_HEIGHT, OVERLAY_GRADIENT_END
+        );
+        g2d.setPaint(gradient);
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, OVERLAY_ALPHA));
-        g2d.setColor(OVERLAY_COLOR);
         g2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // Effet de vignette simplifié
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
+        g2d.setColor(new Color(0, 0, 0, 40));
+        g2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f)); // Réinitialiser
 
-        // === ÉTAPE 5: DESSINER LE TEXTE "PAUSE" ===
+        // === ÉTAPE 5: DESSINER LE TEXTE "PAUSE" AVEC GLOW ===
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2d.setFont(pauseFont);
-        g2d.setColor(Color.WHITE);
-        
+
         // Centrer le texte
         int textWidth = g2d.getFontMetrics().stringWidth(pauseText);
         int textX = (GAME_WIDTH - textWidth) / 2;
-        int textY = GAME_HEIGHT / 2;
-        
-        // Dessiner avec ombre pour meilleure lisibilité
-        g2d.setColor(Color.BLACK);
-        g2d.drawString(pauseText, textX + 2, textY + 2);
-        g2d.setColor(Color.WHITE);
+        int textY = GAME_HEIGHT / 2 - 50; // Remonter le texte pour laisser place aux boutons
+
+        // Dessiner le glow (couches optimisées)
+        g2d.setColor(PAUSE_GLOW_COLOR);
+        for (int i = 1; i <= 3; i += 2) { // Seulement 2 itérations (i=1, i=3)
+            g2d.drawString(pauseText, textX - i, textY);
+            g2d.drawString(pauseText, textX + i, textY);
+            g2d.drawString(pauseText, textX, textY - i);
+            g2d.drawString(pauseText, textX, textY + i);
+        }
+
+        // Dessiner le texte principal
+        g2d.setColor(PAUSE_TEXT_COLOR);
         g2d.drawString(pauseText, textX, textY);
+
+        // === DESSINER LE PANNEAU CENTRAL ===
+        drawPanel(g);
+
+        // === DESSINER LES BOUTONS ===
+        for (MenuButtons mb : buttons)
+            mb.draw(g);
     }
 
+
     /**
-     * Applique un effet de flou gaussien à une image.
-     * 
-     * ALGORITHME OPTIMISÉ:
-     * - Utilise un box blur en deux passes (horizontal puis vertical)
-     * - Beaucoup plus rapide que le blur 2D complet (O(n²) au lieu de O(n⁴))
-     * - Plus le rayon est élevé, plus le flou est prononcé
-     * 
-     * @param source Image source à flouter
-     * @param radius Rayon du flou (en pixels)
-     * @return Image floutée
+     * Dessine le panneau central derrière les boutons
+     * @param g Contexte graphique pour le dessin
      */
-    private BufferedImage applyBlur(BufferedImage source, int radius) {
-        if (source == null) {
-            return null;
-        }
+    private void drawPanel(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        int panelX = GAME_WIDTH / 2 - PANEL_WIDTH / 2;
+        int panelY = GAME_HEIGHT / 2 + BUTTONS_PANEL_Y_OFFSET - PANEL_HEIGHT / 2;
 
-        int width = source.getWidth();
-        int height = source.getHeight();
-        
-        // === PASSE 1: BLUR HORIZONTAL ===
-        BufferedImage horizontalBlur = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int r = 0, g = 0, b = 0, a = 0;
-                int count = 0;
+        // Dessiner l'ombre du panneau (simplifiée)
+        g2d.setColor(new Color(0, 0, 0, 80));
+        g2d.fillRoundRect(panelX + 2, panelY + 2, PANEL_WIDTH, PANEL_HEIGHT, PANEL_CORNER_RADIUS, PANEL_CORNER_RADIUS);
 
-                // Moyenne horizontale des pixels dans le rayon
-                for (int dx = -radius; dx <= radius; dx++) {
-                    int px = x + dx;
-                    if (px >= 0 && px < width) {
-                        int rgb = source.getRGB(px, y);
-                        r += (rgb >> 16) & 0xFF;
-                        g += (rgb >> 8) & 0xFF;
-                        b += rgb & 0xFF;
-                        a += (rgb >> 24) & 0xFF;
-                        count++;
-                    }
-                }
+        // Dessiner le fond du panneau (couleur unie pour performance)
+        g2d.setColor(PANEL_BACKGROUND);
+        g2d.fillRoundRect(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, PANEL_CORNER_RADIUS, PANEL_CORNER_RADIUS);
 
-                if (count > 0) {
-                    r /= count;
-                    g /= count;
-                    b /= count;
-                    a /= count;
-                    int rgb = (a << 24) | (r << 16) | (g << 8) | b;
-                    horizontalBlur.setRGB(x, y, rgb);
-                }
-            }
-        }
-
-        // === PASSE 2: BLUR VERTICAL ===
-        BufferedImage blurred = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int r = 0, g = 0, b = 0, a = 0;
-                int count = 0;
-
-                // Moyenne verticale des pixels dans le rayon
-                for (int dy = -radius; dy <= radius; dy++) {
-                    int py = y + dy;
-                    if (py >= 0 && py < height) {
-                        int rgb = horizontalBlur.getRGB(x, py);
-                        r += (rgb >> 16) & 0xFF;
-                        g += (rgb >> 8) & 0xFF;
-                        b += rgb & 0xFF;
-                        a += (rgb >> 24) & 0xFF;
-                        count++;
-                    }
-                }
-
-                if (count > 0) {
-                    r /= count;
-                    g /= count;
-                    b /= count;
-                    a /= count;
-                    int rgb = (a << 24) | (r << 16) | (g << 8) | b;
-                    blurred.setRGB(x, y, rgb);
-                }
-            }
-        }
-
-        return blurred;
+        // Bordure simple (sans glow animé pour performance)
+        g2d.setColor(PANEL_BORDER);
+        g2d.setStroke(new java.awt.BasicStroke(2));
+        g2d.drawRoundRect(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, PANEL_CORNER_RADIUS, PANEL_CORNER_RADIUS);
+        g2d.setStroke(new java.awt.BasicStroke(1)); // Réinitialiser
     }
 
-    /**
-     * Ne fait rien en pause (le monde n'est pas mis à jour)
-     */
+
     @Override
     public void update() {
-        // Rien à mettre à jour en pause
-        // Le monde reste figé
+        for (MenuButtons mb : buttons)
+            mb.update();
     }
 
     /**
@@ -231,7 +207,11 @@ public class Pause extends State implements StateMethods {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        // Rien à faire
+        for (MenuButtons mb : buttons)
+            mb.setMouseOver(false);
+        for (MenuButtons mb : buttons)
+            if (isIn(e, mb))
+                mb.setMouseOver(true);
     }
 
     @Override
@@ -246,20 +226,28 @@ public class Pause extends State implements StateMethods {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // Rien à faire
+        for (MenuButtons mb : buttons)
+            if (isIn(e, mb))
+                mb.setMousePressed(true);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        // Rien à faire
+        for (MenuButtons mb : buttons) {
+            if (isIn(e, mb)) {
+                mb.action();
+            }
+        }
+        for (MenuButtons mb : buttons)
+            mb.resetBools();
     }
 
-    /**
-     * Met à jour les chaînes de caractères traduites
-     */
     @Override
     public void UpdateStrings() {
         pauseText = GetPhrase("pause");
+        // mettre à jour le texte des boutons
+        for (MenuButtons mb : buttons)
+            mb.setText(GetPhrase(mb.getBaseText()));
     }
 }
 

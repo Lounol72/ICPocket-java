@@ -226,6 +226,7 @@ public class HelpMethods {
         
         // Paramètres Performance
         int targetFPS;
+        boolean parallaxEnabled;
         
         String language;
         
@@ -235,7 +236,8 @@ public class HelpMethods {
         // Constructeur avec toutes les valeurs
         PlayerConfigData(float acceleration, float maxSpeedX, float jumpForce, float gravity, float dashSpeed,
                         float airResistance, float groundFriction, float fastFallMultiplier, int coyoteTimeFrames,
-                        float apexGravityMultiplier, float apexAccelerationMultiplier, int targetFPS, String language) {
+                        float apexGravityMultiplier, float apexAccelerationMultiplier, int targetFPS, String language,
+                        boolean parallaxEnabled) {
             this.acceleration = acceleration;
             this.maxSpeedX = maxSpeedX;
             this.jumpForce = jumpForce;
@@ -249,6 +251,7 @@ public class HelpMethods {
             this.apexAccelerationMultiplier = apexAccelerationMultiplier;
             this.targetFPS = targetFPS;
             this.language = language;
+            this.parallaxEnabled = parallaxEnabled;
         }
 
     }
@@ -279,7 +282,8 @@ public class HelpMethods {
                 Constants.PLAYER.APEX_GRAVITY_MULT,
                 Constants.PLAYER.APEX_ACCEL_MULT,
                 Constants.PERFORMANCE.TARGET_FPS,
-                Constants.language
+                Constants.language,
+                Constants.PERFORMANCE.PARALLAX_ENABLED
             );
             
             // Sérialiser en JSON avec formatage
@@ -397,6 +401,10 @@ public class HelpMethods {
                 if (config.language != null && !config.language.isEmpty()) {
                     Constants.SetLanguage(config.language);
                 }
+                
+                // Charger le paramètre parallax (compatible avec anciennes sauvegardes)
+                // Par défaut true si le champ n'existe pas dans l'ancienne sauvegarde
+                Constants.PERFORMANCE.PARALLAX_ENABLED = (config.parallaxEnabled != false);
                 
                 return true;
             }

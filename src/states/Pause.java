@@ -23,24 +23,22 @@ import static utilz.HelpMethods.GetPhrase;
  * État de pause du jeu.
  * 
  * FONCTIONNALITÉS:
- * - Affiche le niveau WORLD en arrière-plan (sans mise à jour)
- * - Applique un effet de flou (blur) sur l'écran
- * - Affiche un overlay semi-transparent
- * - Affiche le texte "PAUSE"
+ * - Affiche un overlay semi-transparent avec dégradé
+ * - Affiche le texte "PAUSE" avec effet de glow
+ * - Affiche un panneau central avec les boutons (Retour, Paramètres, Quitter)
  * - Peut être activé/désactivé avec ESC
  * 
  * ARCHITECTURE:
- * - Ne met PAS à jour le monde (World.update() n'est pas appelé)
- * - Dessine le monde en arrière-plan via World.draw()
- * - Applique le blur et l'overlay par-dessus
+ * - Le monde WORLD n'est ni mis à jour ni affiché en pause
+ * - Overlay avec dégradé et effet de vignette
+ * - Panneau central pour les boutons de navigation
  * 
  * @author Lounol72
  * @version 1.0
  */
 public class Pause extends State implements StateMethods {
 
-    // === EFFET DE BLUR ===
-    private static final int BLUR_RADIUS = 2; // Rayon du flou réduit pour performance (plus élevé = plus flou)
+    // === OVERLAY ===
     private static final float OVERLAY_ALPHA = 0.8f; // Opacité de l'overlay augmentée pour meilleur contraste (0.0 = transparent, 1.0 = opaque)
 
     // === COULEURS (adjusted for sunset background) ===
@@ -91,11 +89,11 @@ public class Pause extends State implements StateMethods {
      * Dessine l'état de pause.
      * 
      * ORDRE DE RENDU:
-     * 1. Dessine le monde dans une image temporaire
-     * 2. Applique l'effet de blur sur cette image
-     * 3. Dessine l'image floutée à l'écran
-     * 4. Dessine l'overlay semi-transparent
-     * 5. Dessine le texte "PAUSE"
+     * 1. Dessine l'overlay avec dégradé
+     * 2. Applique un effet de vignette
+     * 3. Dessine le texte "PAUSE" avec effet de glow
+     * 4. Dessine le panneau central
+     * 5. Dessine les boutons
      * 
      * @param g Contexte graphique pour le dessin
      */

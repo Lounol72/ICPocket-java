@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 
 import game.Game;
 import static states.GameState.START;
+import utilz.MenuParallaxBackground;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import utilz.LoadSave;
@@ -23,6 +24,7 @@ public class Splash extends State implements StateMethods {
     private BufferedImage logo;
     private String gameName;
     private String pressEnterText;
+    private MenuParallaxBackground parallaxBg;
 
     // Logo scaling
     private static final int MAX_LOGO_WIDTH = (int) (GAME_WIDTH * 0.6f);  // Max 60% of screen width
@@ -46,6 +48,9 @@ public class Splash extends State implements StateMethods {
         // Try to load logo; fall back if missing
         logo = LoadSave.GetSpriteAtlas(LoadSave.UI + "logo.png");
         loadStrings();
+        
+        // Initialize parallax background
+        parallaxBg = new MenuParallaxBackground();
     }
     
     private void loadStrings() {
@@ -56,8 +61,9 @@ public class Splash extends State implements StateMethods {
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(new Color(30, 52, 62));
-        g2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        // Draw animated parallax background
+        parallaxBg.draw(g);
 
         // Apply alpha composite for fade effect
         Composite prev = g2d.getComposite();
@@ -106,6 +112,9 @@ public class Splash extends State implements StateMethods {
 
     @Override
     public void update() {
+        // Update parallax background animation
+        parallaxBg.update();
+        
         float fadePerUpdate = (float) (1.0 / (FADE_SECONDS * 200.0)); // UPS ~200
         long now = System.currentTimeMillis();
 

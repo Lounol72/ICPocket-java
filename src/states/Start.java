@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent;
 import game.Game;
 import static states.GameState.MENU;
 import ui.StartButtons;
+import utilz.MenuParallaxBackground;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.UI.BUTTONS.HEIGHT;
 import static utilz.Constants.UI.BUTTONS.WIDTH;
@@ -35,6 +36,7 @@ public class Start extends State implements StateMethods{
      private String languageString ;
      private int xText, yText ;
      private boolean textPosCalc = false;
+     private MenuParallaxBackground parallaxBg;
  
     // private ScrollingText scrollText;
 
@@ -58,12 +60,15 @@ public class Start extends State implements StateMethods{
         for (int i = 0; i < buttons.length ; i++)
             buttons[i] = new StartButtons(X_BUTTON_POS + ((i % 2) * X_BUTTON_OFFSET), Y_BUTTON_POS + ((i / 2) * Y_BUTTON_OFFSET * 2),WIDTH, HEIGHT,0,lang[i],text[i]);
         languageString = GetPhrase("langue");
+        
+        // Initialize parallax background
+        parallaxBg = new MenuParallaxBackground();
     }
 
     @Override
     public void draw(Graphics g) {
-        g.setColor(new Color (171, 171, 171));
-        g.fillRect(0,0,GAME_WIDTH, GAME_HEIGHT);
+        // Draw animated parallax background
+        parallaxBg.draw(g);
         g.setColor(Color.black);
         g.setFont(new Font("Arial", Font.PLAIN, 20));
         if (!textPosCalc){
@@ -82,6 +87,9 @@ public class Start extends State implements StateMethods{
 
     @Override
     public void update() {
+        // Update parallax background animation
+        parallaxBg.update();
+        
         for (StartButtons mb : buttons)
             mb.update();
         // scrollText.update();

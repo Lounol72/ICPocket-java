@@ -11,6 +11,7 @@ public enum GameState {
     MENU,           // Menu principal
     LEVEL_SELECT,   // Écran de sélection de niveau
     WORLD,          // État de jeu (niveau en cours)
+    PAUSE,          // État de pause (affiche WORLD avec blur)
     SETTINGS,       // Écran des paramètres
     INFOS,          // Écran d'informations (réservé)
     QUIT;           // État de sortie

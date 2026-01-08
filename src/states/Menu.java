@@ -9,17 +9,17 @@ import java.awt.image.BufferedImage;
 
 import game.Game;
 import ui.MenuButtons;
+import utilz.MenuParallaxBackground;
 import static utilz.Constants.SCALE;
 import static utilz.Constants.WORLD.GAME_HEIGHT;
 import static utilz.Constants.WORLD.GAME_WIDTH;
 import utilz.HelpMethods;
 import static utilz.HelpMethods.GetPhrase;
-import utilz.LoadSave;
 public class Menu extends State implements StateMethods{
 
     private String languageString;
     private MenuButtons[] buttons;
-    private BufferedImage backgroundImage;
+    private MenuParallaxBackground parallaxBg;
     
     // Message de confirmation/erreur pour la sauvegarde
     private String saveMessage;
@@ -50,8 +50,8 @@ public class Menu extends State implements StateMethods{
         showSaveMessage = false;
         saveSuccess = false;
         
-        // Load background image
-        backgroundImage = LoadSave.GetSpriteAtlas(LoadSave.MENU_BACKGROUND);
+        // Initialize parallax background
+        parallaxBg = new MenuParallaxBackground();
     }
 
     /**
@@ -60,16 +60,8 @@ public class Menu extends State implements StateMethods{
     @Override
     public void draw( Graphics g ) {
 
-        
-        // Draw background image if available, otherwise fallback to solid color
-        if (backgroundImage != null) {
-            // Scale background to fit screen
-            g.drawImage(backgroundImage, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
-        } else {
-            // Fallback background
-            g.setColor(new Color(30, 52, 62));
-            g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-        }
+        // Draw animated parallax background
+        parallaxBg.draw(g);
         
         // Draw menu title
         g.setColor(Color.WHITE);
@@ -105,6 +97,9 @@ public class Menu extends State implements StateMethods{
      */
     @Override
     public void update() {
+        // Update parallax background animation
+        parallaxBg.update();
+        
         for (MenuButtons mb : buttons)
             mb.update();
         

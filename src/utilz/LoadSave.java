@@ -159,10 +159,17 @@ public class LoadSave {
     
     /**
      * Méthode de fallback pour charger les données du niveau depuis l'image
-     * @return int[][] les données du niveau
+     * @return int[][] les données du niveau, ou null si le chargement échoue
      */
     private static int[][] getLevelDataFromImage(){
         BufferedImage img = GetSpriteAtlas(LEVEL_ONE_DATA);
+        
+        // Vérifier que l'image a été chargée correctement
+        if (img == null) {
+            System.err.println("Impossible de charger l'image du niveau : " + LEVEL_ONE_DATA);
+            return null;
+        }
+        
         int [][] levelData = new int[img.getHeight()][img.getWidth()];
 
         for(int j = 0; j<img.getHeight(); j++)

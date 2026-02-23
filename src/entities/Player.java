@@ -153,7 +153,6 @@ public class Player extends Entity {
         // DÉTERMINATION DE L'ÉTAT INITIAL
         // Vérifier si le joueur commence en l'air ou au sol
         inAir = !IsEntityOnFloorAABB(hitbox, level, physicsBody.getVelocity());
-        System.out.println("feur");
     }
 
     // ================================
